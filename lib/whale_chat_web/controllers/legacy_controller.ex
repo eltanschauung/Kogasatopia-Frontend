@@ -27,7 +27,7 @@ defmodule WhaleChatWeb.LegacyController do
         proxy_upstream_php(conn, req_path)
 
       php_index_dir?(req_path) or String.ends_with?(req_path, ".php") ->
-        redirect(conn, external: "https://kogasa.tf" <> req_path)
+        legacy_php_unavailable(conn)
 
       true ->
         send_resp(conn, 404, "Not Found")
@@ -44,7 +44,8 @@ defmodule WhaleChatWeb.LegacyController do
   end
 
   defp proxy_playercount_widget_php?(request_path) do
-    String.starts_with?(request_path, "/playercount_widget/") and String.ends_with?(request_path, ".php")
+    String.starts_with?(request_path, "/playercount_widget/") and
+      String.ends_with?(request_path, ".php")
   end
 
   defp proxy_leaderboard_php?(request_path) do
@@ -56,8 +57,8 @@ defmodule WhaleChatWeb.LegacyController do
   defp proxy_upstream_php(conn, request_path) do
     url =
       case conn.query_string do
-        "" -> "https://kogasa.tf" <> request_path
-        qs -> "https://kogasa.tf" <> request_path <> "?" <> qs
+        "" -> legacy_php_base() <> request_path
+        qs -> legacy_php_base() <> request_path <> "?" <> qs
       end
 
     case UpstreamProxy.fetch_html(url) do
@@ -67,8 +68,16 @@ defmodule WhaleChatWeb.LegacyController do
         |> send_resp(200, body)
 
       :error ->
-        redirect(conn, external: "https://kogasa.tf" <> request_path)
+        legacy_php_unavailable(conn)
     end
+  end
+
+  defp legacy_php_base do
+    Application.get_env(:whale_chat, :legacy_php_base, "http://127.0.0.1:8081")
+  end
+
+  defp legacy_php_unavailable(conn) do
+    send_resp(conn, 502, "Legacy PHP backend unavailable")
   end
 
   defp mobile_request?(conn) do

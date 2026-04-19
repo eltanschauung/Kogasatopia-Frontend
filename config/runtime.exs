@@ -20,8 +20,14 @@ if System.get_env("PHX_SERVER") do
   config :whale_chat, WhaleChatWeb.Endpoint, server: true
 end
 
-config :whale_chat, WhaleChatWeb.Endpoint,
-  http: [port: String.to_integer(System.get_env("PORT", "4000"))]
+ip =
+  case System.get_env("PHX_IP", "0.0.0.0") do
+    "0.0.0.0" -> {0, 0, 0, 0}
+    "::" -> {0, 0, 0, 0, 0, 0, 0, 0}
+    _ -> {127, 0, 0, 1}
+  end
+
+http_port = String.to_integer(System.get_env("PORT", "80"))
 
 if config_env() == :dev do
   config :whale_chat, WhaleChat.Repo,
@@ -88,16 +94,69 @@ if config_env() == :prod do
     chat_server_port: String.to_integer(System.get_env("WT_CHAT_SERVER_PORT", "443")),
     steam_api_key: System.get_env("STEAM_API_KEY", "")
 
-  config :whale_chat, WhaleChatWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https"],
+  tls_dir = System.get_env("PHX_TLS_DIR")
+  https_port = String.to_integer(System.get_env("HTTPS_PORT", "443"))
+
+  tls_path = fn domain, file ->
+    Path.join([tls_dir || "", domain, file])
+  end
+
+  tls_charlist = fn domain, file ->
+    tls_path.(domain, file)
+    |> String.to_charlist()
+  end
+
+  sni_hosts =
+    if is_binary(tls_dir) and tls_dir != "" do
+      [
+        {~c"kogasa.tf",
+         [
+           certfile: tls_charlist.("kogasa.tf", "fullchain.pem"),
+           keyfile: tls_charlist.("kogasa.tf", "privkey.pem")
+         ]},
+        {~c"fastdl.kogasa.tf",
+         [
+           certfile: tls_charlist.("fastdl.kogasa.tf", "fullchain.pem"),
+           keyfile: tls_charlist.("fastdl.kogasa.tf", "privkey.pem")
+         ]},
+        {~c"fastdl.gyate.net",
+         [
+           certfile: tls_charlist.("fastdl.gyate.net", "fullchain.pem"),
+           keyfile: tls_charlist.("fastdl.gyate.net", "privkey.pem")
+         ]}
+      ]
+    else
+      []
+    end
+
+  endpoint_opts = [
+    url: [host: host, port: https_port, scheme: "https"],
+    secret_key_base: secret_key_base,
     http: [
-      # Enable IPv6 and bind on all interfaces.
-      # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
-      # See the documentation on https://hexdocs.pm/bandit/Bandit.html#t:options/0
-      # for details about using IPv6 vs IPv4 and loopback vs public addresses.
-      ip: {0, 0, 0, 0, 0, 0, 0, 0}
-    ],
-    secret_key_base: secret_key_base
+      ip: ip,
+      port: http_port
+    ]
+  ]
+
+  endpoint_opts =
+    if sni_hosts == [] do
+      endpoint_opts
+    else
+      Keyword.put(endpoint_opts, :https, [
+        ip: ip,
+        port: https_port,
+        cipher_suite: :strong,
+        certfile: tls_path.("kogasa.tf", "fullchain.pem"),
+        keyfile: tls_path.("kogasa.tf", "privkey.pem"),
+        thousand_island_options: [
+          transport_options: [
+            sni_hosts: sni_hosts
+          ]
+        ]
+      ])
+    end
+
+  config :whale_chat, WhaleChatWeb.Endpoint, endpoint_opts
 
   # ## SSL Support
   #

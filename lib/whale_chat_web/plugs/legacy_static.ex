@@ -6,7 +6,7 @@ defmodule WhaleChatWeb.Plugs.LegacyStatic do
 
   @allowed_exts ~w(
     .html .htm .css .js .png .jpg .jpeg .gif .ico .svg .txt .json
-    .mp3 .wav .woff .woff2 .ttf .otf .webp
+    .mp3 .wav .woff .woff2 .ttf .otf .webp .vpk
   )
   def init(opts), do: opts
 

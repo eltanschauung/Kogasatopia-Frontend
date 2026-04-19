@@ -10,7 +10,6 @@ defmodule WhaleChat.StatsFeed do
   @stats_table "whaletracker"
   @logs_table "whaletracker_logs"
   @log_players_table "whaletracker_log_players"
-  @stats_min_playtime_sort 4 * 3600
   @weapon_category_metadata %{
     "shotguns" => %{label: "Shotgun"},
     "scatterguns" => %{label: "Scattergun"},
@@ -321,23 +320,24 @@ defmodule WhaleChat.StatsFeed do
     favorite_class_expr = favorite_class_select_expr()
 
     sql = """
-    SELECT steamid,
-           COALESCE(cached_personaname, personaname, steamid) AS personaname,
-           kills, deaths, assists, healing, headshots, backstabs,
-           COALESCE(best_killstreak, 0) AS best_killstreak,
-           COALESCE(playtime, 0) AS playtime,
-           COALESCE(damage_dealt, 0) AS damage_dealt,
-           COALESCE(damage_taken, 0) AS damage_taken,
-           COALESCE(shots, 0) AS shots,
-           COALESCE(hits, 0) AS hits,
-           COALESCE(total_ubers, 0) AS total_ubers,
-           COALESCE(medic_drops, 0) AS medic_drops,
-           COALESCE(uber_drops, COALESCE(medic_drops, 0)) AS uber_drops,
-           COALESCE(airshots, 0) AS airshots,
+    SELECT w.steamid,
+           COALESCE(w.cached_personaname, w.personaname, w.steamid) AS personaname,
+           w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
+           COALESCE(w.best_killstreak, 0) AS best_killstreak,
+           COALESCE(w.playtime, 0) AS playtime,
+           COALESCE(w.damage_dealt, 0) AS damage_dealt,
+           COALESCE(w.damage_taken, 0) AS damage_taken,
+           COALESCE(w.shots, 0) AS shots,
+           COALESCE(w.hits, 0) AS hits,
+           COALESCE(w.total_ubers, 0) AS total_ubers,
+           COALESCE(w.medic_drops, 0) AS medic_drops,
+           COALESCE(w.uber_drops, COALESCE(w.medic_drops, 0)) AS uber_drops,
+           COALESCE(w.airshots, 0) AS airshots,
            #{favorite_class_expr} AS favorite_class,
-           COALESCE(last_seen, 0) AS last_seen
-    FROM #{@stats_table}
-    ORDER BY #{stats_order_clause()}
+           COALESCE(w.last_seen, 0) AS last_seen
+    FROM #{@stats_table} w
+    LEFT JOIN whaletracker_points_cache pc ON pc.steamid = w.steamid
+    ORDER BY #{stats_cache_order_clause()}
     LIMIT ? OFFSET ?
     """
 
@@ -363,26 +363,27 @@ defmodule WhaleChat.StatsFeed do
     total = scalar_query(count_sql, [like, steam_like, q])
 
     sql = """
-    SELECT steamid,
-           COALESCE(cached_personaname, personaname, steamid) AS personaname,
-           kills, deaths, assists, healing, headshots, backstabs,
-           COALESCE(best_killstreak, 0) AS best_killstreak,
-           COALESCE(playtime, 0) AS playtime,
-           COALESCE(damage_dealt, 0) AS damage_dealt,
-           COALESCE(damage_taken, 0) AS damage_taken,
-           COALESCE(shots, 0) AS shots,
-           COALESCE(hits, 0) AS hits,
-           COALESCE(total_ubers, 0) AS total_ubers,
-           COALESCE(medic_drops, 0) AS medic_drops,
-           COALESCE(uber_drops, COALESCE(medic_drops, 0)) AS uber_drops,
-           COALESCE(airshots, 0) AS airshots,
+    SELECT w.steamid,
+           COALESCE(w.cached_personaname, w.personaname, w.steamid) AS personaname,
+           w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
+           COALESCE(w.best_killstreak, 0) AS best_killstreak,
+           COALESCE(w.playtime, 0) AS playtime,
+           COALESCE(w.damage_dealt, 0) AS damage_dealt,
+           COALESCE(w.damage_taken, 0) AS damage_taken,
+           COALESCE(w.shots, 0) AS shots,
+           COALESCE(w.hits, 0) AS hits,
+           COALESCE(w.total_ubers, 0) AS total_ubers,
+           COALESCE(w.medic_drops, 0) AS medic_drops,
+           COALESCE(w.uber_drops, COALESCE(w.medic_drops, 0)) AS uber_drops,
+           COALESCE(w.airshots, 0) AS airshots,
            #{favorite_class_expr} AS favorite_class,
-           COALESCE(last_seen, 0) AS last_seen
-    FROM #{@stats_table}
-    WHERE LOWER(COALESCE(cached_personaname, personaname, steamid)) LIKE ?
-       OR steamid LIKE ?
-       OR steamid = ?
-    ORDER BY #{stats_order_clause()}
+           COALESCE(w.last_seen, 0) AS last_seen
+    FROM #{@stats_table} w
+    LEFT JOIN whaletracker_points_cache pc ON pc.steamid = w.steamid
+    WHERE LOWER(COALESCE(w.cached_personaname, w.personaname, w.steamid)) LIKE ?
+       OR w.steamid LIKE ?
+       OR w.steamid = ?
+    ORDER BY #{stats_cache_order_clause()}
     LIMIT ? OFFSET ?
     """
 
@@ -870,11 +871,10 @@ defmodule WhaleChat.StatsFeed do
     end
   end
 
-  defp stats_order_clause do
-    ratio_expr =
-      "COALESCE((kills + (0.5 * assists)) / NULLIF(deaths, 0), (kills + (0.5 * assists)))"
-
-    "CASE WHEN playtime >= #{@stats_min_playtime_sort} THEN #{ratio_expr} ELSE -1 END DESC, (kills + assists) DESC, kills DESC"
+  defp stats_cache_order_clause do
+    "CASE WHEN COALESCE(pc.rank, 0) > 0 THEN 0 ELSE 1 END ASC, " <>
+      "CASE WHEN COALESCE(pc.rank, 0) > 0 THEN pc.rank ELSE 2147483647 END ASC, " <>
+      "w.steamid ASC"
   end
 
   defp logs_scope(value) do
