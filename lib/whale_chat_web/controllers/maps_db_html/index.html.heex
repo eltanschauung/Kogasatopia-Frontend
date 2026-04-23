@@ -7,9 +7,6 @@
     <link rel="stylesheet" href="/stats/css/whaletracker.css" />
     <style>
       body { margin: 0; }
-      .mapsdb-page {}
-      .mapsdb-shell {}
-      .mapsdb-card {}
       .stats-header-shell {
         margin-bottom: .9rem;
         padding: 0;
@@ -36,21 +33,14 @@
         word-break: break-all;
         white-space: normal;
       }
-      .mapsdb-page-actions {}
-      .mapsdb-page-actions .tab-controls {}
-      .mapsdb-home-btn {
-        display:inline-flex; align-items:center; justify-content:center;
-        text-decoration:none; color:var(--text-primary, #f5f6fa);
-        border:1px solid rgba(127, 200, 255, 0.35);
-        background: rgba(127, 200, 255, 0.08);
-        border-radius:999px; padding:.35rem .9rem; font-size:.88rem; font-weight:600;
-        transition: background .2s ease, border-color .2s ease, transform .12s ease;
-      }
-      .mapsdb-home-btn:hover { border-color: rgba(127, 200, 255, 0.55); background: rgba(127, 200, 255, 0.16); }
-      .mapsdb-home-btn:active { transform: translateY(1px); }
       .mapsdb-page-actions .tab-button,
       .mapsdb-page-actions .tab-button:link,
-      .mapsdb-page-actions .tab-button:visited {}
+      .mapsdb-page-actions .tab-button:visited {
+        box-shadow: none !important;
+        text-shadow: none !important;
+        filter: none !important;
+        transition: background .2s ease, border-color .2s ease, color .2s ease;
+      }
       .mapsdb-page-actions .tab-button.wt-tab--orange {
         background: rgba(242, 162, 74, .10);
         border-color: rgba(242, 162, 74, .34);
@@ -78,11 +68,14 @@
         background: rgba(243, 207, 103, .14);
         border-color: rgba(243, 207, 103, .44);
       }
-      .mapsdb-title-row {}
-      .mapsdb-title-row h1 {}
-      .mapsdb-title-row h1 span {}
+      .mapsdb-page-actions .tab-button:hover,
+      .mapsdb-page-actions .tab-button.tab-button-glow {
+        transform: none !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+        filter: none !important;
+      }
       .stats-sub { margin:.2rem 0 0; color:#b5bfd0; font-size:.9rem; }
-      .mapsdb-sub {}
       .mapsdb-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1.25rem; }
       .mapsdb-stats { display:flex; gap:.8rem; align-items:center; }
       .mapsdb-layout { display:grid; grid-template-columns:minmax(280px,.4fr) minmax(360px,.6fr); gap:1.1rem; }

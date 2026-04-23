@@ -15,7 +15,6 @@
     .stats-card {
       background: linear-gradient(160deg, rgba(18, 23, 34, .850), rgba(11, 14, 22, .90));
       border: 1px solid var(--border-color, rgba(255,255,255,.10));
-      border-radius: 18px;
       padding: 1.1rem 1.1rem 1rem;
       box-shadow: 0 18px 44px rgba(0,0,0,.30);
       backdrop-filter: blur(8px);
@@ -24,7 +23,14 @@
     .stats-home-row .tab-controls { margin-bottom: 0; gap: .6rem; }
     .stats-home-row .tab-button,
     .stats-home-row .tab-button:link,
-    .stats-home-row .tab-button:visited { padding: .55rem 1.1rem; gap: .45rem; }
+    .stats-home-row .tab-button:visited {
+      padding: .55rem 1.1rem;
+      gap: .45rem;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      filter: none !important;
+      transition: background .2s ease, border-color .2s ease, color .2s ease;
+    }
     .stats-home-row .tab-button-count { padding: .14rem .52rem; font-size: .83rem; }
     .stats-home-row .tab-button.wt-tab--orange {
       background: rgba(242, 162, 74, .10);
@@ -53,15 +59,13 @@
       background: rgba(243, 207, 103, .14);
       border-color: rgba(243, 207, 103, .44);
     }
-    .stats-home-btn {
-      display:inline-flex; align-items:center; gap:.4rem;
-      padding:.6rem 1rem; border-radius:999px; text-decoration:none;
-      border:1px solid var(--border-color, rgba(255,255,255,.14));
-      background: rgba(127, 200, 255, 0.16);
-      color:#eef3ff; font-weight:600;
-      box-shadow: 0 6px 18px rgba(0,0,0,.20);
+    .stats-home-row .tab-button:hover,
+    .stats-home-row .tab-button.tab-button-glow {
+      transform: none !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      filter: none !important;
     }
-    .stats-home-btn:hover { background: rgba(127, 200, 255, 0.28); }
     .stats-header-shell {
       margin-bottom: .9rem;
       padding: 0;
@@ -71,23 +75,7 @@
       box-shadow: none;
     }
     .stats-header-shell .header { margin: 0; }
-    .stats-title-row {
-      display:flex; flex-wrap:wrap; justify-content:space-between; gap:.8rem;
-      align-items:flex-start; margin-bottom:.8rem;
-      padding: .1rem .15rem 0;
-    }
-    .stats-title-row h1 { margin:0; font-size:1.2rem; letter-spacing:.03em; }
-    .stats-title-row h1 span { color: var(--accent, #7fc8ff); }
     .stats-sub { margin:.2rem 0 0; color:#b5bfd0; font-size:.9rem; }
-    .stats-sub a {
-      color: #f2a24a;
-      text-decoration: none;
-      text-shadow: 0 0 8px rgba(242, 162, 74, .28);
-    }
-    .stats-sub a:hover {
-      color: #ffc278;
-      text-shadow: 0 0 10px rgba(242, 162, 74, .4);
-    }
     .stats-auth { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; justify-content:flex-end; }
     .stats-header-shell .header-actions { gap: .75rem; }
     .stats-header-shell .header-user .steam-logout { margin-top: 0; }
@@ -108,17 +96,6 @@
       word-break: break-all;
       white-space: normal;
     }
-    .stats-summary-grid { border-top:1px solid rgba(255,255,255,.06); padding-top:.85rem; }
-    .stats-summary-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:.75rem; margin-bottom: .95rem; }
-    .stats-summary-item {
-      background: rgba(20, 25, 36, .50);
-      border:1px solid var(--border-color, rgba(255,255,255,.08));
-      border-radius:14px;
-      padding:.75rem .85rem;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
-    }
-    .stats-summary-item .label { font-size:.72rem; color:#aab4c6; text-transform:uppercase; letter-spacing:.06em; }
-    .stats-summary-item .value { margin-top:.25rem; font-size:1.03rem; font-weight:700; color:#f3f7ff; }
     .stat-card,
     .stat-card * { min-width: 0; }
     .stat-card > p,
@@ -152,15 +129,11 @@
       border: 1px solid rgba(142,186,255,.08);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
     }
-    .stats-tabs { display:flex; flex-wrap:wrap; gap:.45rem; margin-bottom:.8rem; }
-    .stats-tab-btn { appearance:none; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); color:#e8eefb; border-radius:999px; padding:.45rem .9rem; cursor:pointer; font-weight:600; }
-    .stats-tab-btn.is-active { background:rgba(102,181,255,.15); border-color:rgba(102,181,255,.45); color:#dff1ff; }
     .stats-panel { display:none; }
     .stats-panel.is-active { display:block; }
     .stats-toolbar { display:flex; flex-wrap:wrap; gap:.5rem; justify-content:space-between; align-items:center; margin-bottom:.65rem; }
-    .stats-search { display:flex; gap:.45rem; flex-wrap:wrap; }
-    .stats-search input, .stats-chat-form input { background:#10131c; border:1px solid rgba(255,255,255,.13); color:#eef1f8; border-radius:8px; padding:.55rem .65rem; }
-    .stats-search button, .stats-chat-form button, .stats-mini-btn { appearance:none; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#eef1f8; border-radius:8px; padding:.5rem .7rem; cursor:pointer; font-weight:600; }
+    .stats-chat-form input { background:#10131c; border:1px solid rgba(255,255,255,.13); color:#eef1f8; border-radius:8px; padding:.55rem .65rem; }
+    .stats-chat-form button, .stats-mini-btn { appearance:none; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#eef1f8; border-radius:8px; padding:.5rem .7rem; cursor:pointer; font-weight:600; }
     .stats-mini-btn.is-active { background:rgba(124, 221, 143, .12); border-color:rgba(124,221,143,.4); }
     .table-wrap { width:100%; overflow:auto; border:1px solid rgba(255,255,255,.08); border-radius:12px; background: rgba(15,18,26,.5); }
     table.stats-grid { width:100%; min-width: 980px; border-collapse: collapse; }
@@ -256,7 +229,6 @@
     #stats-current-log-container .log-entry.log-current { background: rgba(15,18,26,.5); border:1px solid rgba(255,255,255,.08); border-radius:12px; }
     #stats-current-log-container .log-summary { display:flex; flex-wrap:wrap; gap:.45rem; align-items:center; padding:.6rem .7rem; }
     #stats-current-log-container .log-body { padding:.6rem .7rem .75rem; }
-    .stats-tabs { display: none !important; }
     #stats-panel-online, #stats-panel-chat, #stats-panel-logs { display: none !important; }
     @media (max-width: 900px) {
       table.stats-grid { min-width: 760px; }
@@ -273,8 +245,6 @@
         padding: 1rem .9rem;
       }
       .stats-focused-slot .detail-panel .detail-profile img { width: 96px; height: 96px; }
-      .stats-summary-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .55rem; }
-      .stats-summary-item { padding: .55rem .65rem; }
       .wt-cumulative-fragment .search-bar input { min-width: 220px; }
     }
     @media (max-width: 700px) {
@@ -286,13 +256,9 @@
       .stats-header-shell .brand img { width: 100% !important; max-width: 260px; }
       .stats-header-shell .animation img { width: 100%; max-width: 180px; }
       .stats-auth { justify-content: flex-start; }
-      .stats-title-row { margin-bottom: .5rem; gap: .45rem; }
-      .stats-title-row h1 { font-size: 1.02rem; }
       .stats-sub { font-size: .8rem; }
       .stats-home-row { margin: .1rem 0 .55rem; }
       .stats-home-row .tab-controls { gap: .3rem; }
-      .stats-summary-grid { grid-template-columns: 1fr; }
-      .stats-summary-item .value { font-size: .95rem; }
       .stats-cumulative-fragment-host .table-wrapper { border-radius: 10px; }
       .wt-cumulative-fragment .table-toolbar { gap: .4rem; }
       .wt-cumulative-fragment .search-bar { width: 100%; }
@@ -354,13 +320,6 @@
             <% end %>
           </div>
         </header>
-      </div>
-
-      <div class="stats-title-row">
-        <div>
-          <h1>Whaletracker (Ver. 2.0)</h1>
-          <p class="stats-sub">Powered by <a href="https://www.phoenixframework.org/">Phoenix.</a></p>
-        </div>
       </div>
 
       <div class="stats-home-row">
