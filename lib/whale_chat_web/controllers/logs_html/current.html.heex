@@ -1,28 +1,15 @@
 <Layouts.app flash={@flash} wide={true}>
-  <link rel="stylesheet" href="/stats/css/whaletracker.css" />
-  <style>
-    .logs-current-page {}
-    .logs-current-shell {}
-    .logs-current-content {}
-    .current-log-container {
-      min-height: 220px;
-    }
-    .current-log-container .log-entry {}
-    .current-log-container .log-summary {}
-    .current-log-container .log-body {}
-    .current-log-container .gamemode-label {}
-    .current-log-container .log-table { width:100%; min-width:980px; }
-    .current-log-container .table-wrapper { overflow-x:auto; }
-    @media (max-width: 700px) {
-      .logs-current-page { padding-left: 0; padding-right: 0; }
-      .logs-current-shell.wt-shell { padding: .5rem; border-radius: 12px; }
-      .logs-current-content.wt-content-shell { padding: .45rem; }
-      .current-log-container.wt-content-box { padding: .25rem; }
-      .current-log-container .log-table { min-width: 760px; }
-    }
-  </style>
-
   <div class="logs-current-page wt-page-pad">
+    <.section_nav active={:logs} chat_label_id="nav-chat-label" />
+
+    <div class="logs-topbar wt-topbar">
+      <div>
+        <h1>Current Match</h1>
+        <p id="current-log-status">Loaded</p>
+      </div>
+      <button type="button" class="wt-action-btn" id="refresh-current-log">Refresh</button>
+    </div>
+
     <div class="logs-current-shell wt-shell">
       <div class="logs-current-content wt-content-shell">
         <div id="current-log-container" class="current-log-container wt-content-box">
