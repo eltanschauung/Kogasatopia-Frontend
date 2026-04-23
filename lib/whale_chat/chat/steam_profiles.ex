@@ -22,6 +22,37 @@ defmodule WhaleChat.Chat.SteamProfiles do
 
   def fetch_many(_), do: %{}
 
+  def search_cached_ids(term, limit \\ 200)
+
+  def search_cached_ids(term, limit) when is_binary(term) and is_integer(limit) do
+    query =
+      term
+      |> String.trim()
+      |> String.downcase()
+
+    cond do
+      query == "" ->
+        []
+
+      String.length(query) < 2 ->
+        []
+
+      limit <= 0 ->
+        []
+
+      true ->
+        ensure_cache()
+        now = System.system_time(:second)
+        ets_matches = search_ets_cached_ids(query, now, limit)
+        seen = MapSet.new(ets_matches)
+        remaining = max(limit - length(ets_matches), 0)
+
+        ets_matches ++ search_disk_cached_ids(query, seen, remaining)
+    end
+  end
+
+  def search_cached_ids(_, _), do: []
+
   defp cached_and_fetch(ids) do
     ensure_cache()
     now = System.system_time(:second)
@@ -100,7 +131,8 @@ defmodule WhaleChat.Chat.SteamProfiles do
 
     try do
       case Req.get(url, receive_timeout: 2_500, connect_options: [timeout: 2_500]) do
-        {:ok, %{status: 200, body: %{"response" => %{"players" => players}}}} when is_list(players) ->
+        {:ok, %{status: 200, body: %{"response" => %{"players" => players}}}}
+        when is_list(players) ->
           Map.new(players, fn player ->
             sid = player["steamid"]
 
@@ -164,7 +196,8 @@ defmodule WhaleChat.Chat.SteamProfiles do
     avatar_source = profile["avatar_source"] |> to_string_safe() |> String.trim()
 
     cond do
-      avatar != "" and String.starts_with?(avatar, "/stats/cache/") and avatar_cache_exists?(avatar) ->
+      avatar != "" and String.starts_with?(avatar, "/stats/cache/") and
+          avatar_cache_exists?(avatar) ->
         avatar
 
       avatar != "" and String.starts_with?(avatar, "/stats/cache/") ->
@@ -213,5 +246,92 @@ defmodule WhaleChat.Chat.SteamProfiles do
     end
   rescue
     _ -> :ok
+  end
+
+  defp search_ets_cached_ids(query, now, limit) do
+    @cache_table
+    |> :ets.tab2list()
+    |> Enum.reduce_while([], fn
+      {steamid, profile, expires_at}, acc
+      when is_binary(steamid) and is_map(profile) and expires_at > now ->
+        name =
+          profile
+          |> Map.get("personaname", "")
+          |> to_string_safe()
+          |> String.downcase()
+
+        cond do
+          name == "" or not String.contains?(name, query) ->
+            {:cont, acc}
+
+          length(acc) >= limit ->
+            {:halt, acc}
+
+          true ->
+            {:cont, [steamid | acc]}
+        end
+
+      _, acc ->
+        {:cont, acc}
+    end)
+    |> Enum.reverse()
+  end
+
+  defp search_disk_cached_ids(_query, _seen, limit) when limit <= 0, do: []
+
+  defp search_disk_cached_ids(query, seen, limit) do
+    case File.ls(disk_cache_dir()) do
+      {:ok, files} ->
+        files
+        |> Enum.reduce_while([], fn file, acc ->
+          cond do
+            length(acc) >= limit ->
+              {:halt, acc}
+
+            not String.ends_with?(file, ".json") ->
+              {:cont, acc}
+
+            true ->
+              steamid = String.trim_trailing(file, ".json")
+
+              cond do
+                MapSet.member?(seen, steamid) ->
+                  {:cont, acc}
+
+                true ->
+                  path = Path.join(disk_cache_dir(), file)
+
+                  case File.read(path) do
+                    {:ok, body} ->
+                      case Jason.decode(body) do
+                        {:ok, %{} = profile} ->
+                          name =
+                            profile
+                            |> normalize_disk_profile(steamid)
+                            |> Map.get("personaname", "")
+                            |> to_string_safe()
+                            |> String.downcase()
+
+                          if name != "" and String.contains?(name, query) do
+                            {:cont, [steamid | acc]}
+                          else
+                            {:cont, acc}
+                          end
+
+                        _ ->
+                          {:cont, acc}
+                      end
+
+                    _ ->
+                      {:cont, acc}
+                  end
+              end
+          end
+        end)
+        |> Enum.reverse()
+
+      _ ->
+        []
+    end
   end
 end

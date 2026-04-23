@@ -351,16 +351,21 @@ defmodule WhaleChat.StatsFeed do
     favorite_class_expr = favorite_class_select_expr()
     like = "%" <> String.downcase(q) <> "%"
     steam_like = "%" <> q <> "%"
+    cached_profile_ids = SteamProfiles.search_cached_ids(q)
+
+    {count_where_sql, count_params} =
+      cumulative_search_where_clause("", like, steam_like, q, cached_profile_ids)
 
     count_sql = """
     SELECT COUNT(*)
     FROM #{@stats_table}
-    WHERE LOWER(COALESCE(cached_personaname, personaname, steamid)) LIKE ?
-       OR steamid LIKE ?
-       OR steamid = ?
+    WHERE #{count_where_sql}
     """
 
-    total = scalar_query(count_sql, [like, steam_like, q])
+    total = scalar_query(count_sql, count_params)
+
+    {where_sql, params} =
+      cumulative_search_where_clause("w.", like, steam_like, q, cached_profile_ids)
 
     sql = """
     SELECT w.steamid,
@@ -380,20 +385,36 @@ defmodule WhaleChat.StatsFeed do
            COALESCE(w.last_seen, 0) AS last_seen
     FROM #{@stats_table} w
     LEFT JOIN whaletracker_points_cache pc ON pc.steamid = w.steamid
-    WHERE LOWER(COALESCE(w.cached_personaname, w.personaname, w.steamid)) LIKE ?
-       OR w.steamid LIKE ?
-       OR w.steamid = ?
+    WHERE #{where_sql}
     ORDER BY #{stats_cache_order_clause()}
     LIMIT ? OFFSET ?
     """
 
     rows =
-      case SQL.query(Repo, sql, [like, steam_like, q, limit, offset]) do
+      case SQL.query(Repo, sql, params ++ [limit, offset]) do
         {:ok, %{rows: rs, columns: cols}} -> Enum.map(rs, &row_map(&1, cols))
         _ -> []
       end
 
     {rows, total}
+  end
+
+  defp cumulative_search_where_clause(alias_prefix, like, steam_like, q, cached_profile_ids) do
+    base =
+      "LOWER(COALESCE(#{alias_prefix}cached_personaname, #{alias_prefix}personaname, #{alias_prefix}steamid)) LIKE ? " <>
+        "OR #{alias_prefix}steamid LIKE ? " <>
+        "OR #{alias_prefix}steamid = ?"
+
+    params = [like, steam_like, q]
+
+    case cached_profile_ids do
+      [] ->
+        {base, params}
+
+      ids ->
+        placeholders = Enum.map_join(ids, ", ", fn _ -> "?" end)
+        {base <> " OR #{alias_prefix}steamid IN (" <> placeholders <> ")", params ++ ids}
+    end
   end
 
   defp enrich_cumulative_rows(rows) do
