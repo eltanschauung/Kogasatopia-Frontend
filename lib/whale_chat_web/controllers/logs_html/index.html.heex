@@ -35,7 +35,6 @@
       .logs-page { padding-left: 0; padding-right: 0; }
       .logs-topbar.wt-topbar { padding: .5rem .55rem; }
       .logs-topbar h1 { font-size: .95rem; }
-      .logs-topbar p { font-size: .78rem; line-height: 1.2; }
       .logs-shell.wt-shell { padding: .5rem; border-radius: 12px; }
       .logs-content-shell.wt-content-shell { padding: .45rem; }
       .logs-container.wt-content-box { padding: .25rem; }
@@ -49,7 +48,6 @@
     <div class="logs-topbar wt-topbar">
       <div>
         <h1><%= if @scope == "short", do: "Match Logs (Short)", else: "Match Logs" %></h1>
-        <p>Currently only enabled for base TF2 due to accuracy tracking and other stats being incompatible with TF2 Classified; Sourcemod-side log creation occurs when total damage reaches 200+</p>
       </div>
       <div class="logs-topbar-meta wt-topbar-badge">
         <%= @total_logs %> logs · Page <%= @page %>/<%= @total_pages %>

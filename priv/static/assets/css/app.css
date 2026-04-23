@@ -604,16 +604,6 @@ a {
   padding: 0.1rem 0.15rem 0;
 }
 
-.mapsdb-title-row h1 {
-  margin: 0;
-  font-size: 1.2rem;
-  letter-spacing: 0.03em;
-}
-
-.mapsdb-title-row h1 span {
-  color: #66b5ff;
-}
-
 .mapsdb-sub {
   margin: 0.2rem 0 0;
   color: #b5bfd0;
@@ -1109,10 +1099,6 @@ a {
 
   .mapsdb-title-row {
     margin-bottom: 0.55rem;
-  }
-
-  .mapsdb-title-row h1 {
-    font-size: 1.04rem;
   }
 
   .mapsdb-page-actions {

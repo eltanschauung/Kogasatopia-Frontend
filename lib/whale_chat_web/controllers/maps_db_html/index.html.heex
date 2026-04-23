@@ -209,7 +209,6 @@
 
         <div class="mapsdb-title-row">
           <div>
-            <h1>WhaleTracker <span>MapsDB</span></h1>
             <p class="mapsdb-sub">This page contains server statistics and a list of maps. Admins can log in to edit config files.</p>
           </div>
         </div>
@@ -266,10 +265,10 @@
           <div class="mapsdb-alert">Directory <code><%= @mapsdb.maps_dir %></code> is missing.</div>
         <% else %>
           <%= if !@mapsdb.is_logged_in do %>
-            <div class="mapsdb-alert">Sign in to load/edit configs via the API. Browsing-only mode enabled.</div>
+            <div class="mapsdb-alert">Sign in to load/edit configs via the API.</div>
           <% else %>
             <%= if !@mapsdb.is_admin do %>
-              <div class="mapsdb-alert">Your Steam ID is not marked as admin. Browsing-only mode enabled.</div>
+              <div class="mapsdb-alert">Your Steam ID is not marked as admin.</div>
             <% end %>
           <% end %>
 
