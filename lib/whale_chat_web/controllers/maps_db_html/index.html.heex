@@ -4,222 +4,373 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>WhaleTracker MapsDB</title>
-    <link rel="stylesheet" href="/assets/css/app.css" />
+    <link rel="stylesheet" href="/stats/css/whaletracker.css" />
+    <style>
+      body { margin: 0; }
+      .mapsdb-page {}
+      .mapsdb-shell {}
+      .mapsdb-card {}
+      .stats-header-shell {
+        margin-bottom: .9rem;
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+      }
+      .stats-header-shell .header { margin: 0; }
+      .stats-auth { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; justify-content:flex-end; }
+      .stats-header-shell .header-actions { gap: .75rem; }
+      .stats-header-shell .header-user .steam-logout { margin-top: 0; }
+      .stats-header-shell .header-user { gap: .9rem; }
+      .stats-header-shell .header-user-avatar {
+        width: 48px;
+        height: 48px;
+        flex: 0 0 auto;
+      }
+      .stats-header-shell .header-user-meta { min-width: 0; max-width: 100%; }
+      .stats-header-shell .header-user-meta .stats-sub {
+        display: block;
+        font-size: .75rem;
+        line-height: 1.15;
+        word-break: break-all;
+        white-space: normal;
+      }
+      .mapsdb-page-actions {}
+      .mapsdb-page-actions .tab-controls {}
+      .mapsdb-home-btn {
+        display:inline-flex; align-items:center; justify-content:center;
+        text-decoration:none; color:var(--text-primary, #f5f6fa);
+        border:1px solid rgba(127, 200, 255, 0.35);
+        background: rgba(127, 200, 255, 0.08);
+        border-radius:999px; padding:.35rem .9rem; font-size:.88rem; font-weight:600;
+        transition: background .2s ease, border-color .2s ease, transform .12s ease;
+      }
+      .mapsdb-home-btn:hover { border-color: rgba(127, 200, 255, 0.55); background: rgba(127, 200, 255, 0.16); }
+      .mapsdb-home-btn:active { transform: translateY(1px); }
+      .mapsdb-page-actions .tab-button,
+      .mapsdb-page-actions .tab-button:link,
+      .mapsdb-page-actions .tab-button:visited {}
+      .mapsdb-page-actions .tab-button.wt-tab--orange {
+        background: rgba(242, 162, 74, .10);
+        border-color: rgba(242, 162, 74, .34);
+        color: #ffe0b2;
+      }
+      .mapsdb-page-actions .tab-button.wt-tab--orange:hover {
+        background: rgba(242, 162, 74, .16);
+        border-color: rgba(242, 162, 74, .52);
+      }
+      .mapsdb-page-actions .tab-button.wt-tab--navy {
+        background: rgba(47, 59, 82, .28);
+        border-color: rgba(93, 106, 130, .46);
+        color: #e7eefc;
+      }
+      .mapsdb-page-actions .tab-button.wt-tab--navy:hover {
+        background: rgba(65, 80, 107, .34);
+        border-color: rgba(93, 106, 130, .72);
+      }
+      .mapsdb-page-actions .tab-button.wt-tab--gold {
+        background: rgba(243, 207, 103, .08);
+        border-color: rgba(243, 207, 103, .28);
+        color: #f6ebbd;
+      }
+      .mapsdb-page-actions .tab-button.wt-tab--gold:hover {
+        background: rgba(243, 207, 103, .14);
+        border-color: rgba(243, 207, 103, .44);
+      }
+      .mapsdb-title-row {}
+      .mapsdb-title-row h1 {}
+      .mapsdb-title-row h1 span {}
+      .stats-sub { margin:.2rem 0 0; color:#b5bfd0; font-size:.9rem; }
+      .mapsdb-sub {}
+      .mapsdb-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1.25rem; }
+      .mapsdb-stats { display:flex; gap:.8rem; align-items:center; }
+      .mapsdb-layout { display:grid; grid-template-columns:minmax(280px,.4fr) minmax(360px,.6fr); gap:1.1rem; }
+      .map-panel, .map-editor { background: rgba(16,17,23,.6); border-radius:16px; border:1px solid rgba(255,255,255,.08); padding:1rem; display:flex; flex-direction:column; gap:.8rem; }
+      .map-panel { max-height:70vh; }
+      .map-panel input { width:100%; padding:.6rem .9rem; border-radius:12px; border:1px solid rgba(255,255,255,.15); background: rgba(27,31,43,.9); color:#f5f6fa; }
+      .map-list { overflow-y:auto; display:flex; flex-direction:column; gap:.45rem; max-height:100%; }
+      .map-section { border:1px solid rgba(255,255,255,.07); border-radius:12px; background: rgba(20,22,30,.5); padding:.45rem .65rem .35rem; }
+      .map-section summary { list-style:none; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-weight:600; }
+      .map-section summary::-webkit-details-marker { display:none; }
+      .map-section-body { margin-top:.65rem; display:flex; flex-direction:column; gap:.4rem; }
+      .map-entry { width:100%; padding:.5rem .75rem; border-radius:10px; background: rgba(255,255,255,.02); border:1px solid transparent; color:#f5f6fa; text-align:left; font-size:.95rem; display:flex; align-items:center; justify-content:space-between; gap:.4rem; cursor:pointer; }
+      .map-entry:hover { border-color: rgba(127,200,255,.4); }
+      .map-entry.active { border-color: var(--accent, #7fc8ff); background: rgba(127,200,255,.08); }
+      .map-editor { min-height:60vh; }
+      .map-editor-toolbar { display:flex; align-items:center; gap:.6rem; }
+      .map-editor-toolbar button { padding:.45rem .9rem; border-radius:10px; border:none; background: var(--accent, #7fc8ff); color:#04142a; font-weight:600; cursor:pointer; }
+      .map-editor-toolbar button:disabled { opacity:.4; cursor:not-allowed; }
+      #map-content { flex:1; width:100%; background: rgba(17,18,25,.95); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:1rem; color:#f5f6fa; font-family: monospace; font-size:.95rem; resize:none; min-height:420px; }
+      .map-editor-status, .mass-edit-status { font-size:.9rem; color: var(--text-muted, #95a5b7); }
+      .map-popularity { border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:.75rem; background: rgba(10,12,20,.5); display:flex; flex-direction:column; gap:.45rem; }
+      .map-popularity-header { display:flex; justify-content:space-between; align-items:baseline; gap:.5rem; }
+      .map-popularity-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.35rem; max-height:280px; overflow-y:auto; }
+      .map-popularity-entry { display:flex; justify-content:space-between; align-items:center; padding:.35rem .2rem; border-bottom:1px solid rgba(255,255,255,.05); font-size:.92rem; }
+      .map-popularity-entry:last-child { border-bottom:none; }
+      .map-popularity-count { font-weight:600; color: var(--accent, #7fc8ff); }
+      .mapsdb-alert { margin: .75rem 0; padding:.75rem .9rem; border-radius:10px; background: rgba(255, 193, 7, .12); border:1px solid rgba(255,193,7,.28); }
+      .mass-edit-card { margin-top:1.25rem; padding:1rem 1.15rem; border-radius:16px; border:1px solid rgba(255,255,255,.08); background: rgba(12,14,21,.7); }
+      .mass-edit-card form { display:flex; flex-direction:column; gap:.55rem; }
+      .mass-edit-card textarea { width:100%; min-height:80px; border-radius:10px; border:1px solid rgba(255,255,255,.1); background: rgba(17,19,28,.9); color:#f5f6fa; padding:.6rem .75rem; }
+      .mass-edit-card button { align-self:flex-start; padding:.5rem 1rem; border-radius:999px; border:none; background: var(--accent, #7fc8ff); color:#04142a; font-weight:600; cursor:pointer; }
+      .map-preview-wall { margin-top:1.2rem; padding:1rem; border-radius:12px; border:1px solid rgba(255,255,255,.08); background: rgba(12,14,21,.6); }
+      .map-preview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; }
+      .map-preview-card { display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
+      .map-preview-card img { width:160px; height:120px; object-fit:cover; border-radius:6px; box-shadow:0 1px 4px rgba(0,0,0,.25); }
+      .map-preview-title { font-size:13px; font-weight:600; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .popularity-card { border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:1rem; background: rgba(12,14,21,.5); margin-bottom:1rem; }
+      .popularity-title { margin:0; font-size:1.2rem; }
+      .popularity-sub { margin:.25rem 0 0; color: var(--text-muted, #95a5b7); }
+      .popularity-controls { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.55rem; }
+      .popularity-control {
+        border: 1px solid rgba(127, 200, 255, 0.35);
+        background: transparent;
+        color: var(--text-primary, #f5f6fa);
+        border-radius: 999px;
+        padding: 0.25rem 0.9rem;
+        font-size: 0.85rem;
+        line-height: 1.25;
+        cursor: pointer;
+        transition: background .2s ease, color .2s ease, border-color .2s ease;
+      }
+      .popularity-control:hover { border-color: rgba(127, 200, 255, 0.55); background: rgba(127, 200, 255, 0.08); }
+      .popularity-control.active { background: rgba(127, 200, 255, 0.15); color: #e6f4ff; }
+      .popularity-placeholder { margin-top:.5rem; color: var(--text-muted, #95a5b7); font-style: italic; }
+      @media (max-width: 960px) {
+        .mapsdb-layout { grid-template-columns:1fr; gap: .7rem; }
+        .map-panel, .map-editor { padding: .65rem; gap: .55rem; border-radius: 12px; }
+        .map-panel { max-height: none; }
+        .map-editor { min-height: 0; }
+        #map-content { min-height: 280px; padding: .65rem; }
+        .map-preview-grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+        .map-preview-card img { width: 132px; height: 99px; }
+        .map-preview-title { max-width: 132px; }
+        .mass-edit-card, .popularity-card, .map-preview-wall { padding: .7rem; border-radius: 12px; }
+      }
+      @media (max-width: 700px) {
+        .stats-header-shell .header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: .45rem;
+        }
+        .stats-header-shell .brand img { width: 100% !important; max-width: 260px; }
+        .stats-header-shell .animation img { width: 100%; max-width: 180px; }
+        .stats-auth { justify-content: flex-start; }
+        .mapsdb-sub { font-size: .8rem; }
+        .map-editor-toolbar { flex-wrap: wrap; }
+        .map-editor-toolbar button { width: 100%; }
+        .map-popularity-list { max-height: 220px; }
+      }
+    </style>
   </head>
   <body>
     <div class="mapsdb-page">
       <div class="mapsdb-shell">
-        <div class="mapsdb-card">
-          <div class="stats-header-shell">
-            <header class="header">
-              <div class="brand">
-                <img
-                  src="/stats/assets/whaletracker_logo.png"
-                  width="455"
-                  height="250"
-                />
-              </div>
-              <div class="animation">
-                <img
-                  src="/stats/assets/wholesome2.gif"
-                  width="266"
-                  height="108"
-                />
-              </div>
-              <div class="header-actions stats-auth">
-                <%= if @mapsdb.is_logged_in && @mapsdb.current_steamid do %>
-                  <div class="header-user">
-                    <%= if @mapsdb.viewer_profile do %>
-                      <img
-                        class="header-user-avatar"
-                        src={@mapsdb.viewer_profile[:avatar] || "/stats/assets/whaley-avatar.jpg"}
-                        alt=""
-                      />
-                      <div class="header-user-meta">
-                        <span
-                          class={["header-user-name", @mapsdb.is_admin && "admin-name"]}
-                          title={if(@mapsdb.is_admin, do: "Admin", else: nil)}
-                        >
-                          {@mapsdb.viewer_profile[:personaname] || @mapsdb.current_steamid}
-                        </span>
-                        <span class="stats-sub wt-tight">
-                          {@mapsdb.current_steamid}{if !@mapsdb.is_admin,
-                            do: " (browse-only)",
-                            else: ""}
-                        </span>
-                      </div>
-                    <% else %>
-                      <span class="stats-sub wt-tight">Signed in</span>
-                    <% end %>
+      <div class="mapsdb-card">
+        <div class="stats-header-shell">
+          <header class="header">
+            <div class="brand">
+              <img
+                src="/stats/assets/whaletracker_logo.png"
+                width="455"
+                height="250"
+                style="width:50%;height:auto"
+              >
+            </div>
+            <div class="animation">
+              <img
+                src="/stats/assets/wholesome2.gif"
+                width="266"
+                height="108"
+                style="height:auto"
+              >
+            </div>
+            <div class="header-actions stats-auth">
+            <%= if @mapsdb.is_logged_in && @mapsdb.current_steamid do %>
+              <div class="header-user">
+                <%= if @mapsdb.viewer_profile do %>
+                  <img
+                    class="header-user-avatar"
+                    src={@mapsdb.viewer_profile[:avatar] || "/stats/assets/whaley-avatar.jpg"}
+                    alt=""
+                  />
+                  <div class="header-user-meta">
+                    <span
+                      class={["header-user-name", @mapsdb.is_admin && "admin-name"]}
+                      title={if(@mapsdb.is_admin, do: "Admin", else: nil)}
+                    ><%= @mapsdb.viewer_profile[:personaname] || @mapsdb.current_steamid %></span>
+                    <span class="stats-sub" style="margin:0;"><%= @mapsdb.current_steamid %><%= if !@mapsdb.is_admin, do: " (browse-only)", else: "" %></span>
                   </div>
-                  <a class="steam-logout" href={@mapsdb.logout_url}>Logout</a>
                 <% else %>
-                  <a class="steam-login" href={@mapsdb.login_url}>Login with Steam</a>
+                  <span class="stats-sub" style="margin:0;">Signed in</span>
                 <% end %>
               </div>
-            </header>
-          </div>
-
-          <div class="mapsdb-title-row">
-            <div>
-              <h1>WhaleTracker <span>MapsDB</span></h1>
-              <p class="mapsdb-sub">Maps and config editor</p>
-            </div>
-          </div>
-
-          <div class="mapsdb-page-actions">
-            <.section_nav active={:mapsdb} chat_label_id="nav-chat-label" />
-          </div>
-
-          <div class="popularity-card">
-            <h2 class="popularity-title">Server popularity (last 90 days)</h2>
-            <p class="popularity-sub">
-              Active hours this month: {@mapsdb.popularity_active_hours}
-            </p>
-            <%= if @mapsdb.popularity_chart["labels"] != [] do %>
-              <div class="popularity-controls">
-                <button type="button" class="popularity-control active" data-range="30">
-                  Current 30 days
-                </button>
-                <button
-                  type="button"
-                  class="popularity-control"
-                  data-range="14"
-                  title="Show the most recent 14 days for a closer look"
-                >
-                  Compress (14 days)
-                </button>
-                <button type="button" class="popularity-control active" data-restart-toggle="1">
-                  Server restarts
-                </button>
-              </div>
-              <canvas id="popularity-chart" class="popularity-chart"></canvas>
-              <p class="popularity-placeholder" id="popularity-placeholder" hidden></p>
+              <a class="steam-logout" href={@mapsdb.logout_url}>Logout</a>
             <% else %>
-              <p class="popularity-placeholder" id="popularity-placeholder">
-                No popularity chart data available yet.
-              </p>
-              <canvas id="popularity-chart" hidden></canvas>
+              <a class="steam-login" href={@mapsdb.login_url}>Login with Steam</a>
             <% end %>
-          </div>
+            </div>
+          </header>
+        </div>
 
-          <%= if @mapsdb.maps_dir_missing do %>
-            <div class="mapsdb-alert">Directory <code>{@mapsdb.maps_dir}</code> is missing.</div>
+        <div class="mapsdb-title-row">
+          <div>
+            <h1>WhaleTracker <span>MapsDB</span></h1>
+            <p class="mapsdb-sub">This page contains server statistics and a list of maps. Admins can log in to edit config files.</p>
+          </div>
+        </div>
+
+        <div class="mapsdb-page-actions">
+          <div class="tab-controls">
+            <a href="/" class="tab-button wt-tab--orange">
+              <span class="tab-button-label tab-button-label--desktop">Blog</span>
+              <span class="tab-button-label tab-button-label--mobile">Blog</span>
+            </a>
+            <a href="/stats" class="tab-button wt-tab--navy">
+              <span class="tab-button-label tab-button-label--desktop">Stats</span>
+              <span class="tab-button-label tab-button-label--mobile">Stats</span>
+            </a>
+            <span class="tab-button wt-tab--navy" aria-current="page">
+              <span class="tab-button-label tab-button-label--desktop">MapsDB</span>
+              <span class="tab-button-label tab-button-label--mobile">MapsDB</span>
+            </span>
+            <a href="/online" class="tab-button wt-tab--gold">
+              <span class="tab-button-label tab-button-label--desktop">Online Now</span>
+              <span class="tab-button-label tab-button-label--mobile">Online</span>
+              <span id="nav-online-count" class="tab-button-count" aria-live="polite">-- / --</span>
+            </a>
+            <a href="/chat" class="tab-button wt-tab--gold">
+              <span class="tab-button-label tab-button-label--desktop">Chat</span>
+              <span class="tab-button-label tab-button-label--mobile">Chat</span>
+              <span id="nav-chat-label" class="tab-button-count" aria-live="polite">Last msg. --</span>
+            </a>
+            <a href="/logs" class="tab-button wt-tab--gold">
+              <span class="tab-button-label tab-button-label--desktop">Match Logs</span>
+              <span class="tab-button-label tab-button-label--mobile">Logs</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="popularity-card">
+          <h2 class="popularity-title">Server popularity (last 90 days)</h2>
+          <p class="popularity-sub">Active hours this month: <%= @mapsdb.popularity_active_hours %></p>
+          <%= if @mapsdb.popularity_chart["labels"] != [] do %>
+            <div class="popularity-controls">
+              <button type="button" class="popularity-control active" data-range="30">Current 30 days</button>
+              <button type="button" class="popularity-control" data-range="14" title="Show the most recent 14 days for a closer look">Compress (14 days)</button>
+              <button type="button" class="popularity-control active" data-restart-toggle="1">Server restarts</button>
+            </div>
+            <canvas id="popularity-chart" style="width:100%;height:320px;max-height:360px;margin-top:.5rem"></canvas>
+            <p class="popularity-placeholder" id="popularity-placeholder" style="display:none"></p>
           <% else %>
-            <%= if !@mapsdb.is_logged_in do %>
-              <div class="mapsdb-alert">
-                Sign in to load/edit configs via the API. Browsing-only mode enabled.
-              </div>
-            <% else %>
-              <%= if !@mapsdb.is_admin do %>
-                <div class="mapsdb-alert">
-                  Your Steam ID is not marked as admin. Browsing-only mode enabled.
-                </div>
-              <% end %>
-            <% end %>
-
-            <div class="mapsdb-layout">
-              <div class="map-panel">
-                <%= if @popular_maps != [] do %>
-                  <div class="map-popularity">
-                    <div class="map-popularity-header">
-                      <h3 class="map-popularity-title">Popular maps</h3>
-                      <span class="map-popularity-sub">Top {min(50, length(@popular_maps))}</span>
-                    </div>
-                    <div class="map-popularity-list">
-                      <%= for popular <- Enum.take(@popular_maps, 50) do %>
-                        <div class="map-popularity-entry">
-                          <span>{popular.map_name}</span>
-                          <span class="map-popularity-count">{popular.popularity}</span>
-                        </div>
-                      <% end %>
-                    </div>
-                  </div>
-                <% end %>
-
-                <input type="text" id="map-filter" placeholder="Filter maps..." />
-                <div class="map-list" id="map-list">
-                  <%= for section <- @map_sections do %>
-                    <details class="map-section" data-section={section.slug}>
-                      <summary>
-                        <span>{section.label}</span>
-                        <span class="map-section-count">{length(section.entries)}</span>
-                      </summary>
-                      <div class="map-section-body">
-                        <%= for entry <- section.entries do %>
-                          <button
-                            class="map-entry"
-                            type="button"
-                            data-map={entry.name}
-                            data-type={entry.type}
-                            data-category={entry.category}
-                            data-source={entry.source}
-                            data-label={entry.display || entry.name}
-                          >
-                            <span>{entry.display || entry.name}</span>
-                          </button>
-                        <% end %>
-                      </div>
-                    </details>
-                  <% end %>
-                </div>
-              </div>
-
-              <div class="map-editor">
-                <div class="map-editor-toolbar">
-                  <h2 id="map-title">Select a map</h2>
-                  <div>
-                    <button id="reload-btn" type="button" disabled>Reload</button>
-                    <button id="save-btn" type="button" disabled>Save</button>
-                  </div>
-                </div>
-                <textarea
-                  id="map-content"
-                  disabled
-                  placeholder="Select a map to view its config..."
-                ></textarea>
-                <div class="map-editor-status" id="map-status">No map loaded.</div>
-              </div>
-            </div>
-
-            <%= if @mapsdb.can_edit_maps do %>
-              <div class="mass-edit-card">
-                <h2>Mass Replace</h2>
-                <form id="mass-edit-form">
-                  <label>
-                    Search text <textarea
-                      id="mass-search"
-                      required
-                      placeholder="Text to search..."
-                    ></textarea>
-                  </label>
-                  <label>
-                    Replace with <textarea
-                      id="mass-replace"
-                      placeholder="Replacement text (can be empty)"
-                    ></textarea>
-                  </label>
-                  <button type="submit">Run replace</button>
-                </form>
-                <div class="mass-edit-status" id="mass-edit-status">Idle.</div>
-              </div>
-            <% end %>
-
-            <%= if @map_previews != [] do %>
-              <div class="map-preview-wall">
-                <h3>Map Previews</h3>
-                <div class="map-preview-grid">
-                  <%= for preview <- @map_previews do %>
-                    <div class="map-preview-card" title={preview["name"]}>
-                      <img src={preview["url"]} alt={preview["name"]} width="160" height="120" />
-                      <div class="map-preview-title">{preview["name"]}</div>
-                    </div>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
+            <p class="popularity-placeholder" id="popularity-placeholder">No popularity chart data available yet.</p>
+            <canvas id="popularity-chart" style="display:none"></canvas>
           <% end %>
         </div>
+
+        <%= if @mapsdb.maps_dir_missing do %>
+          <div class="mapsdb-alert">Directory <code><%= @mapsdb.maps_dir %></code> is missing.</div>
+        <% else %>
+          <%= if !@mapsdb.is_logged_in do %>
+            <div class="mapsdb-alert">Sign in to load/edit configs via the API. Browsing-only mode enabled.</div>
+          <% else %>
+            <%= if !@mapsdb.is_admin do %>
+              <div class="mapsdb-alert">Your Steam ID is not marked as admin. Browsing-only mode enabled.</div>
+            <% end %>
+          <% end %>
+
+          <div class="mapsdb-layout">
+            <div class="map-panel">
+              <%= if @popular_maps != [] do %>
+                <div class="map-popularity">
+                  <div class="map-popularity-header">
+                    <h3 class="map-popularity-title">Popular maps</h3>
+                    <span class="map-popularity-sub">Top <%= min(50, length(@popular_maps)) %></span>
+                  </div>
+                  <div class="map-popularity-list">
+                    <%= for popular <- Enum.take(@popular_maps, 50) do %>
+                      <div class="map-popularity-entry">
+                        <span><%= popular.map_name %></span>
+                        <span class="map-popularity-count"><%= popular.popularity %></span>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+
+              <input type="text" id="map-filter" placeholder="Filter maps..." />
+              <div class="map-list" id="map-list">
+                <%= for section <- @map_sections do %>
+                  <details class="map-section" data-section={section.slug}>
+                    <summary>
+                      <span><%= section.label %></span>
+                      <span class="map-section-count"><%= length(section.entries) %></span>
+                    </summary>
+                    <div class="map-section-body">
+                      <%= for entry <- section.entries do %>
+                        <button class="map-entry" type="button"
+                          data-map={entry.name}
+                          data-type={entry.type}
+                          data-category={entry.category}
+                          data-source={entry.source}
+                          data-label={entry.display || entry.name}>
+                          <span><%= entry.display || entry.name %></span>
+                        </button>
+                      <% end %>
+                    </div>
+                  </details>
+                <% end %>
+              </div>
+            </div>
+
+            <div class="map-editor">
+              <div class="map-editor-toolbar">
+                <h2 id="map-title">Select a map</h2>
+                <div style="margin-left:auto;display:flex;gap:.6rem;">
+                  <button id="reload-btn" type="button" disabled>Reload</button>
+                  <button id="save-btn" type="button" disabled>Save</button>
+                </div>
+              </div>
+              <textarea id="map-content" disabled placeholder="Select a map to view its config..."></textarea>
+              <div class="map-editor-status" id="map-status">No map loaded.</div>
+            </div>
+          </div>
+
+          <%= if @mapsdb.can_edit_maps do %>
+            <div class="mass-edit-card">
+              <h2 style="margin-top:0">Mass Replace</h2>
+              <p style="margin-top:0;margin-bottom:.5rem;">Search and replace across every <code>.cfg</code> inside <code>tf/cfg/mapsdb</code>.</p>
+              <form id="mass-edit-form">
+                <label>
+                  Search text
+                  <textarea id="mass-search" required placeholder="Text to search..."></textarea>
+                </label>
+                <label>
+                  Replace with
+                  <textarea id="mass-replace" placeholder="Replacement text (can be empty)"></textarea>
+                </label>
+                <button type="submit">Run replace</button>
+              </form>
+              <div class="mass-edit-status" id="mass-edit-status">Idle.</div>
+            </div>
+          <% end %>
+
+          <%= if @map_previews != [] do %>
+            <div class="map-preview-wall">
+              <h3 style="margin-top:0;margin-bottom:.6rem;">Map Previews</h3>
+              <div class="map-preview-grid">
+                <%= for preview <- @map_previews do %>
+                  <div class="map-preview-card" title={preview["name"]}>
+                    <img src={preview["url"]} alt={preview["name"]} width="160" height="120" />
+                    <div class="map-preview-title"><%= preview["name"] %></div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
       </div>
     </div>
 

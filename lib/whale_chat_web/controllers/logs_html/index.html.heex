@@ -1,37 +1,69 @@
 <Layouts.app flash={@flash} wide={true}>
+  <link rel="stylesheet" href="/stats/css/whaletracker.css">
+  <style>
+    .logs-page {}
+    .logs-shell {}
+    .logs-topbar {}
+    .logs-topbar-meta {}
+    .logs-subnav {}
+    .logs-mode-row {}
+    .logs-mode-pill {}
+    .logs-refresh {}
+    .logs-content-shell {}
+    .logs-container {
+      min-height: 240px;
+    }
+    .logs-empty { margin-top: .65rem; color: #b7c0d2; }
+    .logs-pagination {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+      justify-content: center;
+      margin-top: .8rem;
+    }
+    .logs-page-button {}
+    .logs-container .logs-fragment-root {}
+    .logs-container .log-entry {}
+    .logs-container .log-summary {}
+    .logs-container .log-body {}
+    .logs-container .log-title { color: #eff3fb; }
+    .logs-container .log-meta { color: #b9c4d7; }
+    .logs-container .gamemode-label {}
+    .logs-topbar-meta { }
+    .logs-subnav { }
+    @media (max-width: 700px) {
+      .logs-page { padding-left: 0; padding-right: 0; }
+      .logs-topbar.wt-topbar { padding: .5rem .55rem; }
+      .logs-topbar h1 { font-size: .95rem; }
+      .logs-topbar p { font-size: .78rem; line-height: 1.2; }
+      .logs-shell.wt-shell { padding: .5rem; border-radius: 12px; }
+      .logs-content-shell.wt-content-shell { padding: .45rem; }
+      .logs-container.wt-content-box { padding: .25rem; }
+      .logs-pagination { gap: .3rem; margin-top: .55rem; }
+    }
+  </style>
+
   <div class="logs-page wt-page-pad">
     <.section_nav active={:logs} chat_label_id="nav-chat-label" />
 
     <div class="logs-topbar wt-topbar">
       <div>
-        <h1>{if @scope == "short", do: "Match Logs (Short)", else: "Match Logs"}</h1>
-        <p>Recorded match summaries</p>
+        <h1><%= if @scope == "short", do: "Match Logs (Short)", else: "Match Logs" %></h1>
+        <p>Currently only enabled for base TF2 due to accuracy tracking and other stats being incompatible with TF2 Classified; Sourcemod-side log creation occurs when total damage reaches 200+</p>
       </div>
       <div class="logs-topbar-meta wt-topbar-badge">
-        {@total_logs} logs · Page {@page}/{@total_pages}
+        <%= @total_logs %> logs · Page <%= @page %>/<%= @total_pages %>
       </div>
     </div>
 
     <div class="logs-shell wt-shell">
       <div class="logs-subnav wt-subnav">
         <div class="logs-mode-row">
-          <a
-            href="/logs"
-            class={["logs-mode-pill wt-pill-link", @scope == "regular" && "is-active"]}
-          >
-            Recent Logs
-          </a>
-          <a
-            href="/logs/short"
-            class={["logs-mode-pill wt-pill-link", @scope == "short" && "is-active"]}
-          >
-            Short Logs
-          </a>
+          <a href="/logs" class={["logs-mode-pill wt-pill-link", @scope == "regular" && "is-active"]}>Recent Logs</a>
+          <a href="/logs/short" class={["logs-mode-pill wt-pill-link", @scope == "short" && "is-active"]}>Short Logs</a>
           <a href="/logs/current" class="logs-mode-pill wt-pill-link">Current Match</a>
         </div>
-        <button type="button" class="logs-refresh wt-action-btn" id="logs-refresh">
-          Refresh Logs
-        </button>
+        <button type="button" class="logs-refresh wt-action-btn" id="logs-refresh">Refresh Logs</button>
       </div>
 
       <div class="logs-content-shell wt-content-shell">
@@ -43,10 +75,8 @@
           data-total-pages={@total_pages}
           data-total-logs={@total_logs}
           data-per-page={@per_page}
-        >
-          {Phoenix.HTML.raw(@logs_html || "")}
-        </div>
-        <div class="empty-state logs-empty" id="logs-empty" hidden>No logs available.</div>
+        ><%= Phoenix.HTML.raw(@logs_html || "") %></div>
+        <div class="empty-state logs-empty" id="logs-empty" style="display:none">No logs available.</div>
         <div class="logs-pagination" id="logs-pagination"></div>
       </div>
     </div>
@@ -109,7 +139,7 @@
 
       function setEmptyState(visible, message) {
         if (!logsEmpty) return;
-        logsEmpty.hidden = !visible;
+        logsEmpty.style.display = visible ? "" : "none";
         if (message) logsEmpty.textContent = message;
       }
 
