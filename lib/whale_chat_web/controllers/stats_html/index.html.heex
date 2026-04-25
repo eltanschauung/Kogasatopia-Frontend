@@ -995,6 +995,13 @@
         loadCumulative();
       });
       els.cumulativeFragment?.addEventListener('click', (e) => {
+        const clearButton = e.target.closest('[data-search-clear]');
+        if (clearButton) {
+          e.preventDefault();
+          window.location.assign('/stats');
+          return;
+        }
+
         const pagerLink = e.target.closest('.table-pagination-button[href]');
         if (pagerLink) {
           e.preventDefault();
