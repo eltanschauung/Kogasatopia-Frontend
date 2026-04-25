@@ -526,7 +526,9 @@
       <section class="stats-panel is-active" id="stats-panel-cumulative" data-panel="cumulative">
         <div class="stats-toolbar">
           <div class="stats-muted" id="stats-cumulative-meta">
-            {number_format(@cumulative[:total] || 0)} ranked players
+            {number_format(@cumulative[:total] || 0)}
+            <span class="admin-name" title="(kills + deaths) >= 200  and playtime >= 3 hours">ranked</span>
+            players
           </div>
         </div>
         <div class="stats-cumulative-fragment-host" id="stats-cumulative-fragment">
@@ -704,7 +706,9 @@
       }
 
       function renderCumulative(payload) {
-        els.cumulativeMeta.textContent = `${numberFormat(payload.totalRows ?? payload.total ?? 0)} ranked players • page ${payload.page || 1} / ${payload.totalPages || payload.total_pages || 1}`;
+        const rankedTitle = '(kills + deaths) >= 200  and playtime >= 3 hours';
+        const rankedLabel = `<span class="admin-name" title="${escapeHtml(rankedTitle)}">ranked</span>`;
+        els.cumulativeMeta.innerHTML = `${numberFormat(payload.totalRows ?? payload.total ?? 0)} ${rankedLabel} players • page ${payload.page || 1} / ${payload.totalPages || payload.total_pages || 1}`;
         if (typeof payload.html === 'string' && els.cumulativeFragment) {
           els.cumulativeFragment.innerHTML = payload.html;
           initCumulativeSorting(els.cumulativeFragment);
