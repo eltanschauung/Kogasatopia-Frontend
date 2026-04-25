@@ -8,6 +8,7 @@ defmodule WhaleChat.StatsFeed do
 
   @default_avatar "/stats/assets/whaley-avatar.jpg"
   @stats_table "whaletracker"
+  @points_cache_table "whaletracker_points_cache"
   @logs_table "whaletracker_logs"
   @log_players_table "whaletracker_log_players"
   @weapon_category_metadata %{
@@ -96,7 +97,7 @@ defmodule WhaleChat.StatsFeed do
     try do
       {rows, total} =
         if q == "" do
-          {fetch_cumulative_rows(per_page, offset), count_table(@stats_table)}
+          {fetch_cumulative_rows(per_page, offset), count_ranked_cumulative_rows()}
         else
           fetch_cumulative_search(q, per_page, offset)
         end
@@ -217,7 +218,11 @@ defmodule WhaleChat.StatsFeed do
   end
 
   def tab_hash do
-    sql = "SELECT COALESCE(MAX(last_seen), 0) AS recent, COUNT(*) AS total FROM #{@stats_table}"
+    sql = """
+    SELECT GREATEST(COALESCE(MAX(w.last_seen), 0), COALESCE(MAX(pc.updated_at), 0)) AS recent,
+           COUNT(*) AS total
+    FROM #{ranked_stats_from()}
+    """
 
     case SQL.query(Repo, sql, []) do
       {:ok, %{rows: [row], columns: cols}} ->
@@ -335,8 +340,7 @@ defmodule WhaleChat.StatsFeed do
            COALESCE(w.airshots, 0) AS airshots,
            #{favorite_class_expr} AS favorite_class,
            COALESCE(w.last_seen, 0) AS last_seen
-    FROM #{@stats_table} w
-    LEFT JOIN whaletracker_points_cache pc ON pc.steamid = w.steamid
+    FROM #{ranked_stats_from()}
     ORDER BY #{stats_cache_order_clause()}
     LIMIT ? OFFSET ?
     """
@@ -354,11 +358,11 @@ defmodule WhaleChat.StatsFeed do
     cached_profile_ids = SteamProfiles.search_cached_ids(q)
 
     {count_where_sql, count_params} =
-      cumulative_search_where_clause("", like, steam_like, q, cached_profile_ids)
+      cumulative_search_where_clause("w.", like, steam_like, q, cached_profile_ids)
 
     count_sql = """
     SELECT COUNT(*)
-    FROM #{@stats_table}
+    FROM #{ranked_stats_from()}
     WHERE #{count_where_sql}
     """
 
@@ -383,8 +387,7 @@ defmodule WhaleChat.StatsFeed do
            COALESCE(w.airshots, 0) AS airshots,
            #{favorite_class_expr} AS favorite_class,
            COALESCE(w.last_seen, 0) AS last_seen
-    FROM #{@stats_table} w
-    LEFT JOIN whaletracker_points_cache pc ON pc.steamid = w.steamid
+    FROM #{ranked_stats_from()}
     WHERE #{where_sql}
     ORDER BY #{stats_cache_order_clause()}
     LIMIT ? OFFSET ?
@@ -492,7 +495,13 @@ defmodule WhaleChat.StatsFeed do
     end)
   end
 
-  defp count_table(table), do: scalar_query("SELECT COUNT(*) FROM #{table}", [])
+  defp count_ranked_cumulative_rows do
+    scalar_query("SELECT COUNT(*) FROM #{ranked_stats_from()}", [])
+  end
+
+  defp ranked_stats_from do
+    "#{@stats_table} w INNER JOIN #{@points_cache_table} pc ON pc.steamid = w.steamid AND COALESCE(pc.rank, 0) > 0"
+  end
 
   defp summary_top_killstreak do
     favorite_class_expr = favorite_class_select_expr()
