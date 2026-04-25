@@ -428,6 +428,13 @@ defmodule WhaleChatWeb.StatsFragments do
 
     name_cls = if player[:is_admin], do: "admin-name", else: ""
 
+    avatar_html =
+      if is_binary(profile_url) and profile_url != "" do
+        ~s(<a href="#{e(profile_url)}" target="_blank" rel="noopener"><img class="player-avatar" src="#{e(avatar)}" alt=""></a>)
+      else
+        ~s(<img class="player-avatar" src="#{e(avatar)}" alt="">)
+      end
+
     link_html =
       if is_binary(profile_url) and profile_url != "" do
         ~s(<a href="#{e(profile_url)}" target="_blank" rel="noopener" class="#{e(name_cls)}">#{e(name)}</a>)
@@ -438,7 +445,7 @@ defmodule WhaleChatWeb.StatsFragments do
     """
     <tr>
       <td class="player-cell">
-        <img class="player-avatar" src="#{e(avatar)}" alt="">
+        #{avatar_html}
         <div class="log-player-info">#{link_html}</div>
       </td>
       <td>#{number(kills)}</td>
