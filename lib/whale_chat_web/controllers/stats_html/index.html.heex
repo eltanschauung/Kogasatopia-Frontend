@@ -589,7 +589,7 @@
   <script>
     (() => {
       const state = {
-        cumulative: { q: <%= Phoenix.HTML.raw(Jason.encode!(@search || "")) %>, page: <%= @cumulative[:page] || 1 %>, perPage: 50, focusedPlayer: <%= Phoenix.HTML.raw(Jason.encode!(@focused_player || "")) %> },
+        cumulative: { q: <%= Phoenix.HTML.raw(Jason.encode!(@search || "")) %>, page: <%= @cumulative[:page] || 1 %>, perPage: 100, focusedPlayer: <%= Phoenix.HTML.raw(Jason.encode!(@focused_player || "")) %> },
       };
 
       const els = {

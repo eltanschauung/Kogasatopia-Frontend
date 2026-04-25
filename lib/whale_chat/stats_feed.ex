@@ -25,7 +25,13 @@ defmodule WhaleChat.StatsFeed do
   def page_payload(opts \\ %{}) do
     search = str(Map.get(opts, :q, Map.get(opts, "q", "")))
     page = positive_int(Map.get(opts, :page, Map.get(opts, "page", 1)), 1)
-    per_page = positive_int(Map.get(opts, :per_page, Map.get(opts, "per_page", 50)), 50)
+
+    per_page =
+      positive_int(
+        Map.get(opts, :per_page, Map.get(opts, "per_page", Map.get(opts, "perPage", 100))),
+        100
+      )
+
     player = Map.get(opts, :player, Map.get(opts, "player"))
 
     %{
@@ -90,7 +96,11 @@ defmodule WhaleChat.StatsFeed do
     page = positive_int(Map.get(opts, :page, Map.get(opts, "page", 1)), 1)
 
     per_page =
-      positive_int(Map.get(opts, :per_page, Map.get(opts, "per_page", 50)), 50) |> min(100)
+      positive_int(
+        Map.get(opts, :per_page, Map.get(opts, "per_page", Map.get(opts, "perPage", 100))),
+        100
+      )
+      |> min(100)
 
     offset = (page - 1) * per_page
 
@@ -134,7 +144,7 @@ defmodule WhaleChat.StatsFeed do
           total: 0,
           page: 1,
           total_pages: 1,
-          per_page: 50,
+          per_page: 100,
           q: q,
           focused_player: nil
         }

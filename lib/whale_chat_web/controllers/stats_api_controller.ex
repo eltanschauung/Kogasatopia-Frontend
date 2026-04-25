@@ -12,7 +12,7 @@ defmodule WhaleChatWeb.StatsApiController do
       StatsFeed.cumulative(%{
         q: Map.get(params, "q", ""),
         page: Map.get(params, "page", "1"),
-        per_page: Map.get(params, "perPage", Map.get(params, "per_page", "50")),
+        per_page: Map.get(params, "perPage", Map.get(params, "per_page", "100")),
         player: Map.get(params, "player")
       })
 

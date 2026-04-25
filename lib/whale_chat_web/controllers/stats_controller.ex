@@ -10,7 +10,14 @@ defmodule WhaleChatWeb.StatsController do
     focused_player = Map.get(params, "player") || session_steamid
     search = Map.get(params, "q", "")
 
-    payload = StatsFeed.page_payload(%{"q" => search, "page" => Map.get(params, "page"), "player" => focused_player})
+    payload =
+      StatsFeed.page_payload(%{
+        "q" => search,
+        "page" => Map.get(params, "page"),
+        "perPage" => Map.get(params, "perPage", Map.get(params, "per_page")),
+        "player" => focused_player
+      })
+
     cumulative = payload.cumulative
     default_avatar = payload.default_avatar_url
     viewer_profile = viewer_profile(session_steamid, cumulative[:focused_player], default_avatar)
