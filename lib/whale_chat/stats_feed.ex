@@ -726,7 +726,10 @@ defmodule WhaleChat.StatsFeed do
     SELECT lp.steamid, lp.personaname, COALESCE(lp.damage, 0) AS damage, COALESCE(lp.playtime, 0) AS playtime
     FROM #{@log_players_table} lp
     INNER JOIN #{@logs_table} l ON l.log_id = lp.log_id
-    WHERE l.started_at >= ? AND COALESCE(lp.playtime, 0) > 0
+    WHERE l.started_at >= ?
+      AND COALESCE(l.duration, 0) >= 60
+      AND COALESCE(lp.playtime, 0) >= 60
+      AND COALESCE(lp.damage, 0) >= 1000
     ORDER BY (COALESCE(lp.damage, 0) * 60.0 / NULLIF(lp.playtime, 0)) DESC,
              COALESCE(lp.damage, 0) DESC,
              l.started_at DESC
