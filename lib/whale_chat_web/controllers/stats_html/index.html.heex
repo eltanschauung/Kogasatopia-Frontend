@@ -124,6 +124,16 @@
     .stats-focused-slot .detail-panel .detail-grid > div { min-width: 0; }
     .stats-focused-slot .detail-panel .detail-grid h3 { margin-bottom: .5rem; }
     .stats-focused-slot .detail-panel .detail-grid p { margin: 0; font-size: clamp(1.08rem, 2vw, 1.55rem); }
+    .streak-podium__entry,
+    .streak-podium__details,
+    .streak-podium__name { min-width: 0; }
+    .streak-podium__name {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      hyphens: auto;
+      line-height: 1.15;
+    }
+    .streak-podium__value { flex: 0 0 auto; }
     .stats-card .stat-grid .stat-card {
       background: rgba(20, 25, 36, .25);
       border: 1px solid rgba(142,186,255,.08);

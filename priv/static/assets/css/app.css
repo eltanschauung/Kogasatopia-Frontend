@@ -539,6 +539,36 @@ a {
   padding: 0.85rem 0.9rem;
 }
 
+.logs-container .log-player-info {
+  display: inline-block;
+  width: calc(100% - 38px);
+  max-width: calc(100% - 38px);
+  min-width: 0;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.logs-container .log-player-info > a,
+.logs-container .log-player-info > span {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.logs-container .log-player-info.has-accuracy-icon > a,
+.logs-container .log-player-info.has-accuracy-icon > span {
+  max-width: calc(100% - 25px);
+}
+
+.logs-container .log-player-info > .stat-accuracy-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .logs-container .gamemode-label,
 .current-log-container .gamemode-label {
   display: inline-flex;

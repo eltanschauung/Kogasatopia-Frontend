@@ -214,7 +214,7 @@ defmodule WhaleChatWeb.StatsFragments do
         ~s(<div class="empty-state">No player data recorded for this match.</div>)
       else
         [
-          ~s(<table class="stats-table log-table"><thead><tr><th>Player</th><th>K</th><th>D</th><th>K/D</th><th>Acc.</th><th>Dmg</th><th>D/M</th><th>DT/M</th><th>AS</th><th>HS</th><th>BS</th><th>Healing</th><th>Ubers</th><th>Time</th></tr></thead><tbody>),
+          ~s(<table class="stats-table log-table"><thead><tr><th>Player</th><th>K</th><th>D</th><th>K/D</th><th>Acc.</th><th>Dmg</th><th>D/M</th><th>DT/M</th><th>AS</th><th>HS</th><th>BS</th><th>Heal</th><th>Ubers</th><th>Time</th></tr></thead><tbody>),
           Enum.map(players, &current_log_player_row_html(&1, default_avatar)),
           "</tbody></table>"
         ]
@@ -361,7 +361,7 @@ defmodule WhaleChatWeb.StatsFragments do
     body_html =
       if is_list(players) and players != [] do
         [
-          ~s(<div class="table-wrapper"><table class="stats-table log-table"><thead><tr><th>Player</th><th>K</th><th>D</th><th>K/D</th><th>Acc.</th><th>Dmg</th><th>D/M</th><th>DT/M</th><th>AS</th><th>HS</th><th>BS</th><th>Healing</th><th>Ubers</th><th>Time</th></tr></thead><tbody>),
+          ~s(<div class="table-wrapper"><table class="stats-table log-table"><thead><tr><th>Player</th><th>K</th><th>D</th><th>K/D</th><th>Acc.</th><th>Dmg</th><th>D/M</th><th>DT/M</th><th>AS</th><th>HS</th><th>BS</th><th>Heal</th><th>Ubers</th><th>Time</th></tr></thead><tbody>),
           Enum.map(players, &current_log_player_row_html(&1, "/stats/assets/whaley-avatar.jpg")),
           "</tbody></table></div>"
         ]
@@ -442,16 +442,23 @@ defmodule WhaleChatWeb.StatsFragments do
         ~s(<span class="#{e(name_cls)}">#{e(name)}</span>)
       end
 
+    player_info_class =
+      if accuracy_icon == "" do
+        "log-player-info"
+      else
+        "log-player-info has-accuracy-icon"
+      end
+
     """
     <tr>
       <td class="player-cell">
         #{avatar_html}
-        <div class="log-player-info">#{link_html}</div>
+        <div class="#{player_info_class}">#{link_html}#{accuracy_icon}</div>
       </td>
       <td>#{number(kills)}</td>
       <td>#{number(deaths)}</td>
       <td>#{decimal(kd, 2)}</td>
-      <td class="stat-accuracy-cell" title="#{e(acc_title)}"><span class="stat-accuracy-value">#{if(acc == nil, do: "—", else: decimal(acc, 1) <> "%")}</span>#{accuracy_icon}</td>
+      <td class="stat-accuracy-cell" title="#{e(acc_title)}"><span class="stat-accuracy-value">#{if(acc == nil, do: "—", else: decimal(acc, 1) <> "%")}</span></td>
       <td>#{number(damage)}</td>
       <td>#{decimal(dpm, 1)}</td>
       <td>#{decimal(dtpm, 1)}</td>
