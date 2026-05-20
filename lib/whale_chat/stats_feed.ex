@@ -294,7 +294,7 @@ defmodule WhaleChat.StatsFeed do
 
       sql = """
       SELECT steamid,
-             COALESCE(cached_personaname, personaname, steamid) AS personaname,
+             COALESCE(cached_personaname, steamid) AS personaname,
              kills, deaths, assists, healing, headshots, backstabs,
              COALESCE(best_killstreak, 0) AS best_killstreak,
              COALESCE(playtime, 0) AS playtime,
@@ -336,7 +336,7 @@ defmodule WhaleChat.StatsFeed do
 
     sql = """
     SELECT w.steamid,
-           COALESCE(w.cached_personaname, w.personaname, w.steamid) AS personaname,
+           COALESCE(w.cached_personaname, pc.name, w.steamid) AS personaname,
            w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
            COALESCE(w.best_killstreak, 0) AS best_killstreak,
            COALESCE(w.playtime, 0) AS playtime,
@@ -383,7 +383,7 @@ defmodule WhaleChat.StatsFeed do
 
     sql = """
     SELECT w.steamid,
-           COALESCE(w.cached_personaname, w.personaname, w.steamid) AS personaname,
+           COALESCE(w.cached_personaname, pc.name, w.steamid) AS personaname,
            w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
            COALESCE(w.best_killstreak, 0) AS best_killstreak,
            COALESCE(w.playtime, 0) AS playtime,
@@ -414,7 +414,7 @@ defmodule WhaleChat.StatsFeed do
 
   defp cumulative_search_where_clause(alias_prefix, like, steam_like, q, cached_profile_ids) do
     base =
-      "LOWER(COALESCE(#{alias_prefix}cached_personaname, #{alias_prefix}personaname, #{alias_prefix}steamid)) LIKE ? " <>
+      "LOWER(COALESCE(#{alias_prefix}cached_personaname, pc.name, #{alias_prefix}steamid)) LIKE ? " <>
         "OR #{alias_prefix}steamid LIKE ? " <>
         "OR #{alias_prefix}steamid = ?"
 
@@ -518,7 +518,7 @@ defmodule WhaleChat.StatsFeed do
 
     sql = """
     SELECT steamid,
-           COALESCE(cached_personaname, personaname, steamid) AS personaname,
+           COALESCE(cached_personaname, steamid) AS personaname,
            kills, deaths, assists, healing, headshots, backstabs,
            COALESCE(best_killstreak, 0) AS best_killstreak,
            COALESCE(playtime, 0) AS playtime,
