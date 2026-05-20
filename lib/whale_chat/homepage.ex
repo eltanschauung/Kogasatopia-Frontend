@@ -24,7 +24,7 @@ defmodule WhaleChat.Homepage do
         read_fragment!("navBar.html")
       end
 
-    panels_html = read_fragment!(if(is_mobile, do: "panels_mobile.html", else: "panels.html"))
+    panels_html = read_fragment!("panels.html")
     blog_html = read_fragment!("blog.html")
     tabs_html = read_fragment!("tabs.html")
     preload_tags = preload_tags(is_mobile)
