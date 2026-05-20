@@ -30,7 +30,7 @@ defmodule WhaleChatWeb.Plugs.LegacyStatic do
       case picked do
         {:redirect_dir, location} ->
           conn
-          |> maybe_put_forever_cache_headers(request_path)
+          |> maybe_put_cache_headers(request_path)
           |> put_resp_header("location", location)
           |> send_resp(302, "")
           |> halt()
@@ -38,7 +38,7 @@ defmodule WhaleChatWeb.Plugs.LegacyStatic do
         {:file, file} ->
           if allowed_file?(file) do
             conn
-            |> maybe_put_forever_cache_headers(request_path)
+            |> maybe_put_cache_headers(request_path)
             |> put_resp_content_type(content_type(file))
             |> send_file(conn.status || 200, file)
             |> halt()
@@ -59,7 +59,8 @@ defmodule WhaleChatWeb.Plugs.LegacyStatic do
       File.regular?(resolved) ->
         {:ok, {:file, resolved}}
 
-      File.dir?(resolved) and not String.ends_with?(request_path, "/") and has_index_html?(resolved) ->
+      File.dir?(resolved) and not String.ends_with?(request_path, "/") and
+          has_index_html?(resolved) ->
         {:ok, {:redirect_dir, request_path <> "/"}}
 
       File.dir?(resolved) and File.regular?(Path.join(resolved, "index.html")) ->
@@ -74,7 +75,8 @@ defmodule WhaleChatWeb.Plugs.LegacyStatic do
   end
 
   defp has_index_html?(resolved) do
-    File.regular?(Path.join(resolved, "index.html")) or File.regular?(Path.join(resolved, "index.htm"))
+    File.regular?(Path.join(resolved, "index.html")) or
+      File.regular?(Path.join(resolved, "index.htm"))
   end
 
   defp allowed_file?(file) do
@@ -89,7 +91,7 @@ defmodule WhaleChatWeb.Plugs.LegacyStatic do
     end
   end
 
-  defp maybe_put_forever_cache_headers(conn, request_path) do
+  defp maybe_put_cache_headers(conn, request_path) do
     normalized =
       if String.starts_with?(request_path, "/") do
         request_path
@@ -97,15 +99,41 @@ defmodule WhaleChatWeb.Plugs.LegacyStatic do
         "/" <> request_path
       end
 
-    if MapSet.member?(LegacySite.homepage_immutable_images(), normalized) or
-         MapSet.member?(LegacySite.homepage_immutable_assets(), normalized) or
-         info_path?(normalized) or hat_background_path?(normalized) do
-      put_resp_header(conn, "cache-control", "public, max-age=31536000, immutable")
-    else
-      conn
+    cond do
+      info_path?(normalized) and info_image_path?(normalized) ->
+        put_forever_cache_headers(conn)
+
+      info_path?(normalized) ->
+        put_no_store_headers(conn)
+
+      MapSet.member?(LegacySite.homepage_immutable_images(), normalized) or
+        MapSet.member?(LegacySite.homepage_immutable_assets(), normalized) or
+          hat_background_path?(normalized) ->
+        put_forever_cache_headers(conn)
+
+      true ->
+        conn
     end
   end
 
   defp info_path?(path), do: path == "/info" or String.starts_with?(path, "/info/")
+
+  defp info_image_path?(path) do
+    ext = path |> Path.extname() |> String.downcase()
+    ext in ~w(.png .jpg .jpeg .gif .ico .svg .webp)
+  end
+
   defp hat_background_path?(path), do: path == "/hat.jpg"
+
+  defp put_forever_cache_headers(conn) do
+    put_resp_header(conn, "cache-control", "public, max-age=31536000, immutable")
+  end
+
+  defp put_no_store_headers(conn) do
+    conn
+    |> put_resp_header("cache-control", "no-store, no-cache, must-revalidate, max-age=0")
+    |> put_resp_header("pragma", "no-cache")
+    |> put_resp_header("expires", "0")
+    |> put_resp_header("surrogate-control", "no-store")
+  end
 end

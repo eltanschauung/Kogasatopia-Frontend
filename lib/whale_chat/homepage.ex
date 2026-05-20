@@ -4,9 +4,12 @@ defmodule WhaleChat.Homepage do
   alias WhaleChat.LegacySite
 
   @fragments_root Path.join(LegacySite.docroot(), "home/includes")
+  @site_title "Kogasatopia | Gensokyo New Jersey TF2 Server"
+  @site_description "Kogasatopia at kogasa.tf is the website for Gensokyo | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
 
   def render_html(opts \\ []) do
     is_mobile = Keyword.get(opts, :mobile?, false)
+
     viewport =
       if is_mobile do
         "width=1400, initial-scale=0.1, user-scalable=yes, maximum-scale=10, viewport-fit=cover"
@@ -32,7 +35,40 @@ defmodule WhaleChat.Homepage do
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="#{viewport}">
-      <title>Kogasatopia</title>
+      <title>#{@site_title}</title>
+      <meta name="description" content="#{@site_description}">
+      <meta property="og:site_name" content="Kogasatopia">
+      <meta property="og:title" content="#{@site_title}">
+      <meta property="og:description" content="#{@site_description}">
+      <meta property="og:url" content="https://kogasa.tf/">
+      <meta property="og:type" content="website">
+      <meta name="twitter:card" content="summary">
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://kogasa.tf/#website",
+            "url": "https://kogasa.tf/",
+            "name": "Kogasatopia",
+            "alternateName": ["Gensokyo | New Jersey", "Gensokyo New Jersey", "kogasa.tf"],
+            "description": "#{@site_description}"
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://kogasa.tf/#organization",
+            "url": "https://kogasa.tf/",
+            "name": "Kogasatopia",
+            "alternateName": ["Gensokyo | New Jersey", "Gensokyo New Jersey"],
+            "sameAs": [
+              "https://steamcommunity.com/groups/kogtf2",
+              "https://x.com/kogasatopia"
+            ]
+          }
+        ]
+      }
+      </script>
       <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
       #{preload_tags}
       <link rel="stylesheet" type="text/css" href="/styles.css">
@@ -95,7 +131,13 @@ defmodule WhaleChat.Homepage do
   end
 
   defp preload_image_tags do
-    high_priority = MapSet.new(["/background_lumberyard.png", "/main_panel.png", "/white_panel.png", "/trump_update_card.png"])
+    high_priority =
+      MapSet.new([
+        "/background_lumberyard.png",
+        "/main_panel.png",
+        "/white_panel.png",
+        "/trump_update_card.png"
+      ])
 
     LegacySite.homepage_preload_images()
     |> Enum.map_join("\n", fn href ->

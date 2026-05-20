@@ -122,7 +122,8 @@ defmodule WhaleChat.InfoPage do
     "deals 1",
     "market",
     "holster",
-    "retain"
+    "retain",
+    "enemies within range are zapped instead"
   ]
 
   @downside_cues [
@@ -139,7 +140,8 @@ defmodule WhaleChat.InfoPage do
     "66%",
     "No ammo",
     "range",
-    "no disguise"
+    "no disguise",
+    "disabled on some gamemodes"
   ]
 
   def assigns do
@@ -215,7 +217,8 @@ defmodule WhaleChat.InfoPage do
     low = String.downcase(trimmed)
 
     is_down =
-      Enum.any?(@downside_cues, &String.contains?(low, &1)) and not String.contains?(low, "+")
+      Enum.any?(@downside_cues, &String.contains?(low, &1)) and not String.contains?(low, "+") and
+        not String.contains?(low, "enemies within range are zapped instead")
 
     is_up = not is_down and Enum.any?(@upside_cues, &String.contains?(low, &1))
 

@@ -3,8 +3,31 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Kogasatopia at kogasa.tf is the website for Gensokyo | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
+    />
+    <meta property="og:site_name" content="Kogasatopia" />
+    <meta property="og:title" content="Kogasatopia | Gensokyo New Jersey TF2 Server" />
+    <meta
+      property="og:description"
+      content="Kogasatopia at kogasa.tf is the website for Gensokyo | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
+    />
+    <meta property="og:url" content="https://kogasa.tf/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title default="WhaleChat" suffix=" · Phoenix Framework">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "@id": "https://kogasa.tf/#website",
+        "url": "https://kogasa.tf/",
+        "name": "Kogasatopia",
+        "alternateName": ["Gensokyo | New Jersey", "Gensokyo New Jersey", "kogasa.tf"]
+      }
+    </script>
+    <.live_title default="Kogasatopia" suffix=" · kogasa.tf">
       {assigns[:page_title]}
     </.live_title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />

@@ -1,59 +1,83 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Youkai Pound · Weapons Page</title>
-  <link rel="preload" as="style" href="/info/css/changes.css">
-  <link rel="preload" as="script" href={~p"/assets/js/info_page.js"}>
-  <link rel="preload" as="audio" href="/info/sound/tf2-button-click.mp3">
-  <link rel="preload" as="image" href="/info/icons/backgrounds/tf2full.jpg" fetchpriority="high">
-  <link :for={src <- @preload_images} rel="preload" as="image" href={src}>
-  <link rel="stylesheet" href="/info/css/changes.css">
-</head>
-<body>
-  <div class="top-nav">
-    <a class="home-btn" href="/">Home</a>
-  </div>
-  <div class="page">
-    <header class="header">
-      <div class="title-group">
-        <div class="brand">Gensokyo Weapons Page</div>
-        <div class="subtitle">This server has buffs for bad weapons and nerf reverts for many weapons; we also have custom weapons, but they're not documented in this directory yet. Use !c in-game to learn about custom weapons.</div>
-      </div>
-    </header>
-
-    <nav class="class-bar" id="class-bar">
-      <button
-        :for={class <- @classes}
-        class={["class-btn", class.key == @active_class && "active"]}
-        data-class={class.key}
-        type="button"
-      >
-        <img class="class-icon" src={"/info/icons/" <> class.icon}>
-        <span class="class-label"><%= class.label %></span>
-      </button>
-    </nav>
-
-    <section class="content">
-      <aside class="filters">
-        <label class="filter-label">Search</label>
-        <input type="text" id="search" class="search" placeholder="Find a weapon or effect...">
-      </aside>
-      <main>
-        <div id="button-container">
-          <a :for={item <- @initial_items} href="#" class="on" title={item.title}>
-            <img class="btn-icon" src={item.icon}>
-            <span class="btn-label"><%= item.name %></span>
-            <div class="effects">
-              <span :for={segment <- item.effects} class={"seg " <> segment.cls}><%= segment.text %></span>
-            </div>
-          </a>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kogasatopia · Gensokyo New Jersey Weapons Page</title>
+    <meta
+      name="description"
+      content="Weapon changes and custom weapon notes for Gensokyo | New Jersey, the Kogasatopia Team Fortress 2 server at kogasa.tf."
+    />
+    <meta property="og:site_name" content="Kogasatopia" />
+    <meta property="og:title" content="Kogasatopia · Gensokyo New Jersey Weapons Page" />
+    <meta
+      property="og:description"
+      content="Weapon changes and custom weapon notes for Gensokyo | New Jersey, the Kogasatopia Team Fortress 2 server at kogasa.tf."
+    />
+    <meta property="og:url" content="https://kogasa.tf/info" />
+    <meta property="og:type" content="website" />
+    <link rel="preload" as="style" href="/info/css/changes.css" />
+    <link rel="preload" as="script" href="/info/js/info_page.js" />
+    <link rel="preload" as="audio" href="/info/sound/tf2-button-click.mp3" />
+    <link
+      rel="preload"
+      as="image"
+      href="/info/icons/backgrounds/tf2full.jpg"
+      fetchpriority="high"
+    />
+    <link :for={src <- @preload_images} rel="preload" as="image" href={src} />
+    <link rel="stylesheet" href="/info/css/changes.css" />
+  </head>
+  <body>
+    <div class="top-nav">
+      <a class="home-btn" href="/">Home</a>
+    </div>
+    <div class="page">
+      <header class="header">
+        <div class="title-group">
+          <div class="brand">Gensokyo Weapons Page</div>
+          <div class="subtitle">
+            This server has buffs for bad weapons and nerf reverts for many weapons; we also have custom weapons, but they're not documented in this directory yet. Use !c in-game to learn about custom weapons.
+          </div>
         </div>
-      </main>
-    </section>
-  </div>
-  <script id="info-data" type="application/json"><%= Phoenix.HTML.raw(@payload_json) %></script>
-  <script defer src={~p"/assets/js/info_page.js"}></script>
-</body>
+      </header>
+
+      <nav class="class-bar" id="class-bar">
+        <button
+          :for={class <- @classes}
+          class={["class-btn", class.key == @active_class && "active"]}
+          data-class={class.key}
+          type="button"
+        >
+          <img class="class-icon" src={"/info/icons/" <> class.icon} />
+          <span class="class-label">{class.label}</span>
+        </button>
+      </nav>
+
+      <section class="content">
+        <aside class="filters">
+          <label class="filter-label">Search</label>
+          <input type="text" id="search" class="search" placeholder="Find a weapon or effect..." />
+        </aside>
+        <main>
+          <div id="button-container">
+            <a :for={item <- @initial_items} href="#" class="on" title={item.title}>
+              <img class="btn-icon" src={item.icon} />
+              <span class="btn-label">{item.name}</span>
+              <div class="effects">
+                <span :for={segment <- item.effects} class={"seg " <> segment.cls}>
+                  {segment.text}
+                </span>
+              </div>
+            </a>
+          </div>
+        </main>
+      </section>
+    </div>
+    <script id="info-data" type="application/json">
+      <%= Phoenix.HTML.raw(@payload_json) %>
+    </script>
+    <script defer src="/info/js/info_page.js">
+    </script>
+  </body>
 </html>
