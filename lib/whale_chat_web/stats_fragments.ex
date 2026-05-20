@@ -307,8 +307,15 @@ defmodule WhaleChatWeb.StatsFragments do
 
     kd = row[:kd] || 0
     acc = row[:accuracy_overall] || 0
-    favorite_class = favorite_class_icon_html(row[:favorite_class])
-    accuracy_class = if is_integer(row[:favorite_class]), do: row[:favorite_class], else: 0
+
+    accuracy_class =
+      case row[:accuracy_class] || row[:favorite_class] do
+        id when is_integer(id) -> id
+        _ -> 0
+      end
+
+    accuracy_title = row[:accuracy_class_title] || "Favorite class"
+    accuracy_icon = class_icon_html(accuracy_class, accuracy_title)
     tr_class = if classes == "", do: "", else: ~s( class="#{e(classes)}")
 
     name_title =
@@ -338,7 +345,7 @@ defmodule WhaleChatWeb.StatsFragments do
       <td>#{number(row[:damage_taken])}</td>
       <td>#{decimal(row[:dpm] || 0, 1)}</td>
       <td>#{decimal(row[:dtpm] || 0, 1)}</td>
-      <td class="stat-accuracy-cell"><span class="stat-accuracy-value">#{decimal(acc, 1)}%</span>#{favorite_class}</td>
+      <td class="stat-accuracy-cell"><span class="stat-accuracy-value">#{decimal(acc, 1)}%</span>#{accuracy_icon}</td>
       <td>#{number(row[:airshots])}</td>
       <td>#{number(row[:medic_drops])} | #{number(row[:uber_drops])}</td>
       <td>#{number(row[:healing])}</td>
@@ -563,8 +570,6 @@ defmodule WhaleChatWeb.StatsFragments do
 
   defp maybe_push(list, true, value), do: [value | list]
   defp maybe_push(list, _, _), do: list
-
-  defp favorite_class_icon_html(id), do: class_icon_html(id, "Favorite class")
 
   defp log_accuracy_class_icon_html(active_acc) when is_map(active_acc) do
     active_acc

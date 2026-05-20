@@ -21,6 +21,26 @@ defmodule WhaleChat.StatsFeed do
     "snipers" => %{label: "Sniper Rifle"},
     "revolvers" => %{label: "Revolver"}
   }
+  @weapon_category_slugs ~w(shotguns scatterguns pistols rocketlaunchers grenadelaunchers stickylaunchers snipers revolvers)
+  @favorite_class_accuracy_groups %{
+    1 => ~w(scatterguns),
+    2 => ~w(snipers),
+    3 => ~w(rocketlaunchers shotguns),
+    4 => ~w(grenadelaunchers stickylaunchers),
+    5 => [],
+    6 => ~w(shotguns),
+    7 => ~w(shotguns),
+    8 => ~w(revolvers),
+    9 => ~w(shotguns pistols)
+  }
+  @fallback_accuracy_class_groups [
+    {1, ~w(scatterguns)},
+    {2, ~w(snipers)},
+    {3, ~w(rocketlaunchers)},
+    {4, ~w(grenadelaunchers stickylaunchers)},
+    {8, ~w(revolvers)},
+    {9, ~w(shotguns pistols)}
+  ]
 
   def page_payload(opts \\ %{}) do
     search = str(Map.get(opts, :q, Map.get(opts, "q", "")))
@@ -291,6 +311,7 @@ defmodule WhaleChat.StatsFeed do
       nil
     else
       favorite_class_expr = favorite_class_select_expr()
+      category_select_clause = weapon_category_select_clause("")
 
       sql = """
       SELECT steamid,
@@ -301,7 +322,7 @@ defmodule WhaleChat.StatsFeed do
              COALESCE(damage_dealt, 0) AS damage_dealt,
              COALESCE(damage_taken, 0) AS damage_taken,
              COALESCE(shots, 0) AS shots,
-             COALESCE(hits, 0) AS hits,
+             COALESCE(hits, 0) AS hits#{category_select_clause},
              COALESCE(total_ubers, 0) AS total_ubers,
              COALESCE(medic_drops, 0) AS medic_drops,
              COALESCE(uber_drops, COALESCE(medic_drops, 0)) AS uber_drops,
@@ -333,6 +354,7 @@ defmodule WhaleChat.StatsFeed do
 
   defp fetch_cumulative_rows(limit, offset) do
     favorite_class_expr = favorite_class_select_expr()
+    category_select_clause = weapon_category_select_clause("w.")
 
     sql = """
     SELECT w.steamid,
@@ -343,7 +365,7 @@ defmodule WhaleChat.StatsFeed do
            COALESCE(w.damage_dealt, 0) AS damage_dealt,
            COALESCE(w.damage_taken, 0) AS damage_taken,
            COALESCE(w.shots, 0) AS shots,
-           COALESCE(w.hits, 0) AS hits,
+           COALESCE(w.hits, 0) AS hits#{category_select_clause},
            COALESCE(w.total_ubers, 0) AS total_ubers,
            COALESCE(w.medic_drops, 0) AS medic_drops,
            COALESCE(w.uber_drops, COALESCE(w.medic_drops, 0)) AS uber_drops,
@@ -363,6 +385,7 @@ defmodule WhaleChat.StatsFeed do
 
   defp fetch_cumulative_search(q, limit, offset) do
     favorite_class_expr = favorite_class_select_expr()
+    category_select_clause = weapon_category_select_clause("w.")
     like = "%" <> String.downcase(q) <> "%"
     steam_like = "%" <> q <> "%"
     cached_profile_ids = SteamProfiles.search_cached_ids(q)
@@ -390,7 +413,7 @@ defmodule WhaleChat.StatsFeed do
            COALESCE(w.damage_dealt, 0) AS damage_dealt,
            COALESCE(w.damage_taken, 0) AS damage_taken,
            COALESCE(w.shots, 0) AS shots,
-           COALESCE(w.hits, 0) AS hits,
+           COALESCE(w.hits, 0) AS hits#{category_select_clause},
            COALESCE(w.total_ubers, 0) AS total_ubers,
            COALESCE(w.medic_drops, 0) AS medic_drops,
            COALESCE(w.uber_drops, COALESCE(w.medic_drops, 0)) AS uber_drops,
@@ -450,8 +473,8 @@ defmodule WhaleChat.StatsFeed do
       playtime = int(row["playtime"])
       damage = int(row["damage_dealt"])
       damage_taken = int(row["damage_taken"])
-      shots = int(row["shots"])
-      hits = int(row["hits"])
+      favorite_class = int(row["favorite_class"])
+      accuracy = cumulative_accuracy_for_row(row, favorite_class)
       minutes = if playtime > 0, do: playtime / 60.0, else: 0.0
 
       personaname =
@@ -466,7 +489,6 @@ defmodule WhaleChat.StatsFeed do
           url -> url
         end
 
-      accuracy = if shots > 0, do: Float.round(hits * 100.0 / shots, 1), else: 0.0
       dpm = if minutes > 0, do: Float.round(damage / minutes, 1), else: 0.0
       dtpm = if minutes > 0, do: Float.round(damage_taken / minutes, 1), else: 0.0
       kd = if deaths > 0, do: Float.round(kills / deaths, 2), else: kills * 1.0
@@ -488,12 +510,16 @@ defmodule WhaleChat.StatsFeed do
         medic_drops: int(row["medic_drops"]),
         uber_drops: int(row["uber_drops"]),
         airshots: int(row["airshots"]),
-        favorite_class: int(row["favorite_class"]),
+        favorite_class: favorite_class,
         playtime: playtime,
         playtime_human: format_playtime(playtime),
         damage_dealt: damage,
         damage_taken: damage_taken,
-        accuracy_overall: accuracy,
+        accuracy_overall: accuracy.value,
+        accuracy_class: accuracy.class_id,
+        accuracy_class_title: accuracy.title,
+        accuracy_shots: accuracy.shots,
+        accuracy_hits: accuracy.hits,
         dpm: dpm,
         dtpm: dtpm,
         kd: kd,
@@ -509,12 +535,76 @@ defmodule WhaleChat.StatsFeed do
     scalar_query("SELECT COUNT(*) FROM #{ranked_stats_from()}", [])
   end
 
+  defp weapon_category_select_clause(alias_prefix) do
+    @weapon_category_slugs
+    |> Enum.flat_map(fn slug ->
+      [
+        ", COALESCE(#{alias_prefix}shots_#{slug}, 0) AS shots_#{slug}",
+        ", COALESCE(#{alias_prefix}hits_#{slug}, 0) AS hits_#{slug}"
+      ]
+    end)
+    |> Enum.join("")
+  end
+
+  defp cumulative_accuracy_for_row(row, favorite_class) do
+    {favorite_shots, favorite_hits} = accuracy_counts_for_class(row, favorite_class)
+
+    {class_id, title, shots, hits} =
+      if favorite_shots > 0 do
+        {favorite_class, "Favorite class", favorite_shots, favorite_hits}
+      else
+        case fallback_accuracy_counts(row) do
+          {fallback_class, fallback_shots, fallback_hits} when fallback_shots > 0 ->
+            {fallback_class, "Accuracy class", fallback_shots, fallback_hits}
+
+          _ ->
+            {favorite_class, "Favorite class", int(row["shots"]), int(row["hits"])}
+        end
+      end
+
+    value = if shots > 0, do: Float.round(hits * 100.0 / shots, 1), else: 0.0
+
+    %{
+      value: value,
+      class_id: class_id,
+      title: title,
+      shots: shots,
+      hits: hits
+    }
+  end
+
+  defp accuracy_counts_for_class(row, class_id) do
+    row
+    |> accuracy_counts_for_categories(Map.get(@favorite_class_accuracy_groups, class_id, []))
+  end
+
+  defp fallback_accuracy_counts(row) do
+    Enum.reduce(@fallback_accuracy_class_groups, {0, 0, 0}, fn {class_id, slugs},
+                                                               {_best_class, best_shots,
+                                                                best_hits} = best ->
+      {shots, hits} = accuracy_counts_for_categories(row, slugs)
+
+      if shots + hits > best_shots + best_hits do
+        {class_id, shots, hits}
+      else
+        best
+      end
+    end)
+  end
+
+  defp accuracy_counts_for_categories(row, slugs) do
+    Enum.reduce(slugs, {0, 0}, fn slug, {shots_acc, hits_acc} ->
+      {shots_acc + int(row["shots_#{slug}"]), hits_acc + int(row["hits_#{slug}"])}
+    end)
+  end
+
   defp ranked_stats_from do
     "#{@stats_table} w INNER JOIN #{@points_cache_table} pc ON pc.steamid = w.steamid AND COALESCE(pc.rank, 0) > 0"
   end
 
   defp summary_top_killstreak do
     favorite_class_expr = favorite_class_select_expr()
+    category_select_clause = weapon_category_select_clause("")
 
     sql = """
     SELECT steamid,
@@ -525,7 +615,7 @@ defmodule WhaleChat.StatsFeed do
            COALESCE(damage_dealt, 0) AS damage_dealt,
            COALESCE(damage_taken, 0) AS damage_taken,
            COALESCE(shots, 0) AS shots,
-           COALESCE(hits, 0) AS hits,
+           COALESCE(hits, 0) AS hits#{category_select_clause},
            COALESCE(total_ubers, 0) AS total_ubers,
            COALESCE(medic_drops, 0) AS medic_drops,
            COALESCE(uber_drops, COALESCE(medic_drops, 0)) AS uber_drops,
@@ -952,8 +1042,7 @@ defmodule WhaleChat.StatsFeed do
     placeholders = Enum.map_join(log_ids, ",", fn _ -> "?" end)
 
     category_select_clause =
-      @weapon_category_metadata
-      |> Map.keys()
+      @weapon_category_slugs
       |> Enum.flat_map(fn slug -> [", shots_#{slug}", ", hits_#{slug}"] end)
       |> Enum.join("")
 
@@ -1107,16 +1196,7 @@ defmodule WhaleChat.StatsFeed do
   defp fallback_overall_weapon_summary(summary, _row), do: summary
 
   defp total_weapon_accuracy_counts(row) do
-    pairs = [
-      {"shots_shotguns", "hits_shotguns"},
-      {"shots_scatterguns", "hits_scatterguns"},
-      {"shots_pistols", "hits_pistols"},
-      {"shots_rocketlaunchers", "hits_rocketlaunchers"},
-      {"shots_grenadelaunchers", "hits_grenadelaunchers"},
-      {"shots_stickylaunchers", "hits_stickylaunchers"},
-      {"shots_snipers", "hits_snipers"},
-      {"shots_revolvers", "hits_revolvers"}
-    ]
+    pairs = Enum.map(@weapon_category_slugs, &{"shots_#{&1}", "hits_#{&1}"})
 
     {total_shots, total_hits} =
       Enum.reduce(pairs, {0, 0}, fn {shots_key, hits_key}, {s_acc, h_acc} ->
