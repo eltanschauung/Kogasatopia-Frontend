@@ -397,8 +397,7 @@ defmodule WhaleChat.MapsDb do
         nominations: to_int(Map.get(votes, :nominations)),
         rtvs: to_int(Map.get(votes, :rtvs)),
         vote_options: to_int(Map.get(votes, :vote_options)),
-        vote_wins: to_int(Map.get(votes, :vote_wins)),
-        eligibility_failures: to_int(Map.get(votes, :eligibility_failures))
+        vote_wins: to_int(Map.get(votes, :vote_wins))
       }
     end)
   end
@@ -563,8 +562,7 @@ defmodule WhaleChat.MapsDb do
              SUM(event_type = 'nomination') AS nominations,
              SUM(event_type = 'rtv') AS rtvs,
              SUM(event_type = 'vote_option') AS vote_options,
-             SUM(event_type = 'vote_winner') AS vote_wins,
-             SUM(event_type = 'eligibility_failure') AS eligibility_failures
+             SUM(event_type = 'vote_winner') AS vote_wins
       FROM #{@vote_statistics_table}
       WHERE created_at >= UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 30 DAY))
         AND map_name <> ''
