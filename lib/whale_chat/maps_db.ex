@@ -403,14 +403,37 @@ defmodule WhaleChat.MapsDb do
     end)
   end
 
-  defp fetch_session_extremes(kind, limit) do
+  defp fetch_session_extremes(:worst, limit) do
     lim = max(1, min(limit, 25))
 
-    order =
-      case kind do
-        :worst -> "avg_players ASC, peak_players ASC, duration DESC"
-        _ -> "avg_players DESC, peak_players DESC, duration DESC"
-      end
+    query_rows("""
+    SELECT s.map_name,
+           s.map_session_id,
+           s.started_at,
+           s.duration,
+           MAX(p.player_count) AS peak_players,
+           ROUND(AVG(p.player_count), 2) AS avg_players,
+           SUM(p.player_seconds_delta) AS player_seconds,
+           SUM(p.joining_players) AS joins,
+           SUM(p.leaving_players) AS leaves,
+           s.end_reason
+    FROM #{@map_session_statistics_table} s
+    JOIN #{@population_statistics_table} p
+      ON p.host_port = s.host_port
+     AND p.map_session_id = s.map_session_id
+    WHERE s.duration >= 600
+      AND p.player_count > 3
+      AND FLOOR(MOD(p.sampled_at, 86400) / 3600) >= 2
+      AND FLOOR(MOD(p.sampled_at, 86400) / 3600) < 6
+    GROUP BY s.host_port, s.map_session_id, s.map_name, s.started_at, s.duration, s.end_reason
+    ORDER BY avg_players ASC, peak_players ASC, duration DESC
+    LIMIT #{lim}
+    """)
+    |> format_session_extreme_rows()
+  end
+
+  defp fetch_session_extremes(_kind, limit) do
+    lim = max(1, min(limit, 25))
 
     query_rows("""
     SELECT map_name,
@@ -425,9 +448,14 @@ defmodule WhaleChat.MapsDb do
            end_reason
     FROM #{@map_session_statistics_table}
     WHERE peak_players > 0 AND duration >= 600
-    ORDER BY #{order}
+    ORDER BY avg_players DESC, peak_players DESC, duration DESC
     LIMIT #{lim}
     """)
+    |> format_session_extreme_rows()
+  end
+
+  defp format_session_extreme_rows(rows) do
+    rows
     |> Enum.map(fn row ->
       avg_players = to_float(row.avg_players)
 
