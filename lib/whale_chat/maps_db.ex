@@ -11,6 +11,9 @@ defmodule WhaleChat.MapsDb do
   @page_gamemode_names ~w(arena koth payload payloadrace ctf 5cp adcp tc medieval pd tr dm ultiduo rd pass mvm kotf dom symmetrical asymmetrical default)
   @api_category_order ~w(koth cp pl plr ctf pd sd arena zi vsh mge tc tr dm ultiduo rd pass mvm kotf dom)
   @page_category_order ~w(gamemode koth cp pl plr ctf pd sd arena zi vsh mge tc tr dm ultiduo rd pass mvm kotf dom)
+  @population_statistics_table "server_population_statistics_samples"
+  @map_session_statistics_table "map_statistics_sessions"
+  @vote_statistics_table "nativevotes_statistics_events"
   @category_label_map %{
     "koth" => "KOTH maps",
     "cp" => "Control Point maps",
@@ -39,10 +42,22 @@ defmodule WhaleChat.MapsDb do
 
   def config do
     %{
-      maps_dir: Application.get_env(:whale_chat, :mapsdb_dir, "/home/kogasa/hlserver/tf2/tf/cfg/mapsdb"),
-      tf_cfg_dir: Application.get_env(:whale_chat, :mapsdb_tf_cfg_dir, "/home/kogasa/hlserver/tf2/tf/cfg"),
-      preview_dir: Application.get_env(:whale_chat, :mapsdb_preview_dir, "/var/www/kogasatopia/playercount_widget"),
-      admin_cache_file: Application.get_env(:whale_chat, :mapsdb_admin_cache_file, "/var/www/kogasatopia/stats/cache/admins_cache.json")
+      maps_dir:
+        Application.get_env(:whale_chat, :mapsdb_dir, "/home/kogasa/hlserver/tf2/tf/cfg/mapsdb"),
+      tf_cfg_dir:
+        Application.get_env(:whale_chat, :mapsdb_tf_cfg_dir, "/home/kogasa/hlserver/tf2/tf/cfg"),
+      preview_dir:
+        Application.get_env(
+          :whale_chat,
+          :mapsdb_preview_dir,
+          "/var/www/kogasatopia/playercount_widget"
+        ),
+      admin_cache_file:
+        Application.get_env(
+          :whale_chat,
+          :mapsdb_admin_cache_file,
+          "/var/www/kogasatopia/stats/cache/admins_cache.json"
+        )
     }
   end
 
@@ -53,6 +68,7 @@ defmodule WhaleChat.MapsDb do
     is_admin = is_logged_in and admin?(steamid)
     can_edit_maps = is_logged_in and is_admin
     chart_bundle = popularity_chart_bundle()
+
     viewer_profile =
       case steamid do
         sid when is_binary(sid) and sid != "" ->
@@ -62,6 +78,7 @@ defmodule WhaleChat.MapsDb do
             %{} = profile -> %{personaname: profile["personaname"], avatar: profile["avatarfull"]}
             _ -> nil
           end
+
         _ ->
           nil
       end
@@ -77,6 +94,7 @@ defmodule WhaleChat.MapsDb do
       popular_maps: fetch_map_popularity(25),
       popularity_chart: chart_bundle.chart,
       popularity_active_hours: chart_bundle.active_hours,
+      map_analytics: map_detail_analytics(),
       map_previews: map_previews(cfg.preview_dir),
       map_sections: if(maps_dir_missing, do: [], else: build_page_sections(cfg)),
       login_url: "/mapsdb/login.php?return=" <> URI.encode("/mapsdb"),
@@ -95,7 +113,8 @@ defmodule WhaleChat.MapsDb do
           _ -> false
         end
 
-      _ -> false
+      _ ->
+        false
     end
   end
 
@@ -142,10 +161,11 @@ defmodule WhaleChat.MapsDb do
         {row["order"] || 99_999, String.downcase(row["name"])}
       end)
 
-    grouped = Enum.group_by(maps, fn row ->
-      cat = row["category"]
-      if cat == "", do: "_other", else: String.downcase(cat)
-    end)
+    grouped =
+      Enum.group_by(maps, fn row ->
+        cat = row["category"]
+        if cat == "", do: "_other", else: String.downcase(cat)
+      end)
 
     ordered_maps =
       @api_category_order
@@ -159,7 +179,9 @@ defmodule WhaleChat.MapsDb do
         tail =
           buckets
           |> Enum.sort_by(fn {k, _} -> k end)
-          |> Enum.flat_map(fn {_k, bucket} -> Enum.sort_by(bucket, &String.downcase(&1["name"])) end)
+          |> Enum.flat_map(fn {_k, bucket} ->
+            Enum.sort_by(bucket, &String.downcase(&1["name"]))
+          end)
 
         acc ++ tail
       end)
@@ -186,8 +208,7 @@ defmodule WhaleChat.MapsDb do
          {:ok, path, map_name} <- sanitize_map(map, src),
          :ok <- write_file(path, content),
          {:ok, stat} <- File.stat(path) do
-      {:ok,
-       %{map: map_name, modified: mtime_unix(stat), bytes: stat.size || byte_size(content)}}
+      {:ok, %{map: map_name, modified: mtime_unix(stat), bytes: stat.size || byte_size(content)}}
     else
       {:error, _} = err -> err
       {:file_error, reason} -> {:error, {:io, reason}}
@@ -212,7 +233,9 @@ defmodule WhaleChat.MapsDb do
                   case write_file(file, updated) do
                     :ok ->
                       file_name = Path.basename(file)
-                      {[ %{file: file_name, replacements: count} | mods], total_replacements + count}
+
+                      {[%{file: file_name, replacements: count} | mods],
+                       total_replacements + count}
 
                     _ ->
                       {mods, total_replacements}
@@ -229,7 +252,12 @@ defmodule WhaleChat.MapsDb do
           end
         end)
 
-      {:ok, %{modified: Enum.reverse(modified), filesEdited: length(modified), totalReplacements: total}}
+      {:ok,
+       %{
+         modified: Enum.reverse(modified),
+         filesEdited: length(modified),
+         totalReplacements: total
+       }}
     end
   end
 
@@ -245,11 +273,12 @@ defmodule WhaleChat.MapsDb do
 
     map_meta = fetch_meta(map_names)
 
-    sections = []
-    |> maybe_add_server_configs(tf_cfg_dir)
-    |> maybe_add_mapcycles(tf_cfg_dir)
-    |> add_playercount_settings()
-    |> maybe_add_category_configs(map_meta)
+    sections =
+      []
+      |> maybe_add_server_configs(tf_cfg_dir)
+      |> maybe_add_mapcycles(tf_cfg_dir)
+      |> add_playercount_settings()
+      |> maybe_add_category_configs(map_meta)
 
     map_sections = build_map_sections(map_names, map_meta)
     sections ++ map_sections
@@ -269,6 +298,254 @@ defmodule WhaleChat.MapsDb do
           popularity: m.popularity
         }
     )
+  end
+
+  def map_detail_analytics do
+    rows = fetch_map_detail_rows(40)
+
+    %{
+      rows: rows,
+      top_sessions: fetch_session_extremes(:top, 8),
+      worst_sessions: fetch_session_extremes(:worst, 8),
+      weekday_hours: fetch_weekday_hour_performance(12),
+      first15_chart: fetch_map_curve_chart(rows, 15, 60, 6),
+      population_curve_chart: fetch_map_curve_chart(rows, 60, 300, 6),
+      vote_table_available: table_exists?(@vote_statistics_table)
+    }
+  end
+
+  defp fetch_map_detail_rows(limit) do
+    lim = max(1, min(limit, 100))
+
+    sessions =
+      query_rows("""
+      SELECT map_name,
+             MIN(gamemode) AS gamemode,
+             COUNT(*) AS sessions,
+             ROUND(AVG(avg_players), 2) AS avg_players,
+             MAX(peak_players) AS peak_players,
+             ROUND(SUM(player_seconds) / 3600, 1) AS player_hours,
+             SUM(joins) AS joins,
+             SUM(leaves) AS leaves
+      FROM #{@map_session_statistics_table}
+      WHERE peak_players > 0 AND duration >= 300
+      GROUP BY map_name
+      ORDER BY player_hours DESC, avg_players DESC
+      LIMIT #{lim}
+      """)
+
+    first15 =
+      query_rows("""
+      SELECT map_name,
+             ROUND(AVG(CASE WHEN map_elapsed_seconds BETWEEN 0 AND 899 THEN player_count END), 2) AS first15_avg,
+             ROUND(
+               COALESCE(AVG(CASE WHEN map_elapsed_seconds BETWEEN 600 AND 899 THEN player_count END), 0) -
+               COALESCE(AVG(CASE WHEN map_elapsed_seconds BETWEEN 0 AND 299 THEN player_count END), 0),
+               2
+             ) AS first15_growth
+      FROM #{@population_statistics_table}
+      WHERE map_elapsed_seconds BETWEEN 0 AND 899
+        AND player_count > 0
+      GROUP BY map_name
+      """)
+      |> Map.new(fn row -> {row.map_name, row} end)
+
+    best_slots =
+      query_rows("""
+      SELECT map_name,
+             weekday,
+             hour_of_day,
+             COUNT(*) AS sessions,
+             ROUND(AVG(avg_players), 2) AS avg_players
+      FROM #{@map_session_statistics_table}
+      WHERE peak_players > 0 AND duration >= 300
+      GROUP BY map_name, weekday, hour_of_day
+      ORDER BY map_name ASC, avg_players DESC, sessions DESC
+      """)
+      |> Enum.group_by(& &1.map_name)
+      |> Map.new(fn {map_name, slots} -> {map_name, List.first(slots)} end)
+
+    vote_pressure = fetch_vote_pressure()
+
+    Enum.map(sessions, fn row ->
+      first = Map.get(first15, row.map_name, %{})
+      best = Map.get(best_slots, row.map_name)
+      votes = Map.get(vote_pressure, row.map_name, %{})
+
+      avg_players = to_float(row.avg_players)
+      player_hours = to_float(row.player_hours)
+      first15_avg = to_float(Map.get(first, :first15_avg))
+      first15_growth = to_float(Map.get(first, :first15_growth))
+
+      %{
+        map_name: row.map_name || "",
+        gamemode: row.gamemode || "",
+        sessions: to_int(row.sessions),
+        avg_players: avg_players,
+        avg_players_display: format_float(avg_players, 1),
+        peak_players: to_int(row.peak_players),
+        player_hours: player_hours,
+        player_hours_display: format_float(player_hours, 1),
+        joins: to_int(row.joins),
+        leaves: to_int(row.leaves),
+        first15_avg: first15_avg,
+        first15_avg_display: format_float(first15_avg, 1),
+        first15_growth: first15_growth,
+        first15_growth_display: signed_float(first15_growth, 1),
+        best_slot: format_slot(best),
+        best_slot_avg_display: format_float(Map.get(best || %{}, :avg_players), 1),
+        nominations: to_int(Map.get(votes, :nominations)),
+        rtvs: to_int(Map.get(votes, :rtvs)),
+        vote_options: to_int(Map.get(votes, :vote_options)),
+        vote_wins: to_int(Map.get(votes, :vote_wins)),
+        eligibility_failures: to_int(Map.get(votes, :eligibility_failures))
+      }
+    end)
+  end
+
+  defp fetch_session_extremes(kind, limit) do
+    lim = max(1, min(limit, 25))
+
+    order =
+      case kind do
+        :worst -> "avg_players ASC, peak_players ASC, duration DESC"
+        _ -> "avg_players DESC, peak_players DESC, duration DESC"
+      end
+
+    query_rows("""
+    SELECT map_name,
+           map_session_id,
+           started_at,
+           duration,
+           peak_players,
+           avg_players,
+           player_seconds,
+           joins,
+           leaves,
+           end_reason
+    FROM #{@map_session_statistics_table}
+    WHERE peak_players > 0 AND duration >= 600
+    ORDER BY #{order}
+    LIMIT #{lim}
+    """)
+    |> Enum.map(fn row ->
+      avg_players = to_float(row.avg_players)
+
+      %{
+        map_name: row.map_name || "",
+        map_session_id: row.map_session_id || "",
+        started_at: to_int(row.started_at),
+        started_display: format_date(to_int(row.started_at)),
+        duration_display: format_duration(to_int(row.duration)),
+        peak_players: to_int(row.peak_players),
+        avg_players: avg_players,
+        avg_players_display: format_float(avg_players, 1),
+        player_hours_display: format_float(to_float(row.player_seconds) / 3600.0, 1),
+        joins: to_int(row.joins),
+        leaves: to_int(row.leaves),
+        end_reason: row.end_reason || ""
+      }
+    end)
+  end
+
+  defp fetch_weekday_hour_performance(limit) do
+    lim = max(1, min(limit, 48))
+
+    query_rows("""
+    SELECT weekday,
+           hour_of_day,
+           COUNT(*) AS sessions,
+           ROUND(AVG(avg_players), 2) AS avg_players,
+           MAX(peak_players) AS peak_players,
+           ROUND(SUM(player_seconds) / 3600, 1) AS player_hours
+    FROM #{@map_session_statistics_table}
+    WHERE peak_players > 0 AND duration >= 600
+    GROUP BY weekday, hour_of_day
+    ORDER BY avg_players DESC, sessions DESC
+    LIMIT #{lim}
+    """)
+    |> Enum.map(fn row ->
+      %{
+        slot: format_slot(row),
+        sessions: to_int(row.sessions),
+        avg_players_display: format_float(row.avg_players, 1),
+        peak_players: to_int(row.peak_players),
+        player_hours_display: format_float(row.player_hours, 1)
+      }
+    end)
+  end
+
+  defp fetch_map_curve_chart(rows, minutes, bucket_seconds, limit) do
+    map_names =
+      rows
+      |> Enum.map(& &1.map_name)
+      |> Enum.reject(&(&1 == ""))
+      |> Enum.take(limit)
+
+    bucket_count = max(1, div(minutes * 60, bucket_seconds))
+    labels = for bucket <- 0..(bucket_count - 1), do: "#{div(bucket * bucket_seconds, 60)}m"
+
+    if map_names == [] do
+      %{"labels" => labels, "series" => []}
+    else
+      rows =
+        query_rows("""
+        SELECT map_name,
+               FLOOR(map_elapsed_seconds / #{bucket_seconds}) AS bucket,
+               ROUND(AVG(player_count), 2) AS avg_players
+        FROM #{@population_statistics_table}
+        WHERE map_name IN (#{sql_string_list(map_names)})
+          AND map_elapsed_seconds >= 0
+          AND map_elapsed_seconds < #{minutes * 60}
+          AND player_count > 0
+        GROUP BY map_name, bucket
+        ORDER BY map_name ASC, bucket ASC
+        """)
+
+      values =
+        rows
+        |> Enum.group_by(& &1.map_name)
+        |> Map.new(fn {map_name, points} ->
+          point_map =
+            Map.new(points, fn point -> {to_int(point.bucket), to_float(point.avg_players)} end)
+
+          {map_name, point_map}
+        end)
+
+      series =
+        Enum.map(map_names, fn map_name ->
+          %{
+            "label" => map_name,
+            "data" =>
+              for(
+                bucket <- 0..(bucket_count - 1),
+                do: Map.get(Map.get(values, map_name, %{}), bucket)
+              )
+          }
+        end)
+
+      %{"labels" => labels, "series" => series}
+    end
+  end
+
+  defp fetch_vote_pressure do
+    if table_exists?(@vote_statistics_table) do
+      query_rows("""
+      SELECT map_name,
+             SUM(event_type = 'nomination') AS nominations,
+             SUM(event_type = 'rtv') AS rtvs,
+             SUM(event_type = 'vote_option') AS vote_options,
+             SUM(event_type = 'vote_winner') AS vote_wins,
+             SUM(event_type = 'eligibility_failure') AS eligibility_failures
+      FROM #{@vote_statistics_table}
+      WHERE created_at >= UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 30 DAY))
+        AND map_name <> ''
+      GROUP BY map_name
+      """)
+      |> Map.new(fn row -> {row.map_name, row} end)
+    else
+      %{}
+    end
   end
 
   def popularity_chart_data, do: popularity_chart_bundle().chart
@@ -356,7 +633,8 @@ defmodule WhaleChat.MapsDb do
       Map.new(windows, fn {k, _} -> {k, :array.new(hours_per_range, default: 0)} end)
 
     {sums, counts} =
-      Enum.reduce(entries, {sums, counts}, fn %{sampled_at: ts, player_count: count}, {s_acc, c_acc} ->
+      Enum.reduce(entries, {sums, counts}, fn %{sampled_at: ts, player_count: count},
+                                              {s_acc, c_acc} ->
         if ts <= 0 or ts < earlier_start_ts or ts >= anchor_ts do
           {s_acc, c_acc}
         else
@@ -374,8 +652,16 @@ defmodule WhaleChat.MapsDb do
                 count_arr = Map.fetch!(c_acc, window_key)
 
                 {
-                  Map.put(s_acc, window_key, :array.set(slot, :array.get(slot, sum_arr) + count, sum_arr)),
-                  Map.put(c_acc, window_key, :array.set(slot, :array.get(slot, count_arr) + 1, count_arr))
+                  Map.put(
+                    s_acc,
+                    window_key,
+                    :array.set(slot, :array.get(slot, sum_arr) + count, sum_arr)
+                  ),
+                  Map.put(
+                    c_acc,
+                    window_key,
+                    :array.set(slot, :array.get(slot, count_arr) + 1, count_arr)
+                  )
                 }
               end
           end
@@ -426,7 +712,8 @@ defmodule WhaleChat.MapsDb do
 
   defp build_chart_from_rows(_rows, _now), do: %{chart: empty_chart(), active_hours: 0}
 
-  defp empty_chart, do: %{"labels" => [], "current" => [], "previous" => [], "earlier" => [], "restart_ts" => []}
+  defp empty_chart,
+    do: %{"labels" => [], "current" => [], "previous" => [], "earlier" => [], "restart_ts" => []}
 
   defp find_window(ts, windows) do
     Enum.find_value(windows, fn {key, %{start: start_ts, end: end_ts}} ->
@@ -451,8 +738,12 @@ defmodule WhaleChat.MapsDb do
     blend = max(0.0, min(1.0, blend))
 
     cond do
-      count == 0 -> values
-      blend <= 0.0 -> values
+      count == 0 ->
+        values
+
+      blend <= 0.0 ->
+        values
+
       true ->
         Enum.with_index(values)
         |> Enum.map(fn {current, i} ->
@@ -470,7 +761,9 @@ defmodule WhaleChat.MapsDb do
     count = length(values)
 
     cond do
-      count == 0 -> values
+      count == 0 ->
+        values
+
       shift > 0 ->
         s = min(shift, count)
         List.duplicate(0.0, s) ++ Enum.take(values, count - s)
@@ -517,17 +810,54 @@ defmodule WhaleChat.MapsDb do
       keys = Map.keys(series)
 
       {new_labels, new_series} =
-        compress_idle_loop(labels, series, keys, current, count, chunk_size, threshold, 0, [], Map.new(keys, &{&1, []}))
+        compress_idle_loop(
+          labels,
+          series,
+          keys,
+          current,
+          count,
+          chunk_size,
+          threshold,
+          0,
+          [],
+          Map.new(keys, &{&1, []})
+        )
 
-      %{labels: Enum.reverse(new_labels), series: Map.new(new_series, fn {k, v} -> {k, Enum.reverse(v)} end)}
+      %{
+        labels: Enum.reverse(new_labels),
+        series: Map.new(new_series, fn {k, v} -> {k, Enum.reverse(v)} end)
+      }
     end
   end
 
-  defp compress_idle_loop(_labels, _series, _keys, _current, count, _chunk_size, _threshold, i, acc_labels, acc_series) when i >= count do
+  defp compress_idle_loop(
+         _labels,
+         _series,
+         _keys,
+         _current,
+         count,
+         _chunk_size,
+         _threshold,
+         i,
+         acc_labels,
+         acc_series
+       )
+       when i >= count do
     {acc_labels, acc_series}
   end
 
-  defp compress_idle_loop(labels, series, keys, current, count, chunk_size, threshold, i, acc_labels, acc_series) do
+  defp compress_idle_loop(
+         labels,
+         series,
+         keys,
+         current,
+         count,
+         chunk_size,
+         threshold,
+         i,
+         acc_labels,
+         acc_series
+       ) do
     value = abs(Enum.at(current, i) || 0.0)
 
     if value <= threshold do
@@ -540,7 +870,18 @@ defmodule WhaleChat.MapsDb do
             add_point(labels, series, keys, idx, lacc, sacc)
           end)
 
-        compress_idle_loop(labels, series, keys, current, count, chunk_size, threshold, i + run_len, labels2, series2)
+        compress_idle_loop(
+          labels,
+          series,
+          keys,
+          current,
+          count,
+          chunk_size,
+          threshold,
+          i + run_len,
+          labels2,
+          series2
+        )
       else
         chunks = max(1, ceil_div(run_len, chunk_size))
 
@@ -569,11 +910,34 @@ defmodule WhaleChat.MapsDb do
             end
           end)
 
-        compress_idle_loop(labels, series, keys, current, count, chunk_size, threshold, i + run_len, labels2, series2)
+        compress_idle_loop(
+          labels,
+          series,
+          keys,
+          current,
+          count,
+          chunk_size,
+          threshold,
+          i + run_len,
+          labels2,
+          series2
+        )
       end
     else
       {labels2, series2} = add_point(labels, series, keys, i, acc_labels, acc_series)
-      compress_idle_loop(labels, series, keys, current, count, chunk_size, threshold, i + 1, labels2, series2)
+
+      compress_idle_loop(
+        labels,
+        series,
+        keys,
+        current,
+        count,
+        chunk_size,
+        threshold,
+        i + 1,
+        labels2,
+        series2
+      )
     end
   end
 
@@ -664,10 +1028,19 @@ defmodule WhaleChat.MapsDb do
     sub_sections =
       Enum.reduce(@sub_category_order, {[], sub_buckets}, fn sub_key, {acc, buckets} ->
         case Map.pop(buckets, sub_key) do
-          {nil, rest} -> {acc, rest}
+          {nil, rest} ->
+            {acc, rest}
+
           {entries, rest} ->
             sorted = Enum.sort_by(entries, &String.downcase(&1.name))
-            section = %{label: @sub_category_label_map[sub_key], slug: "subcat-" <> sub_key, entries: sorted, open: false}
+
+            section = %{
+              label: @sub_category_label_map[sub_key],
+              slug: "subcat-" <> sub_key,
+              entries: sorted,
+              open: false
+            }
+
             {acc ++ [section], rest}
         end
       end)
@@ -676,10 +1049,19 @@ defmodule WhaleChat.MapsDb do
     ordered_cat_sections =
       Enum.reduce(@page_category_order, {[], cat_buckets}, fn cat_key, {acc, buckets} ->
         case Map.pop(buckets, cat_key) do
-          {nil, rest} -> {acc, rest}
+          {nil, rest} ->
+            {acc, rest}
+
           {entries, rest} ->
             sorted = Enum.sort_by(entries, &String.downcase(&1.name))
-            section = %{label: format_category_label(cat_key), slug: cat_key, entries: sorted, open: false}
+
+            section = %{
+              label: format_category_label(cat_key),
+              slug: cat_key,
+              entries: sorted,
+              open: false
+            }
+
             {acc ++ [section], rest}
         end
       end)
@@ -688,7 +1070,12 @@ defmodule WhaleChat.MapsDb do
           rest
           |> Enum.sort_by(fn {k, _} -> k end)
           |> Enum.map(fn {bucket_key, entries} ->
-            %{label: format_category_label(bucket_key), slug: bucket_key, entries: Enum.sort_by(entries, &String.downcase(&1.name)), open: false}
+            %{
+              label: format_category_label(bucket_key),
+              slug: bucket_key,
+              entries: Enum.sort_by(entries, &String.downcase(&1.name)),
+              open: false
+            }
           end)
 
         acc ++ extra
@@ -699,17 +1086,33 @@ defmodule WhaleChat.MapsDb do
 
   defp maybe_add_server_configs(sections, tf_cfg_dir) do
     entries =
-      list_tfcfg_files(tf_cfg_dir, fn _base, lower -> String.contains?(lower, "server") && not String.contains?(lower, "mapcycle") end, "server", "server", "tfcfg")
+      list_tfcfg_files(
+        tf_cfg_dir,
+        fn _base, lower ->
+          String.contains?(lower, "server") && not String.contains?(lower, "mapcycle")
+        end,
+        "server",
+        "server",
+        "tfcfg"
+      )
 
     if entries == [] do
       sections
     else
-      sections ++ [%{label: "Server configs", slug: "server-configs", entries: entries, open: false}]
+      sections ++
+        [%{label: "Server configs", slug: "server-configs", entries: entries, open: false}]
     end
   end
 
   defp maybe_add_mapcycles(sections, tf_cfg_dir) do
-    entries = list_tfcfg_files(tf_cfg_dir, fn _base, lower -> String.contains?(lower, "mapcycle") end, "mapcycle", "mapcycle", "tfcfg")
+    entries =
+      list_tfcfg_files(
+        tf_cfg_dir,
+        fn _base, lower -> String.contains?(lower, "mapcycle") end,
+        "mapcycle",
+        "mapcycle",
+        "tfcfg"
+      )
 
     if entries == [] do
       sections
@@ -726,8 +1129,20 @@ defmodule WhaleChat.MapsDb do
           slug: "playercount-settings",
           open: false,
           entries: [
-            %{name: "d_highpop", display: "High Population", type: "playercount", category: "playercount", source: "mapsdb"},
-            %{name: "d_lowpop", display: "Low Population", type: "playercount", category: "playercount", source: "mapsdb"}
+            %{
+              name: "d_highpop",
+              display: "High Population",
+              type: "playercount",
+              category: "playercount",
+              source: "mapsdb"
+            },
+            %{
+              name: "d_lowpop",
+              display: "Low Population",
+              type: "playercount",
+              category: "playercount",
+              source: "mapsdb"
+            }
           ]
         }
       ]
@@ -759,7 +1174,8 @@ defmodule WhaleChat.MapsDb do
     if entries == [] do
       sections
     else
-      sections ++ [%{label: "Category configs", slug: "category-configs", entries: entries, open: false}]
+      sections ++
+        [%{label: "Category configs", slug: "category-configs", entries: entries, open: false}]
     end
   end
 
@@ -772,7 +1188,13 @@ defmodule WhaleChat.MapsDb do
         String.ends_with?(lower, ".cfg") and predicate.(Path.rootname(file), lower)
       end)
       |> Enum.map(fn file ->
-        %{name: Path.rootname(file), display: Path.rootname(file), type: type, category: category, source: source}
+        %{
+          name: Path.rootname(file),
+          display: Path.rootname(file),
+          type: type,
+          category: category,
+          source: source
+        }
       end)
       |> Enum.sort_by(&String.downcase(&1.name))
     else
@@ -828,6 +1250,89 @@ defmodule WhaleChat.MapsDb do
     end
   end
 
+  defp query_rows(sql) do
+    case Repo.query(sql) do
+      {:ok, %{columns: columns, rows: rows}} ->
+        Enum.map(rows, fn row ->
+          columns
+          |> Enum.zip(row)
+          |> Map.new(fn {key, value} -> {String.to_atom(key), value} end)
+        end)
+
+      _ ->
+        []
+    end
+  rescue
+    _ -> []
+  end
+
+  defp table_exists?(table) do
+    case Repo.query(
+           "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '#{table}'"
+         ) do
+      {:ok, %{rows: [[count]]}} -> to_int(count) > 0
+      _ -> false
+    end
+  rescue
+    _ -> false
+  end
+
+  defp sql_string_list(values) do
+    values
+    |> Enum.map(fn value -> "'" <> String.replace(to_string(value), "'", "''") <> "'" end)
+    |> Enum.join(",")
+  end
+
+  defp format_slot(nil), do: "n/a"
+
+  defp format_slot(%{} = row) do
+    weekday = row |> Map.get(:weekday) |> to_int()
+    hour = row |> Map.get(:hour_of_day) |> to_int()
+    "#{weekday_label(weekday)} #{pad2(hour)}:00"
+  end
+
+  defp weekday_label(day) do
+    Enum.at(~w(Sun Mon Tue Wed Thu Fri Sat), rem(max(day, 0), 7), "n/a")
+  end
+
+  defp pad2(value) do
+    value
+    |> to_int()
+    |> Integer.to_string()
+    |> String.pad_leading(2, "0")
+  end
+
+  defp format_duration(seconds) do
+    minutes = max(0, div(seconds, 60))
+
+    cond do
+      minutes >= 60 -> "#{div(minutes, 60)}h #{rem(minutes, 60)}m"
+      true -> "#{minutes}m"
+    end
+  end
+
+  defp format_date(0), do: "n/a"
+
+  defp format_date(unix_seconds) do
+    unix_seconds
+    |> DateTime.from_unix!()
+    |> Calendar.strftime("%m/%d %H:%M UTC")
+  rescue
+    _ -> "n/a"
+  end
+
+  defp signed_float(value, decimals) do
+    value = to_float(value)
+    sign = if value > 0.0, do: "+", else: ""
+    sign <> format_float(value, decimals)
+  end
+
+  defp format_float(value, decimals) do
+    value
+    |> to_float()
+    |> :erlang.float_to_binary(decimals: decimals)
+  end
+
   defp mtime_unix(%File.Stat{mtime: {{y, mo, d}, {h, mi, s}}}) do
     {:ok, ndt} = NaiveDateTime.new(y, mo, d, h, mi, s)
     DateTime.from_naive!(ndt, "Etc/UTC") |> DateTime.to_unix()
@@ -846,6 +1351,19 @@ defmodule WhaleChat.MapsDb do
   end
 
   defp to_int(_), do: 0
+
+  defp to_float(%Decimal{} = v), do: Decimal.to_float(v)
+  defp to_float(v) when is_integer(v), do: v * 1.0
+  defp to_float(v) when is_float(v), do: v
+
+  defp to_float(v) when is_binary(v) do
+    case Float.parse(v) do
+      {f, _} -> f
+      :error -> 0.0
+    end
+  end
+
+  defp to_float(_), do: 0.0
 
   defp truthy?(v) when v in [true, 1, "1", "true", "yes", "on"], do: true
   defp truthy?(_), do: false
