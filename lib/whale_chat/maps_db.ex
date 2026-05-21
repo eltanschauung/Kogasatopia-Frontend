@@ -1507,6 +1507,7 @@ defmodule WhaleChat.MapsDb do
 
   defp to_int(v) when is_integer(v), do: v
   defp to_int(v) when is_float(v), do: trunc(v)
+  defp to_int(%Decimal{} = v), do: v |> Decimal.to_integer()
 
   defp to_int(v) when is_binary(v) do
     case Integer.parse(v) do
