@@ -377,9 +377,6 @@
                 <div class="map-analytics-band map-analytics-chart">
                   <div class="map-analytics-header">
                     <h3 class="map-analytics-title">Population Curve</h3>
-                    <span class="map-analytics-sub">
-                      Average first hour by five-minute bucket
-                    </span>
                   </div>
                   <div class="map-analytics-chart-frame">
                     <canvas id="map-population-curve"></canvas>
@@ -388,7 +385,6 @@
                 <div class="map-analytics-band map-analytics-chart">
                   <div class="map-analytics-header">
                     <h3 class="map-analytics-title">First 15 Minutes</h3>
-                    <span class="map-analytics-sub">Average minute-by-minute opening curve</span>
                   </div>
                   <div class="map-analytics-chart-frame">
                     <canvas id="map-first15-curve"></canvas>
@@ -408,7 +404,7 @@
                         <div>
                           <div class="map-analytics-name">{session.map_name}</div>
                           <div class="map-analytics-meta">
-                            {session.started_display} · {session.duration_display} · {session.end_reason}
+                            {session.started_display} · {session.duration_display}
                           </div>
                         </div>
                         <div class="map-analytics-meta">
@@ -421,9 +417,6 @@
                 <div class="map-analytics-band">
                   <div class="map-analytics-header">
                     <h3 class="map-analytics-title">Worst Sessions</h3>
-                    <span class="map-analytics-sub">
-                      Eligible sessions with the lowest average population
-                    </span>
                   </div>
                   <ol class="map-analytics-list">
                     <%= for session <- analytics[:worst_sessions] || [] do %>
@@ -431,7 +424,7 @@
                         <div>
                           <div class="map-analytics-name">{session.map_name}</div>
                           <div class="map-analytics-meta">
-                            {session.started_display} · {session.duration_display} · {session.end_reason}
+                            {session.started_display} · {session.duration_display}
                           </div>
                         </div>
                         <div class="map-analytics-meta">
