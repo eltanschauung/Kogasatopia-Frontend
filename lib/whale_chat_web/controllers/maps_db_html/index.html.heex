@@ -149,6 +149,12 @@
       .map-analytics-meta { color:var(--text-muted, #95a5b7); font-size:.82rem; }
       .map-analytics-chart-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:.75rem; }
       .map-analytics-chart { min-height:280px; }
+      .map-score-badge { display:inline-flex; align-items:center; justify-content:center; min-width:64px; padding:.16rem .45rem; border-radius:999px; border:1px solid rgba(127,200,255,.28); background:rgba(127,200,255,.08); color:#e6f4ff; font-size:.78rem; font-weight:650; text-transform:uppercase; }
+      .map-score-badge[data-category="hold"] { border-color:rgba(151,225,156,.35); background:rgba(151,225,156,.08); color:#dff8df; }
+      .map-score-badge[data-category="grow"] { border-color:rgba(127,200,255,.35); background:rgba(127,200,255,.08); color:#e6f4ff; }
+      .map-score-badge[data-category="seed"] { border-color:rgba(246,235,122,.35); background:rgba(246,235,122,.08); color:#f6ebbd; }
+      .map-score-badge[data-category="risky"] { border-color:rgba(255,143,163,.4); background:rgba(255,143,163,.08); color:#ffdbe2; }
+      .map-score-badge[data-category="novelty"] { border-color:rgba(202,166,255,.35); background:rgba(202,166,255,.08); color:#eadcff; }
       @media (max-width: 960px) {
         .mapsdb-layout { grid-template-columns:1fr; gap: .7rem; }
         .map-panel, .map-editor { padding: .65rem; gap: .55rem; border-radius: 12px; }
@@ -372,6 +378,51 @@
                     Vote pressure columns are ready for the vote statistics table and will populate after native vote events are logged.
                   </p>
                 <% end %>
+              </div>
+
+              <div class="map-analytics-band">
+                <div class="map-analytics-header">
+                  <h3 class="map-analytics-title">Map Scoring Model</h3>
+                  <span class="map-analytics-sub">
+                    Normalized 0-100 seed, grow, hold, risk, and novelty signals
+                  </span>
+                </div>
+                <div class="map-analytics-scroll">
+                  <table class="map-analytics-table">
+                    <thead>
+                      <tr>
+                        <th>Map</th>
+                        <th>Role</th>
+                        <th class="numeric">Score</th>
+                        <th class="numeric">Seed</th>
+                        <th class="numeric">Grow</th>
+                        <th class="numeric">Hold</th>
+                        <th class="numeric">Risk</th>
+                        <th class="numeric">Novelty</th>
+                        <th>Evidence</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%= for score <- Enum.take(analytics[:scores] || [], 30) do %>
+                        <tr>
+                          <td><span class="map-analytics-name">{score.map_name}</span></td>
+                          <td>
+                            <span class="map-score-badge" data-category={score.category}>
+                              {score.category}
+                            </span>
+                          </td>
+                          <td class="numeric">{score.score_display}</td>
+                          <td class="numeric">{score.seed_score_display}</td>
+                          <td class="numeric">{score.grow_score_display}</td>
+                          <td class="numeric">{score.hold_score_display}</td>
+                          <td class="numeric">{score.risk_score_display}</td>
+                          <td class="numeric">{score.novelty_score_display}</td>
+                          <td><span class="map-analytics-meta">{score.evidence}</span></td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <div class="map-analytics-chart-grid">
