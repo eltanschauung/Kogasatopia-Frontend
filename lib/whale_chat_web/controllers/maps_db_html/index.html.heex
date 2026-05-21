@@ -402,7 +402,13 @@
                         <div>
                           <div class="map-analytics-name">{session.map_name}</div>
                           <div class="map-analytics-meta">
-                            {session.started_display} · {session.duration_display}
+                            <span
+                              data-local-time={session.started_at}
+                              data-time-format="short-datetime"
+                            >
+                              {session.started_display}
+                            </span>
+                            · {session.duration_display}
                           </div>
                         </div>
                         <div class="map-analytics-meta">
@@ -602,32 +608,25 @@
         const hoursPerDay = 24;
         let activeRestartIndexes = [];
 
-        const estLabelFmt = new Intl.DateTimeFormat('en-US', {
-          timeZone: 'America/New_York',
+        const time = window.KogasaTime;
+        const serverTimeZone = time?.serverTimeZone || 'America/New_York';
+        const userTimeZone = time?.userTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || serverTimeZone;
+        const localLabelFmt = new Intl.DateTimeFormat(undefined, {
+          timeZone: userTimeZone,
           month: 'short',
           day: 'numeric',
           hour: 'numeric',
           hour12: false
         });
 
-        const formatEstLabel = (ts) => estLabelFmt.format(new Date(Number(ts) * 1000));
-        const estHourFmt = new Intl.DateTimeFormat('en-US', {
-          timeZone: 'America/New_York',
+        const formatLocalLabel = (ts) => localLabelFmt.format(new Date(Number(ts) * 1000));
+        const serverHourFmt = new Intl.DateTimeFormat('en-US', {
+          timeZone: serverTimeZone,
           hour: 'numeric',
           hour12: false
         });
-        const estDateTimeFmt = new Intl.DateTimeFormat('en-US', {
-          timeZone: 'America/New_York',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false
-        });
-        const isSixAmEt = (ts) => estHourFmt.format(new Date(Number(ts) * 1000)) === '06';
-        const formatEstDateTime = (unixSeconds) => estDateTimeFmt.format(new Date(Number(unixSeconds || 0) * 1000)) + ' ET';
+        const isSixAmServerTime = (ts) => serverHourFmt.format(new Date(Number(ts) * 1000)) === '06';
+        const localTimeLabel = time?.timeZoneLabel?.() || (userTimeZone === serverTimeZone ? 'ET' : userTimeZone);
 
         const sliceChartData = (days) => {
           const points = Math.max(1, days * hoursPerDay);
@@ -638,7 +637,7 @@
           const earlier = baseEarlier.slice(start);
           const restartIndexes = [];
           timestamps.forEach((ts, idx) => {
-            if (isSixAmEt(ts) || restartTimestamps.has(ts)) restartIndexes.push(idx);
+            if (isSixAmServerTime(ts) || restartTimestamps.has(ts)) restartIndexes.push(idx);
           });
           return { timestamps, current, previous, earlier, restartIndexes };
         };
@@ -687,11 +686,11 @@
           if (!chartInstance) return;
           const slice = sliceChartData(days);
           activeTimestamps = slice.timestamps;
-          activeLabels = activeTimestamps.map(formatEstLabel);
+          activeLabels = activeTimestamps.map(formatLocalLabel);
           activeRestartIndexes = slice.restartIndexes || [];
           chartInstance.data.labels = activeLabels;
           chartInstance.data.datasets = buildDatasets(slice);
-          chartInstance.options.scales.x.title.text = `Date & Hour (Eastern Time, last ${days} days)`;
+          chartInstance.options.scales.x.title.text = `Date & Hour (${localTimeLabel}, last ${days} days)`;
           chartInstance.update();
         };
 
@@ -699,7 +698,7 @@
           if (!baseTimestamps.length || typeof Chart === 'undefined') return;
           const slice = sliceChartData(currentRangeDays);
           activeTimestamps = slice.timestamps;
-          activeLabels = activeTimestamps.map(formatEstLabel);
+          activeLabels = activeTimestamps.map(formatLocalLabel);
           activeRestartIndexes = slice.restartIndexes || [];
           canvas.style.display = '';
           if (placeholder) placeholder.style.display = 'none';
@@ -713,7 +712,7 @@
               interaction: { mode: 'index', intersect: false },
               scales: {
                 y: { beginAtZero: true, max: 32, title: { display: true, text: 'Playercount' }, ticks: { stepSize: 8 } },
-                x: { title: { display: true, text: `Date & Hour (Eastern Time, last ${currentRangeDays} days)` }, ticks: { maxTicksLimit: 16 } }
+                x: { title: { display: true, text: `Date & Hour (${localTimeLabel}, last ${currentRangeDays} days)` }, ticks: { maxTicksLimit: 16 } }
               },
               plugins: {
                 legend: { display: true, position: 'top' },
@@ -721,7 +720,7 @@
                   callbacks: {
                     label: (ctx) => {
                       const idx = ctx.dataIndex ?? 0;
-                      const labelText = activeTimestamps[idx] !== undefined ? formatEstLabel(activeTimestamps[idx]) : '';
+                      const labelText = activeTimestamps[idx] !== undefined ? formatLocalLabel(activeTimestamps[idx]) : '';
                       return `${ctx.dataset.label}: ${Number(ctx.parsed.y || 0).toFixed(1)} players @ ${labelText}`;
                     }
                   }
@@ -847,17 +846,13 @@
 
           let activeMap = null;
           let activeSource = 'mapsdb';
-          const estDateTimeFmt = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'America/New_York',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-          });
-          const formatEstDateTime = (unixSeconds) => estDateTimeFmt.format(new Date(Number(unixSeconds || 0) * 1000)) + ' ET';
+          const time = window.KogasaTime;
+          const userTimeZone = time?.userTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+          const formatLocalDateTime = (unixSeconds) => {
+            const options = { timeZone: userTimeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            if (time?.formatUnix) return time.formatUnix(unixSeconds, options);
+            return new Intl.DateTimeFormat(undefined, options).format(new Date(Number(unixSeconds || 0) * 1000));
+          };
 
           const setStatus = (message, isError = false) => {
             if (!statusEl) return;
@@ -910,7 +905,7 @@
               activeMap = name;
               activeSource = source;
               highlightSelection(name, source);
-              setStatus('Last updated ' + formatEstDateTime(payload.modified || 0));
+              setStatus('Last updated ' + formatLocalDateTime(payload.modified || 0));
               setButtonsEnabled(true);
             } catch (err) {
               console.error(err);
@@ -932,7 +927,7 @@
               });
               const payload = await res.json();
               if (!res.ok) throw new Error(payload.error || ('Save failed (' + res.status + ')'));
-              setStatus('Saved at ' + formatEstDateTime(payload.modified || 0));
+              setStatus('Saved at ' + formatLocalDateTime(payload.modified || 0));
             } catch (err) {
               console.error(err);
               setStatus('Error: ' + err.message, true);

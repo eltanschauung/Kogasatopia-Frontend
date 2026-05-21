@@ -653,8 +653,10 @@
       }
       function hhmm(ts) {
         if (!ts) return '';
-        const d = new Date(Number(ts) * 1000);
-        return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        if (window.KogasaTime?.formatUnix) {
+          return window.KogasaTime.formatUnix(ts, {hour:'2-digit', minute:'2-digit'});
+        }
+        return new Date(Number(ts) * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       }
 
       function formatChatAge(diffSeconds) {

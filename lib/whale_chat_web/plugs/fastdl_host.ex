@@ -132,7 +132,7 @@ defmodule WhaleChatWeb.Plugs.FastdlHost do
       Plug.HTML.html_escape_to_iodata(request_path),
       "</title></head><body><h1>Index of ",
       Plug.HTML.html_escape_to_iodata(request_path),
-      "</h1><table><tr><th>Name</th><th>Last modified</th><th>Size</th></tr>",
+      "</h1><table><tr><th>Name</th><th>Last modified (ET)</th><th>Size</th></tr>",
       parent_row(request_path),
       rows,
       "</table></body></html>"
@@ -187,7 +187,7 @@ defmodule WhaleChatWeb.Plugs.FastdlHost do
   end
 
   defp format_mtime({{year, month, day}, {hour, minute, _second}}) do
-    :io_lib.format("~4..0B-~2..0B-~2..0B ~2..0B:~2..0B", [year, month, day, hour, minute])
+    :io_lib.format("~4..0B-~2..0B-~2..0B ~2..0B:~2..0B ET", [year, month, day, hour, minute])
     |> IO.iodata_to_binary()
   end
 

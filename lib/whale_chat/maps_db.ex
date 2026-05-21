@@ -6,6 +6,7 @@ defmodule WhaleChat.MapsDb do
   alias WhaleChat.MapsDb.MapMeta
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.Repo
+  alias WhaleChat.TimeDisplay
 
   @gamemode_names ~w(arena koth payload payloadrace ctf 5cp adcp tc medieval pd tr dm ultiduo rd pass mvm kotf dom default)
   @page_gamemode_names ~w(arena koth payload payloadrace ctf 5cp adcp tc medieval pd tr dm ultiduo rd pass mvm kotf dom symmetrical asymmetrical default)
@@ -695,7 +696,7 @@ defmodule WhaleChat.MapsDb do
       end)
 
     labels = for i <- 0..(hours_per_range - 1), do: current_start_ts + i * 3600
-    restart_ts = Enum.filter(labels, fn ts -> hour_of_day_utc(ts) == 6 end)
+    restart_ts = Enum.filter(labels, fn ts -> TimeDisplay.server_hour(ts) == 6 end)
 
     series =
       for key <- ["current", "previous", "earlier"], into: %{} do
@@ -983,12 +984,6 @@ defmodule WhaleChat.MapsDb do
     Enum.reduce_while(start_idx..(count - 1), 0, fn idx, acc ->
       if abs(Enum.at(current, idx) || 0.0) <= threshold, do: {:cont, acc + 1}, else: {:halt, acc}
     end)
-  end
-
-  defp hour_of_day_utc(ts) do
-    ts
-    |> DateTime.from_unix!()
-    |> Map.get(:hour)
   end
 
   defp ceil_div(a, b), do: div(a + b - 1, b)
@@ -1314,7 +1309,7 @@ defmodule WhaleChat.MapsDb do
   defp format_slot(%{} = row) do
     weekday = row |> Map.get(:weekday) |> to_int()
     hour = row |> Map.get(:hour_of_day) |> to_int()
-    "#{weekday_label(weekday)} #{pad2(hour)}:00"
+    "#{weekday_label(weekday)} #{pad2(hour)}:00 ET"
   end
 
   defp weekday_label(day) do
@@ -1340,11 +1335,7 @@ defmodule WhaleChat.MapsDb do
   defp format_date(0), do: "n/a"
 
   defp format_date(unix_seconds) do
-    unix_seconds
-    |> DateTime.from_unix!()
-    |> Calendar.strftime("%m/%d %H:%M UTC")
-  rescue
-    _ -> "n/a"
+    TimeDisplay.format_server_datetime(unix_seconds)
   end
 
   defp signed_float(value, decimals) do
@@ -1361,7 +1352,7 @@ defmodule WhaleChat.MapsDb do
 
   defp mtime_unix(%File.Stat{mtime: {{y, mo, d}, {h, mi, s}}}) do
     {:ok, ndt} = NaiveDateTime.new(y, mo, d, h, mi, s)
-    DateTime.from_naive!(ndt, "Etc/UTC") |> DateTime.to_unix()
+    TimeDisplay.server_naive_to_unix(ndt)
   end
 
   defp mtime_unix(%File.Stat{}), do: System.system_time(:second)

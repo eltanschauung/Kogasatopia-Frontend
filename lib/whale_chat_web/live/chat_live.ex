@@ -2,6 +2,7 @@ defmodule WhaleChatWeb.ChatLive do
   use WhaleChatWeb, :live_view
 
   alias WhaleChat.Chat
+  alias WhaleChat.TimeDisplay
   @poll_ms 4_000
 
   @impl true
@@ -167,7 +168,7 @@ defmodule WhaleChatWeb.ChatLive do
                   <div class="chat-content">
                     <div class="chat-header">
                       <.colored text={msg.name} class="chat-name" />
-                      <span class="chat-timestamp">{format_time(msg.created_at)}</span>
+                      <span class="chat-timestamp" data-local-time={msg.created_at} data-time-format="time">{format_time(msg.created_at)}</span>
                     </div>
                     <div class="chat-text">
                       <.colored text={msg.message} />
@@ -213,9 +214,9 @@ defmodule WhaleChatWeb.ChatLive do
   defp format_time(nil), do: ""
 
   defp format_time(seconds) when is_integer(seconds) do
-    case DateTime.from_unix(seconds) do
-      {:ok, dt} -> Calendar.strftime(dt, "%H:%M")
-      _ -> ""
+    case TimeDisplay.format_server_time(seconds) do
+      "n/a" -> ""
+      formatted -> formatted
     end
   end
 

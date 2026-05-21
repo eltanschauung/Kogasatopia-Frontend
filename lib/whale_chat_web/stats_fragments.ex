@@ -1,6 +1,8 @@
 defmodule WhaleChatWeb.StatsFragments do
   @moduledoc false
 
+  alias WhaleChat.TimeDisplay
+
   @favorite_class_icons %{
     1 => {"Scout", "/leaderboard/Scout.png"},
     2 => {"Sniper", "/leaderboard/Sniper.png"},
@@ -206,7 +208,7 @@ defmodule WhaleChatWeb.StatsFragments do
     started_at = Map.get(log, :started_at, 0)
     duration = Map.get(log, :duration, 0)
     duration_text = format_playtime(duration)
-    started_text = format_log_datetime(started_at)
+    started_time_html = format_log_datetime_html(started_at)
     mode = fallback(Map.get(log, :gamemode), "Unknown")
 
     players_table =
@@ -225,7 +227,7 @@ defmodule WhaleChatWeb.StatsFragments do
     <div class="log-entry log-current" data-player-count="#{player_count}" data-started-at="#{started_at}">
       <div class="log-summary">
         <span class="gamemode-icon"><span class="gamemode-label">#{e(mode)}</span></span>
-        <span class="log-title">#{e(map_name)} — #{e(started_text)} — #{e(duration_text)}</span>
+        <span class="log-title">#{e(map_name)} — #{started_time_html} — #{e(duration_text)}</span>
         <span class="log-meta">#{player_count} player#{if player_count == 1, do: "", else: "s"}</span>
       </div>
       <div class="log-body">#{players_table}</div>
@@ -381,7 +383,7 @@ defmodule WhaleChatWeb.StatsFragments do
     <details class="log-entry" data-player-count="#{player_count}" data-started-at="#{started_at}">
       <summary class="log-summary">
         <span class="gamemode-icon"><span class="gamemode-label">#{e(mode)}</span></span>
-        <span class="log-title">#{e(map_name)} — #{e(format_log_datetime(started_at))} — #{e(format_playtime(duration))}</span>
+        <span class="log-title">#{e(map_name)} — #{format_log_datetime_html(started_at)} — #{e(format_playtime(duration))}</span>
         <span class="log-meta">#{player_count} player#{if player_count == 1, do: "", else: "s"}</span>
       </summary>
       <div class="log-body">
@@ -513,13 +515,19 @@ defmodule WhaleChatWeb.StatsFragments do
   end
 
   defp format_log_datetime(ts) when is_integer(ts) and ts > 0 do
-    case DateTime.from_unix(ts) do
-      {:ok, dt} -> Calendar.strftime(dt, "%Y-%m-%d %H:%M")
-      _ -> "Unknown"
+    case TimeDisplay.format_server_datetime(ts, "%Y-%m-%d %H:%M %Z") do
+      "n/a" -> "Unknown"
+      formatted -> formatted
     end
   end
 
   defp format_log_datetime(_), do: "Unknown"
+
+  defp format_log_datetime_html(ts) when is_integer(ts) and ts > 0 do
+    ~s(<span data-local-time="#{ts}" data-time-format="log-datetime">#{e(format_log_datetime(ts))}</span>)
+  end
+
+  defp format_log_datetime_html(_), do: e("Unknown")
 
   defp format_playtime(seconds) when is_integer(seconds) and seconds > 0 do
     h = div(seconds, 3600)
