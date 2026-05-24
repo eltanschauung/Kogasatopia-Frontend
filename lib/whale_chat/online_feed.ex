@@ -42,48 +42,32 @@ defmodule WhaleChat.OnlineFeed do
     weapon_select_clause = weapon_select_clause()
     category_select_clause = weapon_category_select_clause()
 
-    sql_extended =
+    sql =
       "SELECT steamid, personaname, class, team, alive, is_spectator, kills, deaths, assists, damage, damage_taken, healing, headshots, backstabs, shots, hits" <>
         category_select_clause <>
         weapon_select_clause <>
         ", playtime, total_ubers, classes_mask, time_connected, visible_max, last_update FROM whaletracker_online ORDER BY last_update DESC"
 
-    sql_legacy =
-      "SELECT steamid, personaname, class, team, alive, is_spectator, kills, deaths, assists, damage, damage_taken, healing, headshots, backstabs, shots, hits" <>
-        category_select_clause <>
-        weapon_select_clause <>
-        ", playtime, total_ubers, time_connected, visible_max, last_update FROM whaletracker_online ORDER BY last_update DESC"
-
-    case SQL.query(Repo, sql_extended, []) do
+    case SQL.query(Repo, sql, []) do
       {:ok, %{rows: rows, columns: columns}} -> {:ok, map_rows(rows, columns)}
-      {:error, _} ->
-        case SQL.query(Repo, sql_legacy, []) do
-          {:ok, %{rows: rows, columns: columns}} -> {:ok, map_rows(rows, columns)}
-          {:error, reason} -> {:error, reason}
-        end
+      {:error, reason} -> {:error, reason}
     end
   end
 
   defp fetch_servers(now) do
     cutoff = now - 180
 
-    sql_with_game =
-      "SELECT ip, port, playercount, visible_max, game, game_url, map, city, country, flags, last_update " <>
-        "FROM whaletracker_servers WHERE last_update >= ? ORDER BY port ASC"
-
-    sql_legacy =
+    sql =
       "SELECT ip, port, playercount, visible_max, map, city, country, flags, last_update " <>
+        ", game, game_url " <>
         "FROM whaletracker_servers WHERE last_update >= ? ORDER BY port ASC"
 
-    case SQL.query(Repo, sql_with_game, [cutoff]) do
+    case SQL.query(Repo, sql, [cutoff]) do
       {:ok, %{rows: rows, columns: columns}} ->
         {:ok, build_server_rows(rows, columns)}
 
-      {:error, _} ->
-        case SQL.query(Repo, sql_legacy, [cutoff]) do
-          {:ok, %{rows: rows, columns: columns}} -> {:ok, build_server_rows(rows, columns)}
-          {:error, reason} -> {:error, reason}
-        end
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
