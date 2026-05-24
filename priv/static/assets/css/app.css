@@ -480,8 +480,7 @@ a {
   gap: 0.45rem;
 }
 
-.logs-subnav,
-.logs-current-subnav {
+.logs-subnav {
   align-items: center;
 }
 
@@ -1092,8 +1091,7 @@ a {
     margin-bottom: 0.45rem;
   }
 
-  .logs-subnav,
-  .logs-current-subnav {
+  .logs-subnav {
     align-items: flex-start;
   }
 
