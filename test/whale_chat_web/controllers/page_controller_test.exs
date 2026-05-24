@@ -3,6 +3,6 @@ defmodule WhaleChatWeb.PageControllerTest do
 
   test "GET /", %{conn: conn} do
     conn = get(conn, ~p"/")
-    assert html_response(conn, 200) =~ "WhaleChat (Elixir)"
+    assert html_response(conn, 200) =~ "Gensokyo New Jersey"
   end
 end
