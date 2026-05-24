@@ -3,6 +3,7 @@ defmodule WhaleChatWeb.LegacyControllerTest do
 
   use WhaleChatWeb, :verified_routes
 
+  import Plug.Conn, only: [get_resp_header: 2]
   import Phoenix.ConnTest
 
   @endpoint WhaleChatWeb.Endpoint
@@ -19,7 +20,7 @@ defmodule WhaleChatWeb.LegacyControllerTest do
       end
     end)
 
-    {:ok, conn: build_conn()}
+    {:ok, conn: %{build_conn() | host: "localhost"}}
   end
 
   test "playercount widget returns 502 when php backend is unavailable", %{conn: conn} do

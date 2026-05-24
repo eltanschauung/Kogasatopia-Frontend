@@ -33,6 +33,6 @@ defmodule WhaleChatWeb.ConnCase do
 
   setup tags do
     WhaleChat.DataCase.setup_sandbox(tags)
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+    {:ok, conn: %{Phoenix.ConnTest.build_conn() | host: "localhost"}}
   end
 end
