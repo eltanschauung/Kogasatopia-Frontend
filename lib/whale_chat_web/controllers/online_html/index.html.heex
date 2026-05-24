@@ -204,29 +204,9 @@
         if (!cached) return;
         updateOnlineButtonInfo(cached.player_count, cached.visible_max);
     }
-    function formatChatAge(diffSeconds) {
-        if (!Number.isFinite(diffSeconds) || diffSeconds < 0) return '--';
-        if (diffSeconds < 60) return 'now';
-        if (diffSeconds < 3600) { const m = Math.max(1, Math.floor(diffSeconds / 60)); return `${m} minute${m === 1 ? '' : 's'} ago`; }
-        if (diffSeconds < 86400) { const h = Math.max(1, Math.floor(diffSeconds / 3600)); return `${h} hour${h === 1 ? '' : 's'} ago`; }
-        if (diffSeconds < 604800) { const d = Math.max(1, Math.floor(diffSeconds / 86400)); return `${d} day${d === 1 ? '' : 's'} ago`; }
-        const w = Math.floor(diffSeconds / 604800);
-        if (w < 5) return `${w} week${w === 1 ? '' : 's'} ago`;
-        const mo = Math.max(1, Math.floor(diffSeconds / 2629800));
-        return `${mo} month${mo === 1 ? '' : 's'} ago`;
-    }
     async function updateNavChatLabel() {
         if (!navChatLabel) return;
-        if (window.WTChatAgeLabel?.update) return window.WTChatAgeLabel.update(navChatLabel);
-        try {
-            const res = await fetch(`/stats/chat.php?limit=1&alerts_only=1&t=${Date.now()}`, { cache: 'no-store' });
-            if (!res.ok) return;
-            const payload = await res.json();
-            const messages = Array.isArray(payload?.messages) ? payload.messages : [];
-            if (!messages.length) { navChatLabel.textContent = 'Last msg. --'; return; }
-            const createdAt = Number(messages[messages.length - 1]?.created_at || 0);
-            navChatLabel.textContent = `Last msg. ${formatChatAge(Math.floor(Date.now() / 1000) - createdAt)}`;
-        } catch (_) {}
+        return window.WTChatAgeLabel?.update?.(navChatLabel);
     }
 
     function sortOnlineTableByState() {
