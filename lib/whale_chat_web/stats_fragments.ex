@@ -226,7 +226,7 @@ defmodule WhaleChatWeb.StatsFragments do
     """
     <div class="log-entry log-current" data-player-count="#{player_count}" data-started-at="#{started_at}">
       <div class="log-summary">
-        <span class="gamemode-icon"><span class="gamemode-label">#{e(mode)}</span></span>
+        <span class="gamemode-label">#{e(mode)}</span>
         <span class="log-title">#{e(map_name)} — #{started_time_html} — #{e(duration_text)}</span>
         <span class="log-meta">#{player_count} player#{if player_count == 1, do: "", else: "s"}</span>
       </div>
@@ -382,7 +382,7 @@ defmodule WhaleChatWeb.StatsFragments do
     """
     <details class="log-entry" data-player-count="#{player_count}" data-started-at="#{started_at}">
       <summary class="log-summary">
-        <span class="gamemode-icon"><span class="gamemode-label">#{e(mode)}</span></span>
+        <span class="gamemode-label">#{e(mode)}</span>
         <span class="log-title">#{e(map_name)} — #{format_log_datetime_html(started_at)} — #{e(format_playtime(duration))}</span>
         <span class="log-meta">#{player_count} player#{if player_count == 1, do: "", else: "s"}</span>
       </summary>
