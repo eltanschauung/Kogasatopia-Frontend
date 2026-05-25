@@ -43,7 +43,7 @@ defmodule WhaleChat.OnlineFeed do
     category_select_clause = weapon_category_select_clause()
 
     sql =
-      "SELECT steamid, personaname, class, team, alive, is_spectator, kills, deaths, assists, damage, damage_taken, healing, headshots, backstabs, shots, hits" <>
+      "SELECT steamid, personaname, class, team, alive, is_spectator, COALESCE(is_admin, 0) AS is_admin, kills, deaths, assists, damage, damage_taken, healing, headshots, backstabs, shots, hits" <>
         category_select_clause <>
         weapon_select_clause <>
         ", playtime, total_ubers, classes_mask, time_connected, visible_max, last_update FROM whaletracker_online ORDER BY last_update DESC"
