@@ -436,6 +436,9 @@
         <li style="margin-bottom:4px;">
             <a href="#gamemode-settings" style="text-decoration:none; color:green;">5. Gamemode Settings</a>
         </li>
+        <li style="margin-bottom:4px;">
+            <a href="#gems" style="text-decoration:none; color:green;">6. Currency</a>
+        </li>
     </ul>
 </div>
 
@@ -787,6 +790,57 @@
           <li>CTF has capture crits disabled, 9 flag captures per round, and short respawns.</li>
           <li>Arena disables first-blood crits and uses high max rounds with a shorter timelimit.</li>
           <li>MGE, training, MvM, VSH, Zombie Infection, and other special maps can opt into their own config files.</li>
+      </ul>
+    </p3-p>
+</div>
+<br><hr>
+<br><h6 id="gems">6. Currency</h6>
+<p2>The server currency system is handled by <strong>points_store.sp</strong>. The live server currently displays the currency as <strong>Gems</strong>.</p2><br>
+<div style="background-color: #fffcf6; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+    <h5>Basic Commands</h5>
+    <p3-p>
+      <ul>
+          <li><span style="color:green;">!shop</span>, <span style="color:green;">!store</span>, or <span style="color:green;">!buy</span> opens the shop menu.</li>
+          <li><span style="color:green;">!bp</span>, <span style="color:green;">!bonus</span>, <span style="color:green;">!gems</span>, or <span style="color:green;">!gem</span> shows a balance and the current gameplay reward summary.</li>
+          <li><span style="color:green;">!send</span>, <span style="color:green;">!sendbp</span>, <span style="color:green;">!sendgem</span>, or <span style="color:green;">!gemsend</span> sends Gems to another player. The send command has a short cooldown.</li>
+      </ul>
+    </p3-p>
+
+    <h5>Earning Gems</h5>
+    <p3-p>
+      <ul>
+          <li>Gameplay rewards include things such as airshot kills, market garden kills, meatshot kills, revenge, top-scoring player kills, killstreaks, multikills, medic drops, and ending large killstreaks.</li>
+          <li>Some rewards have per-map limits, so repeated farming of the same reward type can stop paying until the map changes.</li>
+          <li>Bots should not provide Gems; the economy is intended to reward real gameplay.</li>
+      </ul>
+    </p3-p>
+
+    <h5>Welfare</h5>
+    <p3-p>
+      <ul>
+          <li><span style="color:green;">!welfare</span>, <span style="color:green;">!collectwelfare</span>, <span style="color:green;">!handout</span>, <span style="color:green;">!gibs</span>, and <span style="color:green;">!welfarecheck</span> are aliases.</li>
+          <li>Welfare is currently enabled and can be collected once per map.</li>
+          <li>The current welfare payout is a random amount from 4 to 16 Gems.</li>
+      </ul>
+    </p3-p>
+
+    <h5>Lottery</h5>
+    <p3-p>
+      <ul>
+          <li><span style="color:green;">!lotto</span>, <span style="color:green;">!lottery</span>, <span style="color:green;">!gamble</span>, and <span style="color:green;">!ticket</span> open or buy into the active lottery.</li>
+          <li>Ticket values are rounded down to the nearest 50 Gems, and each 50 Gems is one chance to win.</li>
+          <li>The main winner receives most of the pool. For every 4 valid participants, an extra winner is added and receives 10% of the pool.</li>
+          <li>Players can view the prize pool or refund their current ticket before the draw starts.</li>
+      </ul>
+    </p3-p>
+
+    <h5>Current Shop Uses</h5>
+    <p3-p>
+      <ul>
+          <li><strong>Diamond Pickaxe</strong>: unlocks the Diamond Pickaxe custom weapon.</li>
+          <li><strong>Peter Griffin Announcer</strong>: unlocks the paid Family Guy/Peter Griffin announcer and saysound content where configured.</li>
+          <li><strong>Autobalance Immunity (16 times)</strong>: protects against selected autobalance moves until the uses run out.</li>
+          <li><strong>Scramble Immunity (8 times)</strong>: protects against selected scramble moves until the uses run out.</li>
       </ul>
     </p3-p>
 </div>
