@@ -32,6 +32,8 @@ defmodule WhaleChatWeb.Router do
     get "/", LegacyController, :home
     get "/index.php", LegacyController, :home
     get "/index.html", LegacyController, :home
+    get "/manual", LegacyController, :manual
+    get "/changelog", LegacyController, :manual
     get "/info", InfoController, :entry
     get "/info/index.html", InfoController, :entry
     get "/stats", StatsController, :index

@@ -9,6 +9,8 @@ defmodule WhaleChat.Homepage do
 
   def render_html(opts \\ []) do
     is_mobile = Keyword.get(opts, :mobile?, false)
+    default_tab = Keyword.get(opts, :default_tab, "blog")
+    scroll_target = Keyword.get(opts, :scroll_target)
 
     viewport =
       if is_mobile do
@@ -82,8 +84,15 @@ defmodule WhaleChat.Homepage do
     #{tabs_html}
     <script>
     (function () {
-      var defaultTab = document.getElementById("blog");
+      var defaultTab = document.getElementById("#{default_tab}");
       if (defaultTab) defaultTab.click();
+      var scrollTargetId = #{js_string_or_null(scroll_target)};
+      if (scrollTargetId) {
+        window.requestAnimationFrame(function () {
+          var target = document.getElementById(scrollTargetId);
+          if (target) target.scrollIntoView({ block: "start" });
+        });
+      }
     })();
 
     function openTab(evt, tabName) {
@@ -101,6 +110,14 @@ defmodule WhaleChat.Homepage do
     </body>
     </html>
     """
+  end
+
+  defp js_string_or_null(nil), do: "null"
+
+  defp js_string_or_null(value) when is_binary(value) do
+    value
+    |> Phoenix.HTML.javascript_escape()
+    |> then(&~s("#{&1}"))
   end
 
   defp read_fragment!(name) do

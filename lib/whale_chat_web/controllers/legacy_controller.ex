@@ -6,7 +6,18 @@ defmodule WhaleChatWeb.LegacyController do
   alias WhaleChat.UpstreamProxy
 
   def home(conn, _params) do
-    html = Homepage.render_html(mobile?: mobile_request?(conn))
+    render_home(conn)
+  end
+
+  def manual(conn, _params) do
+    render_home(conn, default_tab: "updates", scroll_target: "updatesMain")
+  end
+
+  defp render_home(conn, opts \\ []) do
+    html =
+      opts
+      |> Keyword.put(:mobile?, mobile_request?(conn))
+      |> Homepage.render_html()
 
     conn
     |> put_resp_content_type("text/html")
