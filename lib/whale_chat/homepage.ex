@@ -3,7 +3,7 @@ defmodule WhaleChat.Homepage do
 
   alias WhaleChat.LegacySite
 
-  @fragments_root Path.join(LegacySite.docroot(), "home/includes")
+  @fragments_root LegacySite.homepage_fragments_root()
   @site_title "Kogasatopia | Gensokyo New Jersey TF2 Server"
   @site_description "Kogasatopia at kogasa.tf is the website for Gensokyo | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
 

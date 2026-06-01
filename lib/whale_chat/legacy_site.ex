@@ -2,7 +2,8 @@ defmodule WhaleChat.LegacySite do
   @moduledoc false
 
   @docroot "/var/www/kogasatopia"
-  @blog_fragment Path.join([@docroot, "home", "includes", "blog.html"])
+  @homepage_fragments_root Path.expand("../../priv/legacy_site/home/includes", __DIR__)
+  @blog_fragment Path.join(@homepage_fragments_root, "blog.html")
   @homepage_preload_images [
     "/background_lumberyard.png",
     "/main_panel.png",
@@ -21,6 +22,7 @@ defmodule WhaleChat.LegacySite do
   @homepage_preload_documents ["/favicon.ico"]
 
   def docroot, do: @docroot
+  def homepage_fragments_root, do: @homepage_fragments_root
 
   def homepage_preload_images do
     (@homepage_preload_images ++ blog_image_paths())
