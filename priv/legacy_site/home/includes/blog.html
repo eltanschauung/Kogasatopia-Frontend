@@ -442,6 +442,9 @@
         <li style="margin-bottom:4px;">
             <a href="#clans" style="text-decoration:none; color:green;">7. Clans/Factions</a>
         </li>
+        <li style="margin-bottom:4px;">
+            <a href="#saysounds" style="text-decoration:none; color:green;">8. Saysounds</a>
+        </li>
     </ul>
 </div>
 
@@ -885,6 +888,40 @@
           <li><span style="color:green;">!cc</span> sends a private clan chat message.</li>
           <li><span style="color:green;">!clanwar</span> declares war on another clan or surrenders an active war. Clan wars target 50 kills and expire after a week.</li>
           <li><span style="color:green;">!clanhistory</span> shows recent clan history, such as joins and wars.</li>
+      </ul>
+    </p3-p>
+</div>
+<br><hr>
+<br><h6 id="saysounds">8. Saysounds</h6>
+<p2>Saysounds let players play short server sounds by chat command, choose kill/death sounds, manage volume, and opt out of groups they do not want to hear.</p2><br>
+<div style="background-color: #fffcf6; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+    <h5>Basic Commands</h5>
+    <p3-p>
+      <ul>
+          <li><span style="color:green;">!sounds</span> or <span style="color:green;">!saysounds</span> lists configured groups first, then individual sounds.</li>
+          <li><span style="color:green;">!groups</span>, <span style="color:green;">!soundgroups</span>, or <span style="color:green;">!saysoundgroups</span> lists only sound groups.</li>
+          <li>Typing a sound command directly, such as <span style="color:green;">!pichuun</span>, plays that sound. Typing a group command, such as <span style="color:green;">!uma</span>, plays a random sound from that group.</li>
+          <li><span style="color:green;">sm_saysound soundname</span> and <span style="color:green;">sm_saysound groupname</span> work from console too.</li>
+      </ul>
+    </p3-p>
+
+    <h5>Personal Sound Choices</h5>
+    <p3-p>
+      <ul>
+          <li><span style="color:green;">!killsounds</span> and <span style="color:green;">!diesounds</span> open menus for kill and death sounds.</li>
+          <li><span style="color:green;">!killsound command</span> and <span style="color:green;">!diesound command</span> set them directly.</li>
+          <li>Multiple comma-separated entries are valid, such as <span style="color:green;">!killsound uma,pichuun</span>; one eligible entry is picked randomly.</li>
+          <li>Group names and group aliases are valid in kill/death sound settings.</li>
+      </ul>
+    </p3-p>
+
+    <h5>Volume, Opt-Outs, and Paid Groups</h5>
+    <p3-p>
+      <ul>
+          <li><span style="color:green;">!vol 0.0-1.0</span> changes your personal saysound volume.</li>
+          <li><span style="color:green;">!opt</span> toggles saysounds globally, and <span style="color:green;">!opts</span> opens group toggles.</li>
+          <li>Paid saysound groups are marked in <span style="color:green;">!sounds</span> with <strong>[!shop]</strong>. They are only usable after buying the matching shop item.</li>
+          <li>Paid groups you own appear first in kill/death sound menus. Paid groups you do not own are hidden from those menus.</li>
       </ul>
     </p3-p>
 </div>
