@@ -384,7 +384,7 @@
             if (!payload || payload.success !== true || !Array.isArray(payload.players)) throw new Error('Invalid payload');
             const players = Array.isArray(payload.players) ? payload.players.slice() : [];
             const servers = Array.isArray(payload.servers) ? payload.servers.slice() : [];
-            visibleMaxPlayers = Number(payload.visible_max_players) || 32;
+            visibleMaxPlayers = Number(payload.visible_max || payload.visible_max_players) || 32;
             const totalPlayers = servers.reduce((sum, server) => sum + (Number(server.player_count) || 0), 0);
             const totalMax = servers.reduce((sum, server) => sum + (Number(server.visible_max) || 0), 0);
             renderOnline(players); renderServerCards(servers);
@@ -394,7 +394,9 @@
             window.WTOnlineCountCache?.write?.({ player_count: countForNav, visible_max: maxForNav, updated: payload.updated });
         } catch (err) {
             console.error('[WhaleTracker] Failed to fetch online stats:', err);
-            updateOnlineButtonInfo(0, visibleMaxPlayers);
+            if (!window.WTOnlineCountCache?.apply?.(onlineCountLabel, onlineTopbarCount)) {
+                updateOnlineButtonInfo(0, visibleMaxPlayers);
+            }
             renderServerCards([]);
         }
     }
