@@ -5,24 +5,26 @@ defmodule WhaleChat.Online do
   alias WhaleChat.OnlineFeed
   alias WhaleChat.Repo
 
+  @default_visible_max 32
+
   def summary do
     case OnlineFeed.payload() do
-      %{"success" => true} = payload ->
-        %{
-          success: true,
-          player_count: max(to_int(payload["player_count"]), 0),
-          visible_max:
-            payload["visible_max"] ||
-              payload["visible_max_players"] ||
-              32
-              |> to_int(32)
-              |> then(fn v -> if v > 0, do: v, else: 32 end),
-          updated: to_int(payload["updated"], System.system_time(:second))
-        }
-
-      _ ->
-        summary_legacy()
+      %{"success" => true} = payload -> summary_from_payload(payload)
+      _ -> summary_legacy()
     end
+  end
+
+  defp summary_from_payload(payload) do
+    %{
+      success: true,
+      player_count: payload |> Map.get("player_count") |> to_int(0) |> max(0),
+      visible_max:
+        first_positive_int(
+          [payload["visible_max"], payload["visible_max_players"]],
+          @default_visible_max
+        ),
+      updated: to_int(payload["updated"], System.system_time(:second))
+    }
   end
 
   defp summary_legacy do
@@ -31,14 +33,17 @@ defmodule WhaleChat.Online do
 
     {player_count, visible_max, updated} =
       case aggregate_server_counts(cutoff, now) do
-        {players, slots, updated_at} when players > 0 and slots > 0 -> {players, slots, updated_at}
-        _ -> fallback_online_count(now)
+        {players, slots, updated_at} when players > 0 and slots > 0 ->
+          {players, slots, updated_at}
+
+        _ ->
+          fallback_online_count(now)
       end
 
     %{
       success: true,
       player_count: max(player_count, 0),
-      visible_max: if(visible_max > 0, do: visible_max, else: 32),
+      visible_max: if(visible_max > 0, do: visible_max, else: @default_visible_max),
       updated: updated
     }
   end
@@ -66,11 +71,17 @@ defmodule WhaleChat.Online do
 
   defp fallback_online_count(now) do
     case SQL.query(Repo, "SELECT COUNT(*) AS total_players FROM whaletracker_online", []) do
-      {:ok, %{rows: [[players]]}} -> {to_int(players), 32, now}
-      _ -> {0, 32, now}
+      {:ok, %{rows: [[players]]}} -> {to_int(players), @default_visible_max, now}
+      _ -> {0, @default_visible_max, now}
     end
   rescue
-    _ -> {0, 32, now}
+    _ -> {0, @default_visible_max, now}
+  end
+
+  defp first_positive_int(values, default) do
+    values
+    |> Enum.map(&to_int(&1, 0))
+    |> Enum.find(default, &(&1 > 0))
   end
 
   defp to_int(value, default \\ 0)
