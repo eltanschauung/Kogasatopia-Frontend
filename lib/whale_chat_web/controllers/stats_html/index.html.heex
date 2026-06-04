@@ -659,18 +659,23 @@
         return new Date(Number(ts) * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       }
 
+      function applyOnlineSummary(count, max, updated) {
+        if (!els.navOnlineCount) return;
+        count = Number(count || 0);
+        max = Number(max || 0);
+        if (!Number.isFinite(count) || count < 0) count = 0;
+        if (!Number.isFinite(max) || max <= 0) max = 32;
+        els.navOnlineCount.textContent = `${count} / ${max}`;
+        window.WTOnlineCountCache?.write?.({ player_count: count, visible_max: max, updated });
+      }
+
       async function updateNavCount() {
         if (!els.navOnlineCount) return;
         try {
           const res = await fetch('/stats/online_summary.php', { cache: 'no-store' });
           if (!res.ok) throw new Error('Request failed');
           const payload = await res.json();
-          let count = Number(payload.player_count || 0);
-          let max = Number(payload.visible_max || payload.visible_max_players || 0);
-          if (!Number.isFinite(count) || count < 0) count = 0;
-          if (!Number.isFinite(max) || max <= 0) max = 32;
-          els.navOnlineCount.textContent = `${count} / ${max}`;
-          window.WTOnlineCountCache?.write?.({ player_count: count, visible_max: max, updated: payload.updated });
+          applyOnlineSummary(payload.player_count, payload.visible_max || payload.visible_max_players, payload.updated);
         } catch (_) {
           // ignore
         }
@@ -714,7 +719,12 @@
         }
         const servers = Array.isArray(payload.servers) ? payload.servers : [];
         const players = Array.isArray(payload.players) ? payload.players : [];
-        els.onlineMeta.textContent = `${numberFormat(payload.player_count || players.length)} / ${numberFormat(payload.visible_max_players || 32)} players • updated ${relTime(payload.updated)}`;
+        const totalPlayers = servers.reduce((sum, server) => sum + (Number(server.player_count) || 0), 0);
+        const totalMax = servers.reduce((sum, server) => sum + (Number(server.visible_max) || 0), 0);
+        const playerCount = totalPlayers || Number(payload.player_count || players.length || 0);
+        const visibleMax = totalMax || Number(payload.visible_max || payload.visible_max_players || 32);
+        applyOnlineSummary(playerCount, visibleMax, payload.updated);
+        els.onlineMeta.textContent = `${numberFormat(playerCount)} / ${numberFormat(visibleMax)} players • updated ${relTime(payload.updated)}`;
         els.onlineCards.innerHTML = servers.map(server => `
           <article class="stats-online-card">
             <img src="${escapeHtml(server.map_image || '')}" alt="">
@@ -768,6 +778,7 @@
       async function loadOnline() {
         try {
           const res = await fetch('/stats/online.php', { cache: 'no-store' });
+          if (!res.ok) throw new Error('Request failed');
           renderOnline(await res.json());
         } catch (_) {
           renderOnline({ success: false });
