@@ -4,8 +4,8 @@ defmodule WhaleChat.Homepage do
   alias WhaleChat.LegacySite
 
   @fragments_root LegacySite.homepage_fragments_root()
-  @site_title "Kogasatopia | Gensokyo New Jersey TF2 Server"
-  @site_description "Kogasatopia at kogasa.tf is the website for Gensokyo | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
+  @site_title "Kogasatopia | Kogasatopia New Jersey TF2 Server"
+  @site_description "Kogasatopia at kogasa.tf is the website for Kogasatopia | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
 
   def render_html(opts \\ []) do
     is_mobile = Keyword.get(opts, :mobile?, false)
@@ -54,7 +54,7 @@ defmodule WhaleChat.Homepage do
             "@id": "https://kogasa.tf/#website",
             "url": "https://kogasa.tf/",
             "name": "Kogasatopia",
-            "alternateName": ["Gensokyo | New Jersey", "Gensokyo New Jersey", "kogasa.tf"],
+            "alternateName": ["Kogasatopia | New Jersey", "Kogasatopia New Jersey", "kogasa.tf"],
             "description": "#{@site_description}"
           },
           {
@@ -62,7 +62,7 @@ defmodule WhaleChat.Homepage do
             "@id": "https://kogasa.tf/#organization",
             "url": "https://kogasa.tf/",
             "name": "Kogasatopia",
-            "alternateName": ["Gensokyo | New Jersey", "Gensokyo New Jersey"],
+            "alternateName": ["Kogasatopia | New Jersey", "Kogasatopia New Jersey"],
             "sameAs": [
               "https://steamcommunity.com/groups/kogtf2",
               "https://x.com/kogasatopia"
