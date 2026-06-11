@@ -11,6 +11,7 @@ defmodule WhaleChat.StatsFeed do
   @points_cache_table "whaletracker_points_cache"
   @logs_table "whaletracker_logs"
   @log_players_table "whaletracker_log_players"
+  @default_stats_cache_dir "/var/www/kogasatopia/stats/cache"
   @weapon_category_metadata %{
     "shotguns" => %{label: "Shotgun"},
     "scatterguns" => %{label: "Scattergun"},
@@ -257,7 +258,9 @@ defmodule WhaleChat.StatsFeed do
     case SQL.query(Repo, sql, []) do
       {:ok, %{rows: [row], columns: cols}} ->
         m = row_map(row, cols)
-        raw = "#{int(m["recent"])}:#{int(m["total"])}"
+
+        # Include this ops-touched file so the visible hash can be rolled without recording gameplay stats.
+        raw = "#{int(m["recent"])}:#{int(m["total"])}:#{manual_cache_bust_token()}"
         :crypto.hash(:sha, raw) |> Base.encode16(case: :lower) |> binary_part(0, 7)
 
       _ ->
@@ -265,6 +268,19 @@ defmodule WhaleChat.StatsFeed do
     end
   rescue
     _ -> nil
+  end
+
+  defp manual_cache_bust_token do
+    path = Path.join(stats_cache_dir(), "frontend_reload_bust")
+
+    case File.stat(path, time: :posix) do
+      {:ok, stat} -> stat.mtime
+      _ -> 0
+    end
+  end
+
+  defp stats_cache_dir do
+    Application.get_env(:whale_chat, :php_stats_cache_dir, @default_stats_cache_dir)
   end
 
   def performance_averages do
