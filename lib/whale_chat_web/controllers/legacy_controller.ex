@@ -34,9 +34,6 @@ defmodule WhaleChatWeb.LegacyController do
       proxy_leaderboard_php?(req_path) ->
         proxy_upstream_php(conn, req_path)
 
-      proxy_playercount_widget_php?(req_path) ->
-        proxy_upstream_php(conn, req_path)
-
       php_index_dir?(req_path) or String.ends_with?(req_path, ".php") ->
         legacy_php_unavailable(conn)
 
@@ -52,11 +49,6 @@ defmodule WhaleChatWeb.LegacyController do
     else
       _ -> false
     end
-  end
-
-  defp proxy_playercount_widget_php?(request_path) do
-    String.starts_with?(request_path, "/playercount_widget/") and
-      String.ends_with?(request_path, ".php")
   end
 
   defp proxy_leaderboard_php?(request_path) do

@@ -23,10 +23,21 @@ defmodule WhaleChatWeb.LegacyControllerTest do
     {:ok, conn: %{build_conn() | host: "localhost"}}
   end
 
-  test "playercount widget returns 502 when php backend is unavailable", %{conn: conn} do
+  test "playercount widget renders natively when php backend is unavailable", %{conn: conn} do
     conn = get(conn, "/playercount_widget/index.php")
 
-    assert response(conn, 502) == "Legacy PHP backend unavailable"
+    assert html_response(conn, 200) =~ ~s(<div class="server-name">Gensokyo | New Jersey</div>)
+    assert response(conn, 200) =~ "https://bantculture.com/static/flags/us.png"
+    assert get_resp_header(conn, "location") == []
+  end
+
+  test "playercount widget mge iframe renders natively when php backend is unavailable", %{
+    conn: conn
+  } do
+    conn = get(conn, "/playercount_widget/index3.php")
+
+    assert html_response(conn, 200) =~ ~s(<div class="server-name">MGE Eientei | New Jersey</div>)
+    assert response(conn, 200) =~ "https://bantculture.com/static/flags/kaguya.png"
     assert get_resp_header(conn, "location") == []
   end
 

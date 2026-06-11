@@ -74,6 +74,15 @@ defmodule WhaleChatWeb.Router do
     post "/api.php", MapsDbApiController, :handle
   end
 
+  scope "/playercount_widget", WhaleChatWeb do
+    pipe_through :browser
+
+    get "/index.php", PlayercountWidgetController, :index
+    get "/index2.php", PlayercountWidgetController, :index2
+    get "/index3.php", PlayercountWidgetController, :index3
+    get "/index4.php", PlayercountWidgetController, :index4
+  end
+
   scope "/", WhaleChatWeb do
     pipe_through :browser
 
