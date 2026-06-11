@@ -316,6 +316,8 @@ defmodule WhaleChat.StatsFeed do
       sql = """
       SELECT steamid,
              COALESCE(cached_personaname, steamid) AS personaname,
+             COALESCE(country, '') AS country,
+             COALESCE(show_country, 0) AS show_country,
              kills, deaths, assists, healing, headshots, backstabs,
              COALESCE(best_killstreak, 0) AS best_killstreak,
              COALESCE(playtime, 0) AS playtime,
@@ -359,6 +361,8 @@ defmodule WhaleChat.StatsFeed do
     sql = """
     SELECT w.steamid,
            COALESCE(w.cached_personaname, pc.name, w.steamid) AS personaname,
+           COALESCE(w.country, '') AS country,
+           COALESCE(w.show_country, 0) AS show_country,
            w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
            COALESCE(w.best_killstreak, 0) AS best_killstreak,
            COALESCE(w.playtime, 0) AS playtime,
@@ -407,6 +411,8 @@ defmodule WhaleChat.StatsFeed do
     sql = """
     SELECT w.steamid,
            COALESCE(w.cached_personaname, pc.name, w.steamid) AS personaname,
+           COALESCE(w.country, '') AS country,
+           COALESCE(w.show_country, 0) AS show_country,
            w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
            COALESCE(w.best_killstreak, 0) AS best_killstreak,
            COALESCE(w.playtime, 0) AS playtime,
@@ -496,6 +502,7 @@ defmodule WhaleChat.StatsFeed do
       %{
         steamid: steamid,
         personaname: if(personaname == "", do: steamid, else: personaname),
+        country_code: country_code_for_row(row),
         avatar: avatar,
         profileurl:
           if(steamid != "", do: "https://steamcommunity.com/profiles/" <> steamid, else: nil),
@@ -609,6 +616,8 @@ defmodule WhaleChat.StatsFeed do
     sql = """
     SELECT steamid,
            COALESCE(cached_personaname, steamid) AS personaname,
+           COALESCE(country, '') AS country,
+           COALESCE(show_country, 0) AS show_country,
            kills, deaths, assists, healing, headshots, backstabs,
            COALESCE(best_killstreak, 0) AS best_killstreak,
            COALESCE(playtime, 0) AS playtime,
@@ -1238,6 +1247,17 @@ defmodule WhaleChat.StatsFeed do
       hours > 0 and minutes > 0 -> "#{hours}h #{minutes}m"
       hours > 0 -> "#{hours}h"
       true -> "#{minutes}m"
+    end
+  end
+
+  defp country_code_for_row(row) do
+    if truthy?(row["show_country"]) do
+      row["country"]
+      |> str()
+      |> String.trim()
+      |> String.downcase()
+    else
+      ""
     end
   end
 

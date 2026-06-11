@@ -118,7 +118,7 @@
       min-height: 360px;
     }
     .stats-focused-slot .detail-panel .detail-profile { gap: 1rem; }
-    .stats-focused-slot .detail-panel .detail-profile img { width: 140px; height: 140px; }
+    .stats-focused-slot .detail-panel .detail-profile > img { width: 140px; height: 140px; }
     .stats-focused-slot .detail-panel .detail-profile > div { min-width: 0; }
     .stats-focused-slot .detail-panel .detail-grid { gap: 1.25rem 1.5rem; }
     .stats-focused-slot .detail-panel .detail-grid > div { min-width: 0; }
@@ -171,9 +171,13 @@
     .stats-chat-status { min-height: 1.1rem; margin-top:.35rem; color:#f2bf69; font-size:.82rem; }
     .stats-online-cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:.65rem; margin-bottom:.7rem; }
     .stats-online-card { display:flex; gap:.65rem; background:rgba(15,18,26,.5); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:.65rem; }
-    .stats-online-card img { width:160px; height:120px; border-radius:8px; object-fit:cover; background:#0c1016; border:1px solid rgba(255,255,255,.08); }
+    .stats-online-card > img { width:160px; height:120px; border-radius:8px; object-fit:cover; background:#0c1016; border:1px solid rgba(255,255,255,.08); }
     .stats-online-card h3 { margin:0 0 .25rem; font-size:.95rem; }
     .stats-online-card p { margin:.15rem 0; color:#b5bfd0; font-size:.84rem; }
+    .server-flag,
+    .stats-country-flag { width:16px; height:11px; border:0; border-radius:1px; object-fit:cover; background:transparent; display:inline-block; vertical-align:-1px; margin-left:.25rem; }
+    .stats-player-name { display:inline-flex; align-items:center; gap:.35rem; min-width:0; }
+    .stats-player-name .stats-country-flag { margin-left:0; }
     .team-red td { background: rgba(178,74,74,.12); }
     .team-blue td { background: rgba(75,102,186,.12); }
     .stats-logs-list { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:.65rem; }
@@ -213,7 +217,7 @@
       background: rgba(102, 181, 255, .14);
       box-shadow: inset 0 0 0 9999px rgba(102,181,255,.025);
     }
-    .stats-cumulative-fragment-host #stats-table-cumulative .player-cell img {
+    .stats-cumulative-fragment-host #stats-table-cumulative .player-cell > img {
       border-radius: 50%;
       border: 1px solid rgba(255,255,255,.18);
     }
@@ -244,7 +248,7 @@
       table.stats-grid { min-width: 760px; }
       .stats-chat-form { flex-direction:column; }
       .stats-online-card { flex-direction:column; }
-      .stats-online-card img { width:100%; height:auto; aspect-ratio: 4 / 3; }
+      .stats-online-card > img { width:100%; height:auto; aspect-ratio: 4 / 3; }
       .stats-card { padding: .8rem .75rem .7rem; border-radius: 14px; }
       .stats-home-row .tab-controls { gap: .4rem; }
       .stats-home-row .tab-button,
@@ -254,7 +258,7 @@
         min-height: 0;
         padding: 1rem .9rem;
       }
-      .stats-focused-slot .detail-panel .detail-profile img { width: 96px; height: 96px; }
+      .stats-focused-slot .detail-panel .detail-profile > img { width: 96px; height: 96px; }
       .wt-cumulative-fragment .search-bar input { min-width: 220px; }
     }
     @media (max-width: 700px) {
@@ -642,6 +646,30 @@
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#39;');
       }
+      function normalizeFlagCode(code) {
+        return String(code || '').trim().toLowerCase();
+      }
+      function flagImageUrl(code) {
+        const normalized = normalizeFlagCode(code);
+        return normalized ? `https://bantculture.com/static/flags/${encodeURIComponent(normalized)}.png` : '';
+      }
+      function flagImageHtml(code, title) {
+        const normalized = normalizeFlagCode(code);
+        if (!normalized) return '';
+        return `<img class="server-flag" src="${flagImageUrl(normalized)}" alt="${escapeHtml(normalized.toUpperCase())}" title="${escapeHtml(title || normalized)}">`;
+      }
+      function serverFlagsHtml(server) {
+        const flags = [];
+        const countryCode = normalizeFlagCode(server?.country_code);
+        if (countryCode) flags.push(flagImageHtml(countryCode, `Region: ${countryCode}`));
+        if (Array.isArray(server?.extra_flags)) {
+          server.extra_flags.forEach(flag => {
+            const normalized = normalizeFlagCode(flag);
+            if (normalized) flags.push(flagImageHtml(normalized, String(flag || normalized)));
+          });
+        }
+        return flags.join('');
+      }
       function relTime(ts) {
         if (!ts) return '--';
         const now = Math.floor(Date.now() / 1000);
@@ -731,7 +759,7 @@
             <div>
               <h3>${escapeHtml(server.map_name || 'Unknown map')}</h3>
               <p>${numberFormat(server.player_count)} / ${numberFormat(server.visible_max || 0)} players</p>
-              <p>${escapeHtml(server.city || '')} ${server.country_code ? '(' + escapeHtml(String(server.country_code).toUpperCase()) + ')' : ''}</p>
+              <p>${escapeHtml(server.city || '')}${serverFlagsHtml(server)}</p>
               <p>${escapeHtml(server.host_ip || '')}${server.host_port ? ':' + escapeHtml(server.host_port) : ''}</p>
             </div>
           </article>

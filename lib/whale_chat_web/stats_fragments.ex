@@ -14,6 +14,7 @@ defmodule WhaleChatWeb.StatsFragments do
     8 => {"Spy", "/leaderboard/Spy.png"},
     9 => {"Engineer", "/leaderboard/Engineer.png"}
   }
+  @flag_base_url "https://bantculture.com/static/flags/"
 
   def cumulative_fragment_html(payload, opts \\ %{}) do
     q = Map.get(payload, :q, "")
@@ -62,6 +63,7 @@ defmodule WhaleChatWeb.StatsFragments do
   def focused_player_html(row, default_avatar, opts) do
     avatar = fallback(row[:avatar], default_avatar)
     name = fallback(row[:personaname], fallback(row[:steamid], "Unknown"))
+    name_html = player_name_html(name, row[:country_code])
     perf = get_opt(opts, :performance_averages, %{})
 
     comparison_enabled =
@@ -143,7 +145,7 @@ defmodule WhaleChatWeb.StatsFragments do
       <div class="detail-profile">
         <img src="#{e(avatar)}" alt="" onerror="this.onerror=null;this.src='#{e(default_avatar)}'">
         <div>
-          <div style="font-size:1.35rem;font-weight:600;">#{e(name)}</div>
+          <div class="stats-player-name" style="font-size:1.35rem;font-weight:600;">#{name_html}</div>
           <div class="detail-profile-links">#{profile_link}</div>
           <div style="color:var(--text-muted,#b7c0d2);">#{number(kills)} K / #{number(deaths)} D / #{number(assists)} A</div>
         </div>
@@ -302,7 +304,7 @@ defmodule WhaleChatWeb.StatsFragments do
       |> Enum.join(" ")
 
     name_classes =
-      []
+      ["stats-player-name"]
       |> maybe_push(row[:is_admin], "admin-name")
       |> maybe_push(row[:is_online], "online-name")
       |> Enum.join(" ")
@@ -328,11 +330,13 @@ defmodule WhaleChatWeb.StatsFragments do
         true -> "Player"
       end
 
+    player_name_html = player_name_html(personaname, row[:country_code])
+
     player_link =
       if is_binary(profile_url) and profile_url != "" do
-        ~s(<a class="#{e(name_classes)}" title="#{e(name_title)}" href="#{e(profile_url)}" target="_blank" rel="noopener">#{e(personaname)}</a>)
+        ~s(<a class="#{e(name_classes)}" title="#{e(name_title)}" href="#{e(profile_url)}" target="_blank" rel="noopener">#{player_name_html}</a>)
       else
-        ~s(<span class="#{e(name_classes)}" title="#{e(name_title)}">#{e(personaname)}</span>)
+        ~s(<span class="#{e(name_classes)}" title="#{e(name_title)}">#{player_name_html}</span>)
       end
 
     """
@@ -609,6 +613,27 @@ defmodule WhaleChatWeb.StatsFragments do
       _ ->
         ""
     end
+  end
+
+  defp player_name_html(name, country_code), do: e(name) <> country_flag_html(country_code)
+
+  defp country_flag_html(country_code) do
+    case normalize_country_code(country_code) do
+      "" ->
+        ""
+
+      code ->
+        ~s( <img class="stats-country-flag" src="#{@flag_base_url}#{e(code)}.png" alt="#{e(String.upcase(code))}" title="#{e(String.upcase(code))}">)
+    end
+  end
+
+  defp normalize_country_code(code) do
+    code
+    |> fallback("")
+    |> to_string()
+    |> String.trim()
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9_-]/, "")
   end
 
   defp stat_compare_attr(false, _value, _average, _hib, title), do: title_attr(title)

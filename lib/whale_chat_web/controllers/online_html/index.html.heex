@@ -243,6 +243,26 @@
         onlineTable.dataset.sortBound = '1';
     }
 
+    function normalizeFlagCode(code) {
+        return String(code || '').trim().toLowerCase();
+    }
+
+    function flagImageUrl(code) {
+        const normalized = normalizeFlagCode(code);
+        return normalized ? `https://bantculture.com/static/flags/${encodeURIComponent(normalized)}.png` : '';
+    }
+
+    function createFlagImage(code, title) {
+        const normalized = normalizeFlagCode(code);
+        if (!normalized) return null;
+        const flag = document.createElement('img');
+        flag.className = 'server-flag';
+        flag.alt = normalized.toUpperCase();
+        flag.src = flagImageUrl(normalized);
+        flag.title = title || normalized;
+        return flag;
+    }
+
     function renderServerCards(servers) {
         if (!mapCardsContainer) return;
         mapCardsContainer.innerHTML = '';
@@ -266,17 +286,17 @@
             const label = document.createElement('div'); label.className = 'label';
             const ip = server.host_ip || '0.0.0.0'; const port = Number(server.host_port) || 0;
             const city = (server.city && server.city.trim()) ? server.city : 'Unknown';
-            const countryCode = (server.country_code && server.country_code.trim()) ? server.country_code.trim().toLowerCase() : '';
+            const countryCode = normalizeFlagCode(server.country_code);
             const connectLink = document.createElement('a'); connectLink.classList.add('connect-url'); connectLink.href = `steam://connect/${ip}:${port}`; connectLink.textContent = `${ip}:${port}`; connectLink.title = 'Connect via Steam';
             label.textContent = '('; label.appendChild(connectLink); label.appendChild(document.createTextNode(`): ${city}`));
             if (countryCode) {
               label.appendChild(document.createTextNode(' '));
-              const flag = document.createElement('img'); flag.className = 'server-flag'; flag.alt = countryCode.toUpperCase(); flag.src = `https://kogasa.tf/playercount_widget/${countryCode}.png`; flag.title = `Region: ${countryCode}`; label.appendChild(flag);
+              label.appendChild(createFlagImage(countryCode, `Region: ${countryCode}`));
             }
             const extraFlags = Array.isArray(server.extra_flags) ? server.extra_flags.slice() : [];
             extraFlags.forEach(flagName => {
-              const normalized = (flagName || '').trim().toLowerCase(); if (!normalized) return;
-              const extra = document.createElement('img'); extra.className = 'server-flag'; extra.alt = normalized.toUpperCase(); extra.src = `https://kogasa.tf/playercount_widget/${normalized}.png`; extra.title = `${flagName}`;
+              const normalized = normalizeFlagCode(flagName); if (!normalized) return;
+              const extra = createFlagImage(normalized, `${flagName}`);
               label.appendChild(document.createTextNode(' ')); label.appendChild(extra);
             });
             const value = document.createElement('div'); value.className = 'value'; value.textContent = server.map_name || 'Unknown';
