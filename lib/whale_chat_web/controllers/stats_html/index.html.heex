@@ -1,5 +1,5 @@
 <Layouts.app flash={@flash} wide={true}>
-  <link rel="stylesheet" href="/stats/css/whaletracker.css">
+  <link rel="stylesheet" href={"/stats/css/whaletracker.css?v=#{@tab_hash || "dev"}"}>
   <style>
     :root {
       --bg-color: #0b1019;
