@@ -5,6 +5,7 @@ defmodule WhaleChat.OnlineFeed do
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.CountryNames
   alias WhaleChat.Repo
+  alias WhaleChat.Tf2Classes
   alias WhaleChat.WeaponCategories
 
   require Logger
@@ -111,7 +112,8 @@ defmodule WhaleChat.OnlineFeed do
     %{
       default_avatar_url:
         Application.get_env(:whale_chat, :default_avatar_url, @default_avatar_url),
-      class_icon_base: System.get_env("WT_CLASS_ICON_BASE") || "/leaderboard/"
+      class_icon_base: System.get_env("WT_CLASS_ICON_BASE") || "/leaderboard/",
+      class_metadata: Tf2Classes.online_metadata()
     }
   end
 

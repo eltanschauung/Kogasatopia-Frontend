@@ -1,6 +1,8 @@
 defmodule WhaleChat.PlayercountWidget do
   @moduledoc false
 
+  alias WhaleChat.Tf2Classes
+
   @root "/var/www/kogasatopia/playercount_widget"
   @public_ip "173.255.237.230"
   @flag_base "https://bantculture.com/static/flags"
@@ -10,19 +12,6 @@ defmodule WhaleChat.PlayercountWidget do
     dm_sdm mge eien nagae circu heaven haku hakurei dustbowl_pro brawl letty
     d_pro dom_h rokk gasa ard_event
   )
-
-  @class_icons %{
-    "Scout" => "/leaderboard/Scout.png",
-    "Soldier" => "/leaderboard/Soldier.png",
-    "Pyro" => "/leaderboard/Pyro.png",
-    "Demoman" => "/leaderboard/Demoman.png",
-    "Heavy" => "/leaderboard/Heavy.png",
-    "Engineer" => "/leaderboard/Engineer.png",
-    "Medic" => "/leaderboard/Medic.png",
-    "Sniper" => "/leaderboard/Sniper.png",
-    "Spy" => "/leaderboard/Spy.png",
-    "Respawning" => ""
-  }
 
   def render(:index), do: render_main_widget()
 
@@ -218,8 +207,8 @@ defmodule WhaleChat.PlayercountWidget do
   end
 
   defp class_icon_html(class) do
-    case Map.fetch(@class_icons, class) do
-      {:ok, image} -> ~s(<img src="#{image}" alt="#{image}" title="#{image}  "> )
+    case Tf2Classes.leaderboard_icon_for_label(class) do
+      {:ok, {_label, image}} -> ~s(<img src="#{image}" alt="#{image}" title="#{image}  "> )
       :error -> ""
     end
   end

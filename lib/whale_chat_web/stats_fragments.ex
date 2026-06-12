@@ -1,19 +1,9 @@
 defmodule WhaleChatWeb.StatsFragments do
   @moduledoc false
 
+  alias WhaleChat.Tf2Classes
   alias WhaleChat.TimeDisplay
 
-  @favorite_class_icons %{
-    1 => {"Scout", "/leaderboard/Scout.png"},
-    2 => {"Sniper", "/leaderboard/Sniper.png"},
-    3 => {"Soldier", "/leaderboard/Soldier.png"},
-    4 => {"Demoman", "/leaderboard/Demoman.png"},
-    5 => {"Medic", "/leaderboard/Medic.png"},
-    6 => {"Heavy", "/leaderboard/Heavy.png"},
-    7 => {"Pyro", "/leaderboard/Pyro.png"},
-    8 => {"Spy", "/leaderboard/Spy.png"},
-    9 => {"Engineer", "/leaderboard/Engineer.png"}
-  }
   @flag_base_url "https://bantculture.com/static/flags/"
 
   def cumulative_fragment_html(payload, opts \\ %{}) do
@@ -606,11 +596,11 @@ defmodule WhaleChatWeb.StatsFragments do
   defp accuracy_class_id_for_slug(_), do: 0
 
   defp class_icon_html(id, title_prefix) do
-    case @favorite_class_icons[id] do
-      {label, path} ->
+    case Tf2Classes.leaderboard_icon_for_id(id) do
+      {:ok, {label, path}} ->
         ~s(<img class="stat-accuracy-icon" src="#{e(path)}" alt="#{e(label)}" title="#{e(title_prefix)}: #{e(label)}">)
 
-      _ ->
+      :error ->
         ""
     end
   end

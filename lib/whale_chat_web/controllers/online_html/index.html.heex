@@ -156,18 +156,7 @@
     let visibleMaxPlayers = 32;
     const onlineSortState = { key: null, direction: 1 };
 
-    const classMetadata = {
-        0: { slug: 'spectator', label: 'Spectator', icon: 'Icon_replay.png' },
-        1: { slug: 'scout', label: 'Scout', icon: 'Scout.png' },
-        2: { slug: 'sniper', label: 'Sniper', icon: 'Sniper.png' },
-        3: { slug: 'soldier', label: 'Soldier', icon: 'Soldier.png' },
-        4: { slug: 'demoman', label: 'Demoman', icon: 'Demoman.png' },
-        5: { slug: 'medic', label: 'Medic', icon: 'Medic.png' },
-        6: { slug: 'heavy', label: 'Heavy', icon: 'Heavy.png' },
-        7: { slug: 'pyro', label: 'Pyro', icon: 'Pyro.png' },
-        8: { slug: 'spy', label: 'Spy', icon: 'Spy.png' },
-        9: { slug: 'engineer', label: 'Engineer', icon: 'Engineer.png' },
-    };
+    const classMetadata = <%= Phoenix.HTML.raw(Jason.encode!(@class_metadata)) %>;
 
     function formatPlaytime(seconds) {
         const totalSeconds = Math.max(0, Number(seconds) || 0);

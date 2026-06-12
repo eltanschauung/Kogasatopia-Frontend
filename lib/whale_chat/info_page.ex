@@ -2,21 +2,12 @@ defmodule WhaleChat.InfoPage do
   @moduledoc false
 
   alias WhaleChat.LegacySite
+  alias WhaleChat.Tf2Classes
 
   @changes_path Path.join([LegacySite.docroot(), "info", "data", "changes.json"])
   @active_class "scout"
 
-  @classes [
-    %{id: 1, key: "scout", label: "Scout", icon: "scout.png"},
-    %{id: 2, key: "sniper", label: "Sniper", icon: "sniper.png"},
-    %{id: 3, key: "soldier", label: "Soldier", icon: "soldier.png"},
-    %{id: 4, key: "demoman", label: "Demoman", icon: "demoman.png"},
-    %{id: 5, key: "medic", label: "Medic", icon: "medic.png"},
-    %{id: 6, key: "heavy", label: "Heavy", icon: "heavy.png"},
-    %{id: 7, key: "pyro", label: "Pyro", icon: "pyro.png"},
-    %{id: 8, key: "spy", label: "Spy", icon: "spy.png"},
-    %{id: 9, key: "engineer", label: "Engineer", icon: "engineer.png"}
-  ]
+  @classes Tf2Classes.info_classes()
 
   @class_icons Map.new(@classes, fn %{key: key, icon: icon} -> {key, icon} end)
 
