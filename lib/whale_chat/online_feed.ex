@@ -5,19 +5,11 @@ defmodule WhaleChat.OnlineFeed do
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.CountryNames
   alias WhaleChat.Repo
+  alias WhaleChat.WeaponCategories
 
   require Logger
 
-  @weapon_category_metadata %{
-    "shotguns" => %{label: "Shotgun"},
-    "scatterguns" => %{label: "Scattergun"},
-    "pistols" => %{label: "Pistol"},
-    "rocketlaunchers" => %{label: "Rocket Launcher"},
-    "grenadelaunchers" => %{label: "Grenade Launcher"},
-    "stickylaunchers" => %{label: "Sticky Launcher"},
-    "snipers" => %{label: "Sniper Rifle"},
-    "revolvers" => %{label: "Revolver"}
-  }
+  @weapon_category_metadata WeaponCategories.metadata()
 
   @max_weapon_slots 3
   @server_fresh_seconds 180

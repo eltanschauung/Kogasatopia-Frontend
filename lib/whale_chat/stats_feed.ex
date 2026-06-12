@@ -6,6 +6,7 @@ defmodule WhaleChat.StatsFeed do
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.CountryNames
   alias WhaleChat.Repo
+  alias WhaleChat.WeaponCategories
 
   @default_avatar "/stats/assets/whaley-avatar.jpg"
   @stats_table "whaletracker"
@@ -13,17 +14,8 @@ defmodule WhaleChat.StatsFeed do
   @logs_table "whaletracker_logs"
   @log_players_table "whaletracker_log_players"
   @default_stats_cache_dir "/var/www/kogasatopia/stats/cache"
-  @weapon_category_metadata %{
-    "shotguns" => %{label: "Shotgun"},
-    "scatterguns" => %{label: "Scattergun"},
-    "pistols" => %{label: "Pistol"},
-    "rocketlaunchers" => %{label: "Rocket Launcher"},
-    "grenadelaunchers" => %{label: "Grenade Launcher"},
-    "stickylaunchers" => %{label: "Sticky Launcher"},
-    "snipers" => %{label: "Sniper Rifle"},
-    "revolvers" => %{label: "Revolver"}
-  }
-  @weapon_category_slugs ~w(shotguns scatterguns pistols rocketlaunchers grenadelaunchers stickylaunchers snipers revolvers)
+  @weapon_category_metadata WeaponCategories.metadata()
+  @weapon_category_slugs WeaponCategories.slugs()
   @favorite_class_accuracy_groups %{
     1 => ~w(scatterguns),
     2 => ~w(snipers),
