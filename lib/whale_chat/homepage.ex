@@ -4,7 +4,7 @@ defmodule WhaleChat.Homepage do
   alias WhaleChat.LegacySite
 
   @fragments_root LegacySite.homepage_fragments_root()
-  @site_title "Kogasatopia | Kogasatopia New Jersey TF2 Server"
+  @site_title "Kogasatopia"
   @site_description "Kogasatopia at kogasa.tf is the website for Kogasatopia | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
 
   def render_html(opts \\ []) do
