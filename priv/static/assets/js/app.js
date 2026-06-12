@@ -45,7 +45,7 @@
   window.WTOnlineCountCache = WTOnlineCountCache;
 
   const WTChatAgeLabel = {
-    endpointBase: "/stats/chat.php?limit=1",
+    endpointBase: "/stats/chat.php?limit=1&alerts_only=1",
     lastText: null,
     latestCreatedAt: 0,
     requestSeq: 0,
