@@ -4,6 +4,7 @@ defmodule WhaleChat.StatsFeed do
   require Logger
   alias Ecto.Adapters.SQL
   alias WhaleChat.Chat.SteamProfiles
+  alias WhaleChat.CountryNames
   alias WhaleChat.Repo
 
   @default_avatar "/stats/assets/whaley-avatar.jpg"
@@ -514,11 +515,13 @@ defmodule WhaleChat.StatsFeed do
       dpm = if minutes > 0, do: Float.round(damage / minutes, 1), else: 0.0
       dtpm = if minutes > 0, do: Float.round(damage_taken / minutes, 1), else: 0.0
       kd = if deaths > 0, do: Float.round(kills / deaths, 2), else: kills * 1.0
+      country_code = country_code_for_row(row)
 
       %{
         steamid: steamid,
         personaname: if(personaname == "", do: steamid, else: personaname),
-        country_code: country_code_for_row(row),
+        country_code: country_code,
+        country_name: CountryNames.display_name(country_code),
         avatar: avatar,
         profileurl:
           if(steamid != "", do: "https://steamcommunity.com/profiles/" <> steamid, else: nil),

@@ -63,7 +63,7 @@ defmodule WhaleChatWeb.StatsFragments do
   def focused_player_html(row, default_avatar, opts) do
     avatar = fallback(row[:avatar], default_avatar)
     name = fallback(row[:personaname], fallback(row[:steamid], "Unknown"))
-    name_html = player_name_html(name, row[:country_code])
+    name_html = player_name_html(name, row[:country_code], row[:country_name])
     perf = get_opt(opts, :performance_averages, %{})
 
     comparison_enabled =
@@ -330,7 +330,7 @@ defmodule WhaleChatWeb.StatsFragments do
         true -> "Player"
       end
 
-    player_name_html = player_name_html(personaname, row[:country_code])
+    player_name_html = player_name_html(personaname, row[:country_code], row[:country_name])
 
     player_link =
       if is_binary(profile_url) and profile_url != "" do
@@ -615,15 +615,19 @@ defmodule WhaleChatWeb.StatsFragments do
     end
   end
 
-  defp player_name_html(name, country_code), do: e(name) <> country_flag_html(country_code)
+  defp player_name_html(name, country_code, country_name) do
+    e(name) <> country_flag_html(country_code, country_name)
+  end
 
-  defp country_flag_html(country_code) do
+  defp country_flag_html(country_code, country_name) do
     case normalize_country_code(country_code) do
       "" ->
         ""
 
       code ->
-        ~s( <img class="stats-country-flag" src="#{@flag_base_url}#{e(code)}.png" alt="#{e(String.upcase(code))}" title="#{e(String.upcase(code))}">)
+        title = fallback(country_name, String.upcase(code))
+
+        ~s( <img class="stats-country-flag" src="#{@flag_base_url}#{e(code)}.png" alt="#{e(title)}" title="#{e(title)}">)
     end
   end
 

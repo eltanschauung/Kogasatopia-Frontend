@@ -291,7 +291,7 @@
             label.textContent = '('; label.appendChild(connectLink); label.appendChild(document.createTextNode(`): ${city}`));
             if (countryCode) {
               label.appendChild(document.createTextNode(' '));
-              label.appendChild(createFlagImage(countryCode, `Region: ${countryCode}`));
+              label.appendChild(createFlagImage(countryCode, server.country_name || countryCode.toUpperCase()));
             }
             const extraFlags = Array.isArray(server.extra_flags) ? server.extra_flags.slice() : [];
             extraFlags.forEach(flagName => {

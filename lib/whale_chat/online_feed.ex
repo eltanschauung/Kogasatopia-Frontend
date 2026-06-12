@@ -3,6 +3,7 @@ defmodule WhaleChat.OnlineFeed do
 
   alias Ecto.Adapters.SQL
   alias WhaleChat.Chat.SteamProfiles
+  alias WhaleChat.CountryNames
   alias WhaleChat.Repo
 
   require Logger
@@ -236,6 +237,8 @@ defmodule WhaleChat.OnlineFeed do
           app_id -> app_id
         end
 
+      country_code = server |> Map.get("country") |> CountryNames.normalize_code()
+
       %{
         "host_ip" => host_ip,
         "host_port" => host_port,
@@ -246,7 +249,8 @@ defmodule WhaleChat.OnlineFeed do
         "visible_max" => int(server["visible_max"]),
         "map_image" => resolve_map_image(map_name),
         "city" => str(server["city"]),
-        "country_code" => server |> Map.get("country") |> str() |> String.downcase(),
+        "country_code" => country_code,
+        "country_name" => CountryNames.display_name(country_code),
         "extra_flags" => parse_flags(server["flags"]),
         "last_update" => int(server["last_update"])
       }
@@ -342,6 +346,7 @@ defmodule WhaleChat.OnlineFeed do
           "last_update" => now,
           "city" => "",
           "country_code" => "",
+          "country_name" => "",
           "extra_flags" => []
         }
 
