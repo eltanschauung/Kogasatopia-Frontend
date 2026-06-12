@@ -15,6 +15,8 @@ defmodule WhaleChatWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
+  plug WhaleChatWeb.Plugs.AccessLog
+
   # Reuse the existing WhaleTracker assets (avatars, nav icons) for parity on the demo server.
   plug Plug.Static,
     at: "/stats",

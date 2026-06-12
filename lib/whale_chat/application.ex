@@ -11,6 +11,7 @@ defmodule WhaleChat.Application do
       WhaleChatWeb.Telemetry,
       WhaleChat.Repo,
       WhaleChat.Chat.RateLimiter,
+      WhaleChat.AccessLog,
       {DNSCluster, query: Application.get_env(:whale_chat, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: WhaleChat.PubSub},
       # Start a worker by calling: WhaleChat.Worker.start_link(arg)
