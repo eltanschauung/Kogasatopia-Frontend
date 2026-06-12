@@ -1,6 +1,8 @@
 defmodule WhaleChat.OnlineFeed do
   @moduledoc false
 
+  import WhaleChat.Value, only: [float: 1, int: 1, str: 1, truthy?: 1]
+
   alias Ecto.Adapters.SQL
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.CountryNames
@@ -532,9 +534,6 @@ defmodule WhaleChat.OnlineFeed do
     end
   end
 
-  defp truthy?(v) when v in [true, 1, "1", "true", "yes", "on"], do: true
-  defp truthy?(_), do: false
-
   defp log_online_error(context, reason) do
     Logger.debug(fn -> "[OnlineFeed] #{context}: #{inspect(reason)}" end)
   end
@@ -543,33 +542,4 @@ defmodule WhaleChat.OnlineFeed do
     Enum.map(rows, fn row -> Enum.zip(columns, row) |> Map.new() end)
   end
 
-  defp str(nil), do: ""
-  defp str(v) when is_binary(v), do: v
-  defp str(v), do: to_string(v)
-
-  defp int(nil), do: 0
-  defp int(v) when is_integer(v), do: v
-  defp int(v) when is_float(v), do: trunc(v)
-
-  defp int(v) when is_binary(v) do
-    case Integer.parse(v) do
-      {i, _} -> i
-      :error -> 0
-    end
-  end
-
-  defp int(_), do: 0
-
-  defp float(nil), do: 0.0
-  defp float(v) when is_float(v), do: v
-  defp float(v) when is_integer(v), do: v / 1
-
-  defp float(v) when is_binary(v) do
-    case Float.parse(v) do
-      {f, _} -> f
-      :error -> 0.0
-    end
-  end
-
-  defp float(_), do: 0.0
 end

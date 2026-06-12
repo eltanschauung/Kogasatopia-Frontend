@@ -1,6 +1,8 @@
 defmodule WhaleChat.StatsFeed do
   @moduledoc false
 
+  import WhaleChat.Value, only: [float: 1, int: 1, str: 1, truthy?: 1]
+
   require Logger
   alias Ecto.Adapters.SQL
   alias WhaleChat.Chat.SteamProfiles
@@ -295,12 +297,12 @@ defmodule WhaleChat.StatsFeed do
 
         %{
           eligible: int(m["eligible"]),
-          kd: floaty(m["avg_kd"]),
-          damage: floaty(m["avg_damage"]),
-          airshots: floaty(m["avg_airshots"]),
-          healing: floaty(m["avg_healing"]),
-          dpm: floaty(m["avg_dpm"]),
-          accuracy: floaty(m["avg_accuracy"]) * 100.0
+          kd: float(m["avg_kd"]),
+          damage: float(m["avg_damage"]),
+          airshots: float(m["avg_airshots"]),
+          healing: float(m["avg_healing"]),
+          dpm: float(m["avg_dpm"]),
+          accuracy: float(m["avg_accuracy"]) * 100.0
         }
 
       _ ->
@@ -1189,7 +1191,7 @@ defmodule WhaleChat.StatsFeed do
             ]
         end
       end)
-      |> Enum.sort_by(fn item -> {-int(item["shots"]), -floaty(item["accuracy"])} end)
+      |> Enum.sort_by(fn item -> {-int(item["shots"]), -float(item["accuracy"])} end)
       |> fallback_overall_weapon_summary(row)
 
     {summary, List.first(summary)}
@@ -1272,9 +1274,6 @@ defmodule WhaleChat.StatsFeed do
     end
   end
 
-  defp truthy?(v) when v in [true, 1, "1", "true", "yes", "on"], do: true
-  defp truthy?(_), do: false
-
   defp row_map(row, cols), do: Enum.zip(cols, row) |> Map.new()
 
   defp ceil_div(total, per_page) when per_page > 0, do: div(total + per_page - 1, per_page)
@@ -1295,41 +1294,4 @@ defmodule WhaleChat.StatsFeed do
     end
   end
 
-  defp str(nil), do: ""
-  defp str(v) when is_binary(v), do: v
-  defp str(v), do: to_string(v)
-
-  defp int(nil), do: 0
-  defp int(v) when is_integer(v), do: v
-  defp int(v) when is_float(v), do: trunc(v)
-  defp int(%Decimal{} = v), do: v |> Decimal.round(0) |> Decimal.to_integer()
-
-  defp int(v) when is_binary(v) do
-    case Integer.parse(v) do
-      {i, _} -> i
-      :error -> 0
-    end
-  end
-
-  defp int(_), do: 0
-
-  defp floaty(nil), do: 0.0
-  defp floaty(v) when is_float(v), do: v
-  defp floaty(v) when is_integer(v), do: v / 1
-  defp floaty(%Decimal{} = v), do: Decimal.to_float(v)
-
-  defp floaty(v) when is_binary(v) do
-    case Float.parse(v) do
-      {f, _} ->
-        f
-
-      :error ->
-        case Integer.parse(v) do
-          {i, _} -> i / 1
-          :error -> 0.0
-        end
-    end
-  end
-
-  defp floaty(_), do: 0.0
 end
