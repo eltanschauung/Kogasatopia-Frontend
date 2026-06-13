@@ -29,6 +29,7 @@ phoenix_webserver_explanation.txt
 AGENTS.md
 .server4001.log
 access.log
+weaponreverts.cfg
 
 # Cached assets / mirrored PHP cache directories
 /priv/static/cache/
