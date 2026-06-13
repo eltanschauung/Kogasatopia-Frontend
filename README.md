@@ -1,15 +1,16 @@
-# WhaleChat
+# Kogasatopia Frontend
 
-This is an ongoing project to port the full frontend of Whaletracker to Elixir for concurrency and realtime speeds. You can interact with a demo running on Pheonix, connected to the real database: http://173.255.237.230:4001/
-The landing page will expand as this project does.
-This project aims to port the entirety of Whaletracker to Elixir. See the current version built on PHP, Js and HTML at https://kogasa.tf/stats/
+This repository represents the frontend used by Kogasatopia. Currently, it's a combination of the previous site frontends (blog + stat tracker dashboard) into one. It uses Elixir and the Phoenix webserver, which I became curious about while developing the server's live chat system at [kogasa.tf/chat](https://kogasa.tf/chat).
 
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/82f2dfaa-7848-45ef-8564-eddb54c786e3" />
+Features include:
+- teamfortress.com styled blog with a changelog, relevant links and contact link
+- cumulative stat tracking page
+- 'Online Now' page which shows the in-game players, map, playercount and scoreboard live
+- Ad-hoc Steam connect links for servers
+- map database & server popularity statistics page
+- match logs page
+- current match log for in-game use through the motd panel
+- live chat, which communicates with both servers (inspired by Minecraft Dynmap concept)
+- weapons page which allows clients to check stats easily (to be completed)
 
-## Learn more about Phoenix
-
-* Official website: https://www.phoenixframework.org/
-* Guides: https://hexdocs.pm/phoenix/overview.html
-* Docs: https://hexdocs.pm/phoenix
-* Forum: https://elixirforum.com/c/phoenix-forum
-* Source: https://github.com/phoenixframework/phoenix
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/fc0963c3-633f-41d2-977c-eb73c30e6e14" />
