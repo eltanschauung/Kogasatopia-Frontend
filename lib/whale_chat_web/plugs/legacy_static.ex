@@ -101,10 +101,10 @@ defmodule WhaleChatWeb.Plugs.LegacyStatic do
 
     cond do
       info_path?(normalized) and info_image_path?(normalized) ->
-        put_forever_cache_headers(conn)
+        put_info_image_cache_headers(conn)
 
       info_path?(normalized) ->
-        put_no_store_headers(conn)
+        put_info_asset_cache_headers(conn)
 
       MapSet.member?(LegacySite.homepage_immutable_images(), normalized) or
         MapSet.member?(LegacySite.homepage_immutable_assets(), normalized) or
@@ -125,15 +125,15 @@ defmodule WhaleChatWeb.Plugs.LegacyStatic do
 
   defp hat_background_path?(path), do: path == "/hat.jpg"
 
-  defp put_forever_cache_headers(conn) do
-    put_resp_header(conn, "cache-control", "public, max-age=31536000, immutable")
+  defp put_info_image_cache_headers(conn) do
+    put_resp_header(conn, "cache-control", "public, max-age=2592000")
   end
 
-  defp put_no_store_headers(conn) do
-    conn
-    |> put_resp_header("cache-control", "no-store, no-cache, must-revalidate, max-age=0")
-    |> put_resp_header("pragma", "no-cache")
-    |> put_resp_header("expires", "0")
-    |> put_resp_header("surrogate-control", "no-store")
+  defp put_info_asset_cache_headers(conn) do
+    put_resp_header(conn, "cache-control", "public, max-age=3600")
+  end
+
+  defp put_forever_cache_headers(conn) do
+    put_resp_header(conn, "cache-control", "public, max-age=31536000, immutable")
   end
 end

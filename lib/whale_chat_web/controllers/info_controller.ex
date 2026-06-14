@@ -7,7 +7,7 @@ defmodule WhaleChatWeb.InfoController do
     case conn.request_path do
       "/info" ->
         conn
-        |> put_no_store_headers()
+        |> put_info_cache_headers()
         |> redirect(to: "/info/")
 
       _ ->
@@ -15,16 +15,12 @@ defmodule WhaleChatWeb.InfoController do
 
         conn
         |> put_root_layout(false)
-        |> put_no_store_headers()
+        |> put_info_cache_headers()
         |> render(:index, assigns)
     end
   end
 
-  defp put_no_store_headers(conn) do
-    conn
-    |> put_resp_header("cache-control", "no-store, no-cache, must-revalidate, max-age=0")
-    |> put_resp_header("pragma", "no-cache")
-    |> put_resp_header("expires", "0")
-    |> put_resp_header("surrogate-control", "no-store")
+  defp put_info_cache_headers(conn) do
+    put_resp_header(conn, "cache-control", "public, max-age=3600")
   end
 end

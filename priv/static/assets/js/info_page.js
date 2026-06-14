@@ -98,6 +98,8 @@
     function setActiveClass(nextClass) {
       if (!nextClass || nextClass === state.activeClass) return;
       state.activeClass = nextClass;
+      state.filter = "";
+      search.value = "";
       syncClassButtons();
       renderTiles();
 
