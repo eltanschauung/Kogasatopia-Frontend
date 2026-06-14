@@ -81,8 +81,8 @@ body {
 }
 .header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; }
 .title-group { display: flex; flex-direction: column; gap: .2rem; }
+.brand-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: .6rem; }
 .brand { font-family: TF2Build, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; font-size: 2.25rem; letter-spacing: .02em; color: var(--text); text-shadow: 2px 2px 0 #000; }
-.config-updated { font-size: .72rem; color: #a79d8a; line-height: 1.1; text-shadow: 1px 1px 0 #000; }
 .subtitle { font-size: 1rem; color: var(--muted); }
 
 .class-bar { display: grid; grid-template-columns: repeat(10, 1fr); gap: .5rem; margin-bottom: 1rem; }
@@ -205,9 +205,6 @@ div#neutral{ color: white; }
   }
   .brand {
     font-size: 1.55rem;
-  }
-  .config-updated {
-    font-size: .72rem;
   }
   .subtitle {
     font-size: .88rem;
