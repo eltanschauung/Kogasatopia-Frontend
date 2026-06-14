@@ -58,13 +58,25 @@ defmodule WhaleChat.Tf2Classes do
   ]
 
   @spectator %{id: 0, slug: "spectator", label: "Spectator", leaderboard_icon: "Icon_replay.png"}
+  @all_class_info %{id: 10, slug: "all_class", label: "All Class", info_icon: "backpack.png"}
   @by_id Map.new(@classes, fn class -> {class.id, class} end)
   @by_label Map.new(@classes, fn class -> {class.label, class} end)
 
   def info_classes do
-    Enum.map(@classes, fn class ->
-      %{id: class.id, key: class.slug, label: class.label, icon: class.info_icon}
-    end)
+    info_classes =
+      Enum.map(@classes, fn class ->
+        %{id: class.id, key: class.slug, label: class.label, icon: class.info_icon}
+      end)
+
+    info_classes ++
+      [
+        %{
+          id: @all_class_info.id,
+          key: @all_class_info.slug,
+          label: @all_class_info.label,
+          icon: @all_class_info.info_icon
+        }
+      ]
   end
 
   def online_metadata do

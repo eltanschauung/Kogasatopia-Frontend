@@ -9,7 +9,8 @@ defmodule WhaleChat.WeaponRevertsConfig do
   @repo_fallback "/home/kogasa/Kogasatopia/tf/addons/sourcemod/configs/weaponreverts.cfg"
   @cwx_repo_fallback "/home/kogasa/Kogasatopia/tf/addons/sourcemod/configs/cwx/weapons.txt"
   @default_cwx_image "100px-item_icon_wrangler.png"
-  @all_class_keys ~w(scout soldier pyro demoman heavy engineer medic sniper spy)
+  @tf2_class_keys ~w(scout soldier pyro demoman heavy engineer medic sniper spy)
+  @all_class_key "all_class"
   @cwx_inherit_class_rules [
     {~r/TF_WEAPON_SHOTGUN_PYRO|SHOTGUN_PYRO|FIREAXE|FLAMETHROWER|FLAREGUN/i, ["pyro"]},
     {~r/TF_WEAPON_SHOTGUN_HWG|SHOTGUN_HWG|TF_WEAPON_MINIGUN|MINIGUN/i, ["heavy"]},
@@ -23,7 +24,7 @@ defmodule WhaleChat.WeaponRevertsConfig do
     {~r/PDA_ENGINEER|Wrench|Sentry|Dispenser/i, ["engineer"]},
     {~r/MEDIGUN|SYRINGEGUN|BONESAW|CROSSBOW|Crusader/i, ["medic"]},
     {~r/REVOLVER|KNIFE|Dead Ringer|Ap-Sap|Enforcer/i, ["spy"]},
-    {~r/Prinny Machete/i, @all_class_keys}
+    {~r/Prinny Machete/i, @tf2_class_keys}
   ]
 
   def items_by_class(classes, path \\ config_path(), cwx_path \\ cwx_config_path()) do
@@ -208,6 +209,14 @@ defmodule WhaleChat.WeaponRevertsConfig do
   end
 
   defp cwx_class_keys(children, allowed_class_keys) do
+    if truthy_value?(value(children, "all_class", "")) and @all_class_key in allowed_class_keys do
+      [@all_class_key]
+    else
+      cwx_regular_class_keys(children, allowed_class_keys)
+    end
+  end
+
+  defp cwx_regular_class_keys(children, allowed_class_keys) do
     explicit =
       children
       |> section("used_by_classes")
@@ -238,6 +247,14 @@ defmodule WhaleChat.WeaponRevertsConfig do
         Enum.filter(classes, &(&1 in allowed_class_keys))
       end
     end)
+  end
+
+  defp truthy_value?(value) do
+    value
+    |> to_string()
+    |> String.trim()
+    |> String.downcase()
+    |> then(&(&1 in ["1", "true", "yes", "on"]))
   end
 
   defp blank_effects?(%{positive: positive, neutral: neutral, negative: negative}) do
