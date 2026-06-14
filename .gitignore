@@ -30,6 +30,7 @@ AGENTS.md
 .server4001.log
 access.log
 weaponreverts.cfg
+weapons.txt
 
 # Cached assets / mirrored PHP cache directories
 /priv/static/cache/

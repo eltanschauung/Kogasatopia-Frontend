@@ -4,10 +4,39 @@ defmodule WhaleChat.WeaponRevertsConfig do
   @item_classes_section "WeaponRevertsItemClasses"
   @root_section "WeaponReverts"
   @config_filename "weaponreverts.cfg"
+  @cwx_root_section "Items"
+  @cwx_config_filename "weapons.txt"
   @repo_fallback "/home/kogasa/Kogasatopia/tf/addons/sourcemod/configs/weaponreverts.cfg"
+  @cwx_repo_fallback "/home/kogasa/Kogasatopia/tf/addons/sourcemod/configs/cwx/weapons.txt"
+  @default_cwx_image "100px-item_icon_wrangler.png"
+  @all_class_keys ~w(scout soldier pyro demoman heavy engineer medic sniper spy)
+  @cwx_inherit_class_rules [
+    {~r/TF_WEAPON_SHOTGUN_PYRO|SHOTGUN_PYRO|FIREAXE|FLAMETHROWER|FLAREGUN/i, ["pyro"]},
+    {~r/TF_WEAPON_SHOTGUN_HWG|SHOTGUN_HWG|TF_WEAPON_MINIGUN|MINIGUN/i, ["heavy"]},
+    {~r/TF_WEAPON_SHOTGUN_SOLDIER|SHOTGUN_SOLDIER|TF_WEAPON_SHOTGUN_PRIMARY|Equalizer|Disciplinary Action|Market Gardener|Buff Banner|Battalion|Concheror|ROCKETLAUNCHER/i,
+     ["soldier"]},
+    {~r/TF_WEAPON_SCATTERGUN|SCATTERGUN|Baby Face|Crit-a-Cola|Wrap Assassin|PISTOL_SCOUT/i,
+     ["scout"]},
+    {~r/SNIPERRIFLE|Huntsman|SMG/i, ["sniper"]},
+    {~r/PIPEBOMBLAUNCHER|GRENADELAUNCHER|Scottish Resistance|Iron Bomber|Claidheamh/i,
+     ["demoman"]},
+    {~r/PDA_ENGINEER|Wrench|Sentry|Dispenser/i, ["engineer"]},
+    {~r/MEDIGUN|SYRINGEGUN|BONESAW|CROSSBOW|Crusader/i, ["medic"]},
+    {~r/REVOLVER|KNIFE|Dead Ringer|Ap-Sap|Enforcer/i, ["spy"]},
+    {~r/Prinny Machete/i, @all_class_keys}
+  ]
 
-  def items_by_class(classes, path \\ config_path()) do
-    root = load_root(path)
+  def items_by_class(classes, path \\ config_path(), cwx_path \\ cwx_config_path()) do
+    revert_items = revert_items_by_class(classes, path)
+    cwx_items = cwx_items_by_class(classes, cwx_path)
+
+    Enum.into(classes, %{}, fn %{key: class_key} ->
+      {class_key, Map.get(revert_items, class_key, []) ++ Map.get(cwx_items, class_key, [])}
+    end)
+  end
+
+  defp revert_items_by_class(classes, path) do
+    root = load_reverts_root(path)
     class_map = section(root, @item_classes_section) || []
     weapon_sections = weapon_sections(root)
 
@@ -16,23 +45,67 @@ defmodule WhaleChat.WeaponRevertsConfig do
     end)
   end
 
+  defp cwx_items_by_class(classes, path) do
+    class_keys = Enum.map(classes, & &1.key)
+    blank_map = Map.new(class_keys, &{&1, []})
+
+    path
+    |> load_cwx_root()
+    |> Enum.reduce(blank_map, fn
+      {item_key, children}, acc when is_list(children) ->
+        item = normalize_cwx_item(item_key, children)
+
+        children
+        |> cwx_class_keys(class_keys)
+        |> Enum.reduce(acc, fn class_key, class_acc ->
+          Map.update!(class_acc, class_key, &[item | &1])
+        end)
+
+      _, acc ->
+        acc
+    end)
+    |> Enum.into(%{}, fn {class_key, items} ->
+      {class_key, items |> Enum.reverse() |> dedupe_items()}
+    end)
+  end
+
   def config_path do
-    cwd_config = Path.expand(@config_filename, File.cwd!())
+    local_config_path(@config_filename, @repo_fallback)
+  end
+
+  def cwx_config_path do
+    local_config_path(@cwx_config_filename, @cwx_repo_fallback)
+  end
+
+  defp local_config_path(filename, fallback) do
+    cwd_config = Path.expand(filename, File.cwd!())
 
     cond do
       File.exists?(cwd_config) -> cwd_config
-      File.exists?(@repo_fallback) -> @repo_fallback
+      File.exists?(fallback) -> fallback
       true -> cwd_config
     end
   end
 
-  defp load_root(path) do
+  defp load_reverts_root(path) do
+    path
+    |> load_entries()
+    |> root_entries()
+  end
+
+  defp load_cwx_root(path) do
+    case path |> load_entries() |> section(@cwx_root_section) do
+      entries when is_list(entries) -> entries
+      _ -> []
+    end
+  end
+
+  defp load_entries(path) do
     with {:ok, body} <- File.read(path) do
       body
       |> tokenize()
       |> parse_entries()
       |> elem(0)
-      |> root_entries()
     else
       _ -> []
     end
@@ -107,6 +180,66 @@ defmodule WhaleChat.WeaponRevertsConfig do
     }
   end
 
+  defp normalize_cwx_item(item_key, children) do
+    description = cwx_description(children)
+
+    %{
+      key: item_key,
+      name: value(children, "name", item_key),
+      image: first_value(children, ["image", "icon"], @default_cwx_image),
+      type: "custom",
+      positive: value(description, "positive", ""),
+      neutral: value(description, "neutral", ""),
+      negative: value(description, "negative", "")
+    }
+  end
+
+  defp cwx_description(children) do
+    Enum.find_value(children, [], fn
+      {"description", description} when is_list(description) ->
+        description
+
+      {"description", description} when is_binary(description) ->
+        [{"positive", String.trim(description)}, {"neutral", ""}, {"negative", ""}]
+
+      _ ->
+        nil
+    end)
+  end
+
+  defp cwx_class_keys(children, allowed_class_keys) do
+    explicit =
+      children
+      |> section("used_by_classes")
+      |> List.wrap()
+      |> Enum.filter(fn
+        {class_key, slot} when is_binary(slot) ->
+          class_key in allowed_class_keys and String.trim(slot) != ""
+
+        _ ->
+          false
+      end)
+      |> Enum.map(&elem(&1, 0))
+
+    case explicit do
+      [] -> fallback_cwx_class_keys(children, allowed_class_keys)
+      _ -> explicit
+    end
+  end
+
+  defp fallback_cwx_class_keys(children, allowed_class_keys) do
+    haystack =
+      [value(children, "inherits", ""), value(children, "item_class", "")]
+      |> Enum.join(" ")
+
+    @cwx_inherit_class_rules
+    |> Enum.find_value([], fn {pattern, classes} ->
+      if Regex.match?(pattern, haystack) do
+        Enum.filter(classes, &(&1 in allowed_class_keys))
+      end
+    end)
+  end
+
   defp blank_effects?(%{positive: positive, neutral: neutral, negative: negative}) do
     [positive, neutral, negative]
     |> Enum.map(&String.trim/1)
@@ -123,12 +256,36 @@ defmodule WhaleChat.WeaponRevertsConfig do
     Enum.join([name, positive, neutral, negative, image], "|")
   end
 
+  defp dedupe_items(items) do
+    items
+    |> Enum.reduce({[], MapSet.new()}, fn item, {kept, seen} ->
+      dedupe_key = item_dedupe_key(item)
+
+      if MapSet.member?(seen, dedupe_key) do
+        {kept, seen}
+      else
+        {[item | kept], MapSet.put(seen, dedupe_key)}
+      end
+    end)
+    |> elem(0)
+    |> Enum.reverse()
+  end
+
   defp section(nil, _key), do: nil
 
   defp section(entries, key) do
     Enum.find_value(entries, fn
       {^key, children} when is_list(children) -> children
       _ -> nil
+    end)
+  end
+
+  defp first_value(entries, keys, default) do
+    Enum.find_value(keys, default, fn key ->
+      case value(entries, key, "") do
+        "" -> nil
+        value -> value
+      end
     end)
   end
 
