@@ -35,11 +35,9 @@
     <div class="page">
       <header class="header">
         <div class="title-group">
-          <div class="brand">
-            Kogasatopia Weapons Page
-            <span :if={@config_update} class="config-updated" title={@config_update.title}>
-              {@config_update.label}
-            </span>
+          <div class="brand">Kogasatopia Weapons Page</div>
+          <div :if={@config_update} class="config-updated" title={@config_update.title}>
+            {@config_update.label}
           </div>
           <div class="subtitle">
             This server has buffs for bad weapons and many nerf reverts. This page contains up-to-date weapon info by reading the server's weapon config file, cool!
