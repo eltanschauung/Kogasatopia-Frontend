@@ -864,3 +864,15 @@ workshop/backrooms_conne.ugc2879360099 | 12 | 02-13-08
 workshop/htf_homerfly_b1.ugc2933027704 | 12 | 02-23-48
 workshop/koth_staredown.ugc3741377255 | 16 | 02-39-25
 workshop/cp_battlefortress_b8c.ugc2792143054 | 16 | 10-27-22
+workshop/htf_homerfly_b1.ugc2933027704 | 24 | 10-41-12
+workshop/pass_smalltime_rc1a.ugc2512066947 | 22 | 10-55-35
+pd_watergate | 20 | 11-09-41
+pl_cactuscanyon_redux_final2 | 21 | 11-34-03
+cp_steel_trad | 21 | 11-59-50
+koth_citadel_a7 | 21 | 12-19-12
+pl_upward | 23 | 12-41-04
+pl_swiftwater_final1 | 21 | 01-07-44
+pd_circus | 15 | 01-13-06
+garbage_day | 14 | 01-23-51
+koth_oofbay_v1 | 8 | 01-52-08
+dm_sdmxmas | 4 | 12-44-46
