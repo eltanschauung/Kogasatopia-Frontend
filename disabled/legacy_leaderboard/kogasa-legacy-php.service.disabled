@@ -1,0 +1,16 @@
+# /etc/systemd/system/kogasa-legacy-php.service
+[Unit]
+Description=Kogasa Legacy PHP Backend
+After=network.target php8.4-fpm.service
+
+[Service]
+Type=simple
+User=kogasa
+Group=kogasa
+WorkingDirectory=/var/www/kogasatopia
+ExecStart=/usr/bin/php -S 127.0.0.1:8081 -t /var/www/kogasatopia
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

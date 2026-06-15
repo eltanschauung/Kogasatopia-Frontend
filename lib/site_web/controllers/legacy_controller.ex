@@ -3,7 +3,6 @@ defmodule WhaleChatWeb.LegacyController do
 
   alias WhaleChat.Homepage
   alias WhaleChat.LegacySite
-  alias WhaleChat.UpstreamProxy
 
   def home(conn, _params) do
     render_home(conn)
@@ -24,15 +23,16 @@ defmodule WhaleChatWeb.LegacyController do
     |> send_resp(200, html)
   end
 
+  def leaderboard(conn, _params) do
+    redirect(conn, to: "/online")
+  end
+
   def passthrough(conn, %{"path" => path_parts}) do
     req_path = "/" <> Enum.join(path_parts, "/")
 
     cond do
-      leaderboard_root?(req_path) ->
-        proxy_upstream_php(conn, "/leaderboard/index.php")
-
-      proxy_leaderboard_php?(req_path) ->
-        proxy_upstream_php(conn, req_path)
+      leaderboard_path?(req_path) ->
+        redirect(conn, to: "/online")
 
       php_index_dir?(req_path) or String.ends_with?(req_path, ".php") ->
         legacy_php_unavailable(conn)
@@ -51,32 +51,10 @@ defmodule WhaleChatWeb.LegacyController do
     end
   end
 
-  defp proxy_leaderboard_php?(request_path) do
-    String.starts_with?(request_path, "/leaderboard/") and String.ends_with?(request_path, ".php")
-  end
-
-  defp leaderboard_root?(request_path), do: request_path in ["/leaderboard", "/leaderboard/"]
-
-  defp proxy_upstream_php(conn, request_path) do
-    url =
-      case conn.query_string do
-        "" -> legacy_php_base() <> request_path
-        qs -> legacy_php_base() <> request_path <> "?" <> qs
-      end
-
-    case UpstreamProxy.fetch_html(url) do
-      {:ok, body} ->
-        conn
-        |> put_resp_content_type("text/html")
-        |> send_resp(200, body)
-
-      :error ->
-        legacy_php_unavailable(conn)
-    end
-  end
-
-  defp legacy_php_base do
-    Application.get_env(:whale_chat, :legacy_php_base, "http://127.0.0.1:8081")
+  defp leaderboard_path?(request_path) do
+    request_path in ["/leaderboard", "/leaderboard/"] or
+      (String.starts_with?(request_path, "/leaderboard/") and
+         String.ends_with?(request_path, ".php"))
   end
 
   defp legacy_php_unavailable(conn) do
