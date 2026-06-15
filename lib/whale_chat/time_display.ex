@@ -4,7 +4,7 @@ defmodule WhaleChat.TimeDisplay do
   @default_server_time_zone "America/New_York"
 
   def server_time_zone do
-    Application.get_env(:whale_chat, :display_time_zone, @default_server_time_zone)
+    Application.get_env(:kogasa_frontend, :display_time_zone, @default_server_time_zone)
   end
 
   def format_server_datetime(unix_seconds, format \\ "%m/%d %H:%M %Z")

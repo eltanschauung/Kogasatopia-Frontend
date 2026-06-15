@@ -53,23 +53,23 @@ defmodule WhaleChatWeb.Telemetry do
       ),
 
       # Database Metrics
-      summary("whale_chat.repo.query.total_time",
+      summary("kogasa_frontend.repo.query.total_time",
         unit: {:native, :millisecond},
         description: "The sum of the other measurements"
       ),
-      summary("whale_chat.repo.query.decode_time",
+      summary("kogasa_frontend.repo.query.decode_time",
         unit: {:native, :millisecond},
         description: "The time spent decoding the data received from the database"
       ),
-      summary("whale_chat.repo.query.query_time",
+      summary("kogasa_frontend.repo.query.query_time",
         unit: {:native, :millisecond},
         description: "The time spent executing the query"
       ),
-      summary("whale_chat.repo.query.queue_time",
+      summary("kogasa_frontend.repo.query.queue_time",
         unit: {:native, :millisecond},
         description: "The time spent waiting for a database connection"
       ),
-      summary("whale_chat.repo.query.idle_time",
+      summary("kogasa_frontend.repo.query.idle_time",
         unit: {:native, :millisecond},
         description:
           "The time the connection spent waiting before being checked out for the query"

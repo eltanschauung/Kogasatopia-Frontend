@@ -12,7 +12,7 @@ defmodule WhaleChat.Application do
       WhaleChat.Repo,
       WhaleChat.Chat.RateLimiter,
       WhaleChat.AccessLog,
-      {DNSCluster, query: Application.get_env(:whale_chat, :dns_cluster_query) || :ignore},
+      {DNSCluster, query: Application.get_env(:kogasa_frontend, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: WhaleChat.PubSub},
       # Start a worker by calling: WhaleChat.Worker.start_link(arg)
       # {WhaleChat.Worker, arg},

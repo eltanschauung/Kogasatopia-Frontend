@@ -45,11 +45,23 @@ defmodule WhaleChat.MapsDb do
   def config do
     %{
       maps_dir:
-        Application.get_env(:whale_chat, :mapsdb_dir, "/home/kogasa/hlserver/tf2/tf/cfg/mapsdb"),
+        Application.get_env(
+          :kogasa_frontend,
+          :mapsdb_dir,
+          "/home/kogasa/hlserver/tf2/tf/cfg/mapsdb"
+        ),
       tf_cfg_dir:
-        Application.get_env(:whale_chat, :mapsdb_tf_cfg_dir, "/home/kogasa/hlserver/tf2/tf/cfg"),
+        Application.get_env(
+          :kogasa_frontend,
+          :mapsdb_tf_cfg_dir,
+          "/home/kogasa/hlserver/tf2/tf/cfg"
+        ),
       preview_dir:
-        Application.get_env(:whale_chat, :mapsdb_preview_dir, LegacyPaths.playercount_widget_dir()),
+        Application.get_env(
+          :kogasa_frontend,
+          :mapsdb_preview_dir,
+          LegacyPaths.playercount_widget_dir()
+        ),
       admin_cache_file: LegacyPaths.admin_cache_file()
     }
   end

@@ -3,7 +3,16 @@ defmodule WhaleChat.Chat do
 
   import Ecto.Query
   alias Ecto.Multi
-  alias WhaleChat.Chat.{AvatarService, Message, OutboxMessage, Persona, RateLimiter, SteamProfiles}
+
+  alias WhaleChat.Chat.{
+    AvatarService,
+    Message,
+    OutboxMessage,
+    Persona,
+    RateLimiter,
+    SteamProfiles
+  }
+
   alias WhaleChat.Repo
 
   @topic "chat:live"
@@ -123,10 +132,10 @@ defmodule WhaleChat.Chat do
       now = System.system_time(:second)
 
       server_ip =
-        actor[:server_ip] || Application.get_env(:whale_chat, :chat_server_ip, "127.0.0.1")
+        actor[:server_ip] || Application.get_env(:kogasa_frontend, :chat_server_ip, "127.0.0.1")
 
       server_port =
-        actor[:server_port] || Application.get_env(:whale_chat, :chat_server_port, 443)
+        actor[:server_port] || Application.get_env(:kogasa_frontend, :chat_server_port, 443)
 
       display_name =
         cond do
@@ -182,7 +191,9 @@ defmodule WhaleChat.Chat do
     iphash = row[:iphash] || row["iphash"]
     personaname = row[:personaname] || row["personaname"]
     steamid = row[:steamid] || row["steamid"]
-    profile = if is_binary(steamid) and steamid != "", do: Map.get(steam_profiles, steamid), else: nil
+
+    profile =
+      if is_binary(steamid) and steamid != "", do: Map.get(steam_profiles, steamid), else: nil
 
     avatar =
       AvatarService.resolve(%{
@@ -203,16 +214,22 @@ defmodule WhaleChat.Chat do
     }
   end
 
-  defp resolved_name(nil, steamid, iphash, profile), do: resolved_name("", steamid, iphash, profile)
+  defp resolved_name(nil, steamid, iphash, profile),
+    do: resolved_name("", steamid, iphash, profile)
 
   defp resolved_name("", steamid, iphash, profile) do
     cond do
       is_map(profile) and is_binary(profile["personaname"]) and profile["personaname"] != "" ->
         profile["personaname"]
 
-      is_binary(steamid) and steamid != "" -> steamid
-      is_binary(iphash) and iphash != "" -> "Web Player ##{String.slice(iphash, 0, 6)}"
-      true -> "Unknown"
+      is_binary(steamid) and steamid != "" ->
+        steamid
+
+      is_binary(iphash) and iphash != "" ->
+        "Web Player ##{String.slice(iphash, 0, 6)}"
+
+      true ->
+        "Unknown"
     end
   end
 

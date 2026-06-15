@@ -114,7 +114,7 @@ defmodule WhaleChat.OnlineFeed do
   def page_config do
     %{
       default_avatar_url:
-        Application.get_env(:whale_chat, :default_avatar_url, @default_avatar_url),
+        Application.get_env(:kogasa_frontend, :default_avatar_url, @default_avatar_url),
       class_icon_base: System.get_env("WT_CLASS_ICON_BASE") || "/leaderboard/",
       class_metadata: Tf2Classes.online_metadata()
     }
@@ -263,7 +263,9 @@ defmodule WhaleChat.OnlineFeed do
 
     profiles = fetch_steam_profiles(steam_ids)
     admin_flags = admin_flags_for_ids(steam_ids)
-    default_avatar = Application.get_env(:whale_chat, :default_avatar_url, @default_avatar_url)
+
+    default_avatar =
+      Application.get_env(:kogasa_frontend, :default_avatar_url, @default_avatar_url)
 
     Enum.map(players, fn row ->
       row = normalize_online_player(row)
@@ -537,5 +539,4 @@ defmodule WhaleChat.OnlineFeed do
   defp map_rows(rows, columns) do
     Enum.map(rows, fn row -> Enum.zip(columns, row) |> Map.new() end)
   end
-
 end

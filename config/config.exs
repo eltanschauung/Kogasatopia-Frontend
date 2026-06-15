@@ -7,11 +7,11 @@
 # General application configuration
 import Config
 
-config :whale_chat,
+config :kogasa_frontend,
   ecto_repos: [WhaleChat.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-config :whale_chat,
+config :kogasa_frontend,
   default_avatar_url:
     System.get_env("WT_DEFAULT_AVATAR_URL") || "/stats/assets/whaley-avatar.jpg",
   secondary_avatar_url:
@@ -21,10 +21,11 @@ config :whale_chat,
   chat_assets_dir:
     System.get_env("WT_CHAT_ASSETS_DIR") || Path.expand("../priv/static/stats/assets", __DIR__),
   display_time_zone: System.get_env("WT_DISPLAY_TIME_ZONE") || "America/New_York",
+  session_signing_salt: System.get_env("PHX_SESSION_SIGNING_SALT") || "public-session-salt",
   access_log_path: Path.expand("access.log")
 
 # Configure the endpoint
-config :whale_chat, WhaleChatWeb.Endpoint,
+config :kogasa_frontend, WhaleChatWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
@@ -32,7 +33,9 @@ config :whale_chat, WhaleChatWeb.Endpoint,
     layout: false
   ],
   pubsub_server: WhaleChat.PubSub,
-  live_view: [signing_salt: "qhUO0Cuj"]
+  live_view: [
+    signing_salt: System.get_env("PHX_LIVE_VIEW_SIGNING_SALT") || "public-live-view-salt"
+  ]
 
 # Configure Elixir's Logger
 config :logger, :default_formatter,

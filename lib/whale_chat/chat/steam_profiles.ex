@@ -3,7 +3,7 @@ defmodule WhaleChat.Chat.SteamProfiles do
 
   alias WhaleChat.LegacyPaths
 
-  @cache_table :whale_chat_steam_profile_cache
+  @cache_table :kogasa_frontend_steam_profile_cache
   @ttl_seconds 24 * 3600
   @php_cache_ttl_seconds 24 * 3600
 
@@ -154,7 +154,7 @@ defmodule WhaleChat.Chat.SteamProfiles do
     end
   end
 
-  defp steam_api_key, do: Application.get_env(:whale_chat, :steam_api_key, "")
+  defp steam_api_key, do: Application.get_env(:kogasa_frontend, :steam_api_key, "")
 
   defp read_disk_cached_profile(steamid, now) do
     path = disk_cache_profile_path(steamid)

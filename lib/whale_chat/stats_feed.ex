@@ -363,7 +363,7 @@ defmodule WhaleChat.StatsFeed do
   end
 
   def default_avatar_url,
-    do: Application.get_env(:whale_chat, :default_avatar_url, @default_avatar)
+    do: Application.get_env(:kogasa_frontend, :default_avatar_url, @default_avatar)
 
   defp fetch_cumulative_rows(limit, offset) do
     favorite_class_expr = favorite_class_select_expr()
@@ -1288,5 +1288,4 @@ defmodule WhaleChat.StatsFeed do
         default
     end
   end
-
 end

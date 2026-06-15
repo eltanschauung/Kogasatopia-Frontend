@@ -20,7 +20,7 @@ defmodule WhaleChat.AccessLog do
 
   @impl true
   def init(opts) do
-    path = Keyword.get(opts, :path) || Application.fetch_env!(:whale_chat, :access_log_path)
+    path = Keyword.get(opts, :path) || Application.fetch_env!(:kogasa_frontend, :access_log_path)
     path = Path.expand(path)
 
     io =

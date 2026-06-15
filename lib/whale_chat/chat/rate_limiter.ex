@@ -2,7 +2,7 @@ defmodule WhaleChat.Chat.RateLimiter do
   @moduledoc false
   use GenServer
 
-  @table :whale_chat_rate_limits
+  @table :kogasa_frontend_rate_limits
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)

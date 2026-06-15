@@ -21,5 +21,5 @@ defmodule WhaleChatWeb.Gettext do
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
   """
-  use Gettext.Backend, otp_app: :whale_chat
+  use Gettext.Backend, otp_app: :kogasa_frontend
 end

@@ -1,11 +1,11 @@
 import Config
 
 # Configure your database
-config :whale_chat, WhaleChat.Repo,
+config :kogasa_frontend, WhaleChat.Repo,
   username: "root",
   password: "",
   hostname: "localhost",
-  database: "whale_chat_dev",
+  database: "kogasa_frontend_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
@@ -16,14 +16,14 @@ config :whale_chat, WhaleChat.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
-config :whale_chat, WhaleChatWeb.Endpoint,
+config :kogasa_frontend, WhaleChatWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "3u4PeAnaStGIEFaJ+ZOt9PjoblFzi1oAJqCLAVU916vLLJxhT1jPo388WNtGE6AJ",
+  secret_key_base: System.get_env("SECRET_KEY_BASE") || String.duplicate("0", 64),
   watchers: []
 
 # ## SSL Support
@@ -50,7 +50,7 @@ config :whale_chat, WhaleChatWeb.Endpoint,
 # different ports.
 
 # Reload browser tabs when matching files change.
-config :whale_chat, WhaleChatWeb.Endpoint,
+config :kogasa_frontend, WhaleChatWeb.Endpoint,
   live_reload: [
     web_console_logger: true,
     patterns: [
@@ -65,7 +65,7 @@ config :whale_chat, WhaleChatWeb.Endpoint,
   ]
 
 # Enable dev routes for dashboard and mailbox
-config :whale_chat, dev_routes: true
+config :kogasa_frontend, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"

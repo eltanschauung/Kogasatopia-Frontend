@@ -43,7 +43,7 @@ defmodule WhaleChat.CountryNames do
   end
 
   defp iso3166_tab_path do
-    Application.get_env(:whale_chat, :iso3166_tab_path, @default_iso3166_tab_path)
+    Application.get_env(:kogasa_frontend, :iso3166_tab_path, @default_iso3166_tab_path)
   end
 
   defp parse_iso3166_tab(contents) do

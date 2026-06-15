@@ -21,8 +21,8 @@ defmodule WhaleChatWeb.ChatLive do
         persona: persona,
         iphash: short_hash(session),
         rate_key: session["wt_chat_client_token"] || "anon",
-        server_ip: Application.get_env(:whale_chat, :chat_server_ip, "127.0.0.1"),
-        server_port: Application.get_env(:whale_chat, :chat_server_port, 443)
+        server_ip: Application.get_env(:kogasa_frontend, :chat_server_ip, "127.0.0.1"),
+        server_port: Application.get_env(:kogasa_frontend, :chat_server_port, 443)
       }
       |> ensure_persona(session, persona)
 
@@ -92,13 +92,18 @@ defmodule WhaleChatWeb.ChatLive do
       prepended = older != []
 
       {:reply,
-       %{prepended: prepended, has_more_older: payload.has_more_older, oldest_id: payload.oldest_id},
+       %{
+         prepended: prepended,
+         has_more_older: payload.has_more_older,
+         oldest_id: payload.oldest_id
+       },
        socket
        |> assign(:messages, dedupe_by_id(merged))
        |> assign(:oldest_id, payload.oldest_id || socket.assigns.oldest_id)
        |> assign(:has_more_older, payload.has_more_older)}
     else
-      {:reply, %{prepended: false, has_more_older: false, oldest_id: socket.assigns.oldest_id}, socket}
+      {:reply, %{prepended: false, has_more_older: false, oldest_id: socket.assigns.oldest_id},
+       socket}
     end
   end
 
@@ -145,7 +150,11 @@ defmodule WhaleChatWeb.ChatLive do
             <p id="nav-chat-label" class="chat-subtitle">Last msg. --</p>
           </div>
           <div class="chat-topbar-right">
-            <span id="nav-online-count" class="chat-online-count" data-mirror-target="chat-nav-online-count-top">
+            <span
+              id="nav-online-count"
+              class="chat-online-count"
+              data-mirror-target="chat-nav-online-count-top"
+            >
               -- / --
             </span>
           </div>
@@ -168,7 +177,13 @@ defmodule WhaleChatWeb.ChatLive do
                   <div class="chat-content">
                     <div class="chat-header">
                       <.colored text={msg.name} class="chat-name" />
-                      <span class="chat-timestamp" data-local-time={msg.created_at} data-time-format="time">{format_time(msg.created_at)}</span>
+                      <span
+                        class="chat-timestamp"
+                        data-local-time={msg.created_at}
+                        data-time-format="time"
+                      >
+                        {format_time(msg.created_at)}
+                      </span>
                     </div>
                     <div class="chat-text">
                       <.colored text={msg.message} />
@@ -180,19 +195,41 @@ defmodule WhaleChatWeb.ChatLive do
           </div>
 
           <div class="chat-nav-stack" aria-label="Chat navigation controls">
-            <button id="chat-btn-lock" type="button" aria-pressed="true" title="Lock chat to bottom" class="navarrow navarrow-lock">
+            <button
+              id="chat-btn-lock"
+              type="button"
+              aria-pressed="true"
+              title="Lock chat to bottom"
+              class="navarrow navarrow-lock"
+            >
               <img src="/stats/assets/keine_lock.png" alt="Lock chat to bottom" />
             </button>
-            <button id="chat-btn-top" type="button" title="Scroll to top" class="navarrow navarrow-top">
+            <button
+              id="chat-btn-top"
+              type="button"
+              title="Scroll to top"
+              class="navarrow navarrow-top"
+            >
               <img src="/stats/assets/reisen_up.png" alt="Scroll to top" />
             </button>
-            <button id="chat-btn-bottom" type="button" title="Scroll to bottom" class="navarrow navarrow-bottom">
+            <button
+              id="chat-btn-bottom"
+              type="button"
+              title="Scroll to bottom"
+              class="navarrow navarrow-bottom"
+            >
               <img src="/stats/assets/tewi_down.png" alt="Scroll to bottom" />
             </button>
           </div>
         </div>
 
-        <form id="chat-form" phx-submit="send" phx-change="change" class="chat-form" autocomplete="off">
+        <form
+          id="chat-form"
+          phx-submit="send"
+          phx-change="change"
+          class="chat-form"
+          autocomplete="off"
+        >
           <textarea
             id="chat-input"
             name="message"
@@ -249,7 +286,7 @@ defmodule WhaleChatWeb.ChatLive do
 
   defp short_hash(session) do
     token = session["wt_chat_client_token"] || "anon"
-    secret = Application.get_env(:whale_chat, :chat_ip_secret, "changeme")
+    secret = Application.get_env(:kogasa_frontend, :chat_ip_secret, "changeme")
 
     :sha256
     |> :crypto.hash("#{secret}|#{token}")

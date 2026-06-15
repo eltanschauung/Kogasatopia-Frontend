@@ -3,7 +3,7 @@ defmodule WhaleChat.MixProject do
 
   def project do
     [
-      app: :whale_chat,
+      app: :kogasa_frontend,
       version: "0.1.0",
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),

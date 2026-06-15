@@ -18,13 +18,28 @@ defmodule WhaleChat.Chat.AvatarService do
   def resolve(_), do: default_avatar_url()
 
   def default_avatar_url,
-    do: Application.get_env(:whale_chat, :default_avatar_url, "/stats/assets/whaley-avatar.jpg")
+    do:
+      Application.get_env(
+        :kogasa_frontend,
+        :default_avatar_url,
+        "/stats/assets/whaley-avatar.jpg"
+      )
 
   def secondary_avatar_url,
-    do: Application.get_env(:whale_chat, :secondary_avatar_url, "/stats/assets/whaley-avatar-2.jpg")
+    do:
+      Application.get_env(
+        :kogasa_frontend,
+        :secondary_avatar_url,
+        "/stats/assets/whaley-avatar-2.jpg"
+      )
 
   def server_avatar_url,
-    do: Application.get_env(:whale_chat, :server_avatar_url, "/stats/assets/server-chat-avatar.jpg")
+    do:
+      Application.get_env(
+        :kogasa_frontend,
+        :server_avatar_url,
+        "/stats/assets/server-chat-avatar.jpg"
+      )
 
   def avatar_for_hash(nil), do: default_avatar_url()
   def avatar_for_hash(""), do: default_avatar_url()
@@ -65,7 +80,9 @@ defmodule WhaleChat.Chat.AvatarService do
     end
   end
 
-  defp profile_avatar(%{"avatarfull" => avatar}) when is_binary(avatar) and avatar != "", do: avatar
+  defp profile_avatar(%{"avatarfull" => avatar}) when is_binary(avatar) and avatar != "",
+    do: avatar
+
   defp profile_avatar(%{avatarfull: avatar}) when is_binary(avatar) and avatar != "", do: avatar
   defp profile_avatar(_), do: nil
 

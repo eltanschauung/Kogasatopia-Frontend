@@ -22,7 +22,7 @@ defmodule WhaleChatWeb.Plugs.ChatIdentity do
   end
 
   defp build_identity(conn, client_token, persona) do
-    secret = Application.get_env(:whale_chat, :chat_ip_secret, "changeme")
+    secret = Application.get_env(:kogasa_frontend, :chat_ip_secret, "changeme")
     iphash = short_hash("#{secret}|#{client_token}")
 
     %{
@@ -32,8 +32,8 @@ defmodule WhaleChatWeb.Plugs.ChatIdentity do
       iphash: iphash,
       rate_key: client_token,
       remote_ip: remote_ip_string(conn),
-      server_ip: Application.get_env(:whale_chat, :chat_server_ip, "127.0.0.1"),
-      server_port: Application.get_env(:whale_chat, :chat_server_port, 443)
+      server_ip: Application.get_env(:kogasa_frontend, :chat_server_ip, "127.0.0.1"),
+      server_port: Application.get_env(:kogasa_frontend, :chat_server_port, 443)
     }
   end
 
