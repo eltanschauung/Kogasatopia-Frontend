@@ -592,12 +592,11 @@
                 <th>A</th>
                 <th>Damage</th>
                 <th>DPM</th>
-                <th>Time</th>
               </tr>
             </thead>
             <tbody id="stats-online-body">
               <tr>
-                <td colspan="9" class="stats-empty">Loading…</td>
+                <td colspan="8" class="stats-empty">Loading…</td>
               </tr>
             </tbody>
           </table>
@@ -788,7 +787,7 @@
         if (!payload || payload.success !== true) {
           els.onlineMeta.textContent = 'Online feed unavailable';
           els.onlineCards.innerHTML = '';
-          els.onlineBody.innerHTML = '<tr><td colspan="9" class="stats-empty">Online feed unavailable.</td></tr>';
+          els.onlineBody.innerHTML = '<tr><td colspan="8" class="stats-empty">Online feed unavailable.</td></tr>';
           return;
         }
         const servers = Array.isArray(payload.servers) ? payload.servers : [];
@@ -811,7 +810,7 @@
           </article>
         `).join('');
         if (!players.length) {
-          els.onlineBody.innerHTML = '<tr><td colspan="9" class="stats-empty">Map changing or no players are currently online.</td></tr>';
+          els.onlineBody.innerHTML = '<tr><td colspan="8" class="stats-empty">Map changing or no players are currently online.</td></tr>';
           return;
         }
         els.onlineBody.innerHTML = players.map(player => {
@@ -843,7 +842,6 @@
               <td>${numberFormat(player.assists)}</td>
               <td>${numberFormat(player.damage)}</td>
               <td>${fmt(dpm,1)}</td>
-              <td>${Math.floor(playtime/60)}m</td>
             </tr>
           `;
         }).join('');

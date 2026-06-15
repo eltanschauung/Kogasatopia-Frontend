@@ -270,11 +270,10 @@ defmodule WhaleChatWeb.StatsFragments do
             <th data-key="headshots" data-type="number">Headshots</th>
             <th data-key="backstabs" data-type="number">Stabs</th>
             <th data-key="streak" data-type="number">Best Streak</th>
-            <th data-key="playtime" data-type="number">Time</th>
           </tr>
         </thead>
         <tbody>
-          #{if rows == [], do: ~s(<tr><td colspan="15" class="empty-state">No players found.</td></tr>), else: cumulative_rows_html(rows, default_avatar, focused_steamid)}
+          #{if rows == [], do: ~s(<tr><td colspan="14" class="empty-state">No players found.</td></tr>), else: cumulative_rows_html(rows, default_avatar, focused_steamid)}
         </tbody>
       </table>
     </div>
@@ -348,7 +347,6 @@ defmodule WhaleChatWeb.StatsFragments do
       <td>#{number(row[:headshots])}</td>
       <td>#{number(row[:backstabs])}</td>
       <td>#{number(row[:best_killstreak])}</td>
-      <td>#{e(fallback(row[:playtime_human], "0m"))}</td>
     </tr>
     """
   end
