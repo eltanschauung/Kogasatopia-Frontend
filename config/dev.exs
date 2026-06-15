@@ -59,8 +59,8 @@ config :whale_chat, WhaleChatWeb.Endpoint,
       # Gettext translations
       ~r"priv/gettext/.*\.po$",
       # Router, Controllers, LiveViews and LiveComponents
-      ~r"lib/whale_chat_web/router\.ex$",
-      ~r"lib/whale_chat_web/(controllers|live|components)/.*\.(ex|heex)$"
+      ~r"lib/site_web/router\.ex$",
+      ~r"lib/site_web/(controllers|live|components)/.*\.(ex|heex)$"
     ]
   ]
 
