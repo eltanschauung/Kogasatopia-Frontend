@@ -1,0 +1,3 @@
+        <li><a href="../mods/marisagibus.vpk">Marisa's Hat - The Ghostly Gibus</a></li>
+        <li><a href="../mods/hat_bundle.vpk">Iku, Shiki Eiki, Tenshi hats - Proof of Purchase, Spiral Sallet, Mann Co. Cap</a></li>
+

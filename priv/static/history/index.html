@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kogasatopia Content Archive!!!</title>
+  <style>
+    :root{--bg:#101417;--panel:#182028;--fg:#e9eef2;--muted:#b8c4cf;--accent:#f38a3d;--line:#2a3845}
+    body{margin:0;background:linear-gradient(180deg,#0e1419,#18222d 55%,#0f1418);color:var(--fg);font-family:Verdana,sans-serif}
+    main{max-width:900px;margin:0 auto;padding:2rem 1rem 3rem}
+    h1{margin:.2rem 0 1rem;font-size:1.6rem}
+    p{color:var(--muted)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem;margin-top:1rem}
+    a.card{display:block;text-decoration:none;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.9rem}
+    a.card:hover{border-color:var(--accent);transform:translateY(-1px)}
+    .small{font-size:.9rem;color:var(--muted)}
+    .stamp{font-size:.82rem;color:#9fb0bf;margin-top:.2rem}
+    .tools{margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap}
+    .btn{display:inline-block;background:#222d37;border:1px solid var(--line);color:var(--fg);text-decoration:none;padding:.5rem .7rem;border-radius:8px}
+    .btn:hover{border-color:var(--accent)}
+  </style>
+  <script>
+    const target = new URLSearchParams(location.search).get('go');
+    const map = {
+      updates:'updates_index.html', bonus:'bonus/', day1:'day1/', day2:'day2/', day3:'day3/', day4:'day4/',
+      fanart:'fanart/', halloween:'halloween_update/', maps:'maps/', newhat:'newhat/', patchnotes:'patchnotes/', secret:'secret/', spyupdate:'spyupdate/', legacy_static:'old_versions/kogasatopia_static/'
+    };
+    if (target && map[target]) location.replace(map[target]);
+  </script>
+</head>
+<body>
+  <main>
+    <h1>Kogasatopia Update Archive</h1>
+    <p>We are whale attracted people</p>
+    <div class="tools">
+      <a class="btn" href="updates_index.html">Original Updates Index</a>
+      <a class="btn" href="site/">Home Stub</a>
+      <a class="btn" href="site/info/">Info Stub</a>
+      <a class="btn" href="site/hat/">Hat Stub</a>
+    </div>
+    <div class="grid">
+      <a class="card" href="bonus/"><strong>Bonus</strong><div class="small">bonus/index.html</div><div class="stamp">~ 2023-06-26</div></a>
+      <a class="card" href="day1/"><strong>Day 1</strong><div class="small">day1/index.html</div><div class="stamp">~ 2023-06-10</div></a>
+      <a class="card" href="day2/"><strong>Day 2</strong><div class="small">day2/index.html</div><div class="stamp">~ 2023-06-12</div></a>
+      <a class="card" href="day3/"><strong>Day 3</strong><div class="small">day3/index.html</div><div class="stamp">~ 2023-06-12</div></a>
+      <a class="card" href="day4/"><strong>Day 4</strong><div class="small">day4/index.html</div><div class="stamp">~ 2023-06-14</div></a>
+      <a class="card" href="fanart/"><strong>Fanart</strong><div class="small">fanart/index.html</div><div class="stamp">~ 2022-10-14</div></a>
+      <a class="card" href="halloween_update/"><strong>Halloween Update</strong><div class="small">halloween_update/index.html</div><div class="stamp">~ 2022-10-12</div></a>
+      <a class="card" href="maps/"><strong>Maps</strong><div class="small">maps/index.html</div><div class="stamp">~ 2022-12-24</div></a>
+      <a class="card" href="newhat/"><strong>New Hat</strong><div class="small">newhat/index.html</div><div class="stamp">~ 2022-10-12</div></a>
+      <a class="card" href="patchnotes/"><strong>Patchnotes</strong><div class="small">patchnotes/index.html</div><div class="stamp">~ 2022-12-21</div></a>
+      <a class="card" href="secret/"><strong>Secret</strong><div class="small">secret/index.html</div><div class="stamp">~ 2023-06-14</div></a>
+      <a class="card" href="spyupdate/"><strong>Spy Update</strong><div class="small">spyupdate/index.html</div><div class="stamp">~ 2022-10-10</div></a>
+      <a class="card" href="old_versions/kogasatopia_static/"><strong>2022 Website</strong><div class="small">old_versions/kogasatopia_static/index.html</div><div class="stamp">~ 2022-07-25</div></a>
+    </div>
+  </main>
+</body>
+</html>

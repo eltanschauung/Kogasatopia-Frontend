@@ -1,0 +1,180 @@
+koth_harvest_final
+koth_badlands
+koth_brazil
+koth_cascade
+koth_highpass
+koth_king
+koth_lakeside_final
+koth_nucleus
+koth_sawmill
+koth_suijin
+workshop/2843470102
+//koth megasnow
+workshop/2112101546
+//koth watermill
+workshop/2797409745
+//koth creek
+workshop/1962574007
+//koth spillway
+workshop/454272353
+//koth product
+workshop/2685445478
+//koth touharvest
+workshop/2874727006
+//koth factory
+workshop/1555439802
+//koth watchtower
+workshop/2767686435
+//stupidcar
+
+workshop/2303316128
+//koth offblast
+workshop/2303582648
+//koth lumberyard
+workshop/1549504774
+//koth ravine
+
+cp_coldfront
+cp_powerhouse
+cp_process_final
+cp_snakewater_final
+cp_sunshine
+cp_freight_final
+cp_yukon_final
+cp_fastlane
+cp_gullywash_final1
+workshop/2438149489
+//cp shabbytown
+workshop/570869131
+//cp tidal
+workshop/2823474145
+//cp science
+
+sd_doomsday
+pd_watergate
+
+//cp_egypt_final
+cp_altitude
+cp_steel
+cp_dustbowl
+cp_gorge
+cp_gravelpit
+cp_mountainlab
+cp_mercenarypark
+cp_junction_final
+cp_snowplow
+workshop/875788392
+//cp hybro
+workshop/460544858
+//cp mojave
+workshop/2857700485
+//dustbowl bridge
+workshop/2803287932
+//cp hotrod
+workshop/611739229
+//cp whiterock
+
+pl_upward
+pl_badwater
+pl_enclosure_final
+pl_frontier_final
+pl_goldrush
+pl_snowycoast
+pl_borneo
+pl_barnblitz
+pl_swiftwater_final
+pl_hoodoo_final
+pl_thundermountain
+pl_cactuscanyon
+pl_pier
+workshop/454137930
+//pl halfacre
+workshop/454194336
+//pl escarpment
+workshop/454262056
+//pl goldrock
+workshop/454619737
+//pl quagmire
+workshop/1266210012
+//pl vigil
+workshop/783080284
+//pl rust
+workshop/454263905
+//pl farmstead
+workshop/2502609756
+//pl cozy canyon
+
+plr_nightfall_final
+plr_pipeline
+plr_hightower
+plr_bananabay
+
+ctf_doublecross
+ctf_landfall
+ctf_well
+workshop/483740681
+//ctf convoy
+workshop/454128304
+//ctf infiltration
+
+tc_hydro
+workshop/454653996
+//tc strata
+
+workshop/695708036
+//dm congo
+workshop/2815181882
+//banana bay twilight deathmatch
+
+cp_standin_final
+cp_degrootkeep
+
+---HALLOWEEN STUFF BEGINS HERE---
+
+koth_harvest_event
+koth_viaduct_event
+koth_moonshine_event
+koth_slasher
+koth_slaughter_event
+koth_megalo
+koth_undergrove_event
+koth_los_muertos
+koth_lakeside_event
+koth_sawmill_event
+koth_bagel_event
+
+cp_gorge_event
+cp_manor_event
+workshop/2863117491
+//cp powerhouse event no spells
+
+cp_sunshine_event
+workshop/1534896855
+//cp well event
+
+pd_cursed_cove_event
+pd_monster_bash
+
+pl_bloodwater
+pl_hasslecastle
+pl_sludgepit_event
+workshop/2847903618
+//pl brainblast
+
+plr_hightower_event
+plr_hacksaw_event
+
+sd_doomsday_event
+
+ctf_crasher
+
+workshop/2618519172
+//harvest event no ghosts
+workshop/2612605992
+//gravelpit event
+workshop/524033908
+//dustbowl event
+workshop/758374382
+//cp degroot creep
+workshop/2579202014
+//ctf 2fort event

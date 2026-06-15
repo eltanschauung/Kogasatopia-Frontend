@@ -1,6 +1,6 @@
 # Legacy Site Fragments
 
-This directory tracks the legacy homepage fragments that used to exist only under `/var/www/kogasatopia/home/includes`.
+This directory tracks the legacy homepage fragments from the old standalone PHP docroot.
 
 Edit these files in the repo first, then deploy them with:
 
@@ -8,6 +8,6 @@ Edit these files in the repo first, then deploy them with:
 scripts/sync_legacy_homepage.sh
 ```
 
-The script copies the tracked fragments to `/var/www/kogasatopia/home/includes` by default. Pass another target path as the first argument to test a sync elsewhere.
+The script now syncs the tracked fragments in-place by default. Pass another target path as the first argument to test a sync elsewhere.
 
-Phoenix homepage rendering reads these tracked copies directly, while legacy static assets such as images and CSS still come from `/var/www/kogasatopia`.
+Phoenix homepage rendering reads these tracked copies directly, while legacy static assets such as images and CSS come from `priv/static`.

@@ -6,6 +6,7 @@ defmodule WhaleChat.OnlineFeed do
   alias Ecto.Adapters.SQL
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.CountryNames
+  alias WhaleChat.LegacyPaths
   alias WhaleChat.Repo
   alias WhaleChat.Tf2Classes
   alias WhaleChat.WeaponCategories
@@ -489,7 +490,7 @@ defmodule WhaleChat.OnlineFeed do
       safe == "" ->
         nil
 
-      File.exists?("/var/www/kogasatopia/playercount_widget/#{safe}.jpg") ->
+      File.exists?(Path.join(LegacyPaths.playercount_widget_dir(), "#{safe}.jpg")) ->
         "/playercount_widget/#{URI.encode(safe)}.jpg"
 
       true ->
@@ -518,12 +519,7 @@ defmodule WhaleChat.OnlineFeed do
   defp admin_flags_for_ids([]), do: %{}
 
   defp admin_flags_for_ids(ids) do
-    cache_file =
-      Application.get_env(
-        :whale_chat,
-        :mapsdb_admin_cache_file,
-        "/var/www/kogasatopia/stats/cache/admins_cache.json"
-      )
+    cache_file = LegacyPaths.admin_cache_file()
 
     with {:ok, json} <- File.read(cache_file),
          {:ok, %{"admins" => admins}} <- Jason.decode(json) do

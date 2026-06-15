@@ -1,0 +1,84 @@
+p3-p {
+  display: block;
+  margin-left: 20px;
+  margin-bottom: 13px;
+}
+
+li {
+  padding: 1%;
+  font-size: 16px;
+  color: #474747;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a {
+  color: #ac4e15;
+}
+
+h3-p {
+  display: block;
+  font-weight: bold;
+  font-size: 24px;
+  padding: 0;
+  margin: 0;
+  margin: 0.5em 0;
+}
+
+a {
+  text-decoration: none;
+}
+
+br {
+  content: "A";
+  display: block;
+  margin-bottom: 1.5em;
+}
+
+h3 {
+  font-size: 22px;
+  padding: 0;
+  margin: 0.5em 0;
+}
+
+h2 {
+  font-size: 38px;
+  margin: 0;
+  margin-bottom: 0.1em;
+  padding: 0;
+}
+
+h4 {
+  font-size: 32px;
+  margin: 0;
+  margin-bottom: 0.1em;
+  padding: 0;
+}
+
+h6 {
+  font-size: 28px;
+  margin: 0;
+  margin-bottom: 0.1em;
+  padding: 0;
+}
+
+h5 {
+  text-align: left;
+  margin: 0;
+  margin-left: 8px;
+  margin-bottom: 4px;
+  font-size: 19px;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: 18px;
+}
+
+p {
+  color: #fff;
+}

@@ -7,6 +7,7 @@ defmodule WhaleChat.StatsFeed do
   alias Ecto.Adapters.SQL
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.CountryNames
+  alias WhaleChat.LegacyPaths
   alias WhaleChat.Repo
   alias WhaleChat.WeaponCategories
 
@@ -15,7 +16,6 @@ defmodule WhaleChat.StatsFeed do
   @points_cache_table "whaletracker_points_cache"
   @logs_table "whaletracker_logs"
   @log_players_table "whaletracker_log_players"
-  @default_stats_cache_dir "/var/www/kogasatopia/stats/cache"
   @weapon_category_metadata WeaponCategories.metadata()
   @weapon_category_slugs WeaponCategories.slugs()
   @favorite_class_accuracy_groups %{
@@ -275,7 +275,7 @@ defmodule WhaleChat.StatsFeed do
   end
 
   defp stats_cache_dir do
-    Application.get_env(:whale_chat, :php_stats_cache_dir, @default_stats_cache_dir)
+    LegacyPaths.stats_cache_dir()
   end
 
   def performance_averages do
@@ -1235,12 +1235,7 @@ defmodule WhaleChat.StatsFeed do
   defp admin_flags_for_ids([]), do: %{}
 
   defp admin_flags_for_ids(ids) do
-    cache_file =
-      Application.get_env(
-        :whale_chat,
-        :mapsdb_admin_cache_file,
-        "/var/www/kogasatopia/stats/cache/admins_cache.json"
-      )
+    cache_file = LegacyPaths.admin_cache_file()
 
     with {:ok, json} <- File.read(cache_file),
          {:ok, %{"admins" => admins}} <- Jason.decode(json) do

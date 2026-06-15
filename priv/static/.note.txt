@@ -1,0 +1,52 @@
+Kogasatopia Cleanup Note (skeleton + findings)
+=============================================
+
+Root document
+- Primary entrypoint is `/var/www/kogasatopia/index.php`.
+- `index.php` is a thin page assembler:
+  - user-agent mobile check
+  - loads `styles.css`
+  - loads `desktop.css` or `mobile.css`
+  - includes `navBar.html` (desktop only)
+  - includes `panels.html` or `panels_mobile.html`
+  - includes `blog.html`
+  - includes `tabs.html`
+  - inline JS opens default tab (`blog`)
+
+Observed site shape (high-level)
+- Monolithic docroot mixing multiple concerns:
+  - homepage assets/content
+  - standalone microsites (`info`, `info2`, `updates`, `sfm`, etc.)
+  - apps (`stats`, `mapsdb`, `sb`)
+  - backups, caches, archives, experiments, scripts
+- Many large archives are stored directly in web root (`*.zip`).
+- Multiple backup/temp artifacts exist (`backup`, `backups`, `.bak`, `.save`, older copies).
+- Runtime/generated cache trees are present under the web root (not source).
+
+Findings (concrete)
+- Root `index.php` syntax is valid (`php -l` passed).
+- Root required includes/CSS for `index.php` currently exist:
+  - `styles.css`, `desktop.css`, `mobile.css`
+  - `navBar.html`, `panels.html`, `panels_mobile.html`, `blog.html`, `tabs.html`
+- Root has clutter and likely non-production files in document root:
+  - typo file: `.htacess` (extra/misspelled alongside `.htaccess`)
+  - backup files (`*.bak`, `*.save`, etc.)
+  - large archives in web root (`modpack.zip`, `modpack_old.zip`, `cobson.zip`, etc.)
+- Significant generated/cache footprint under docroot:
+  - `stats/cache` (large)
+  - `sb/cache`
+  - `sb/templates_c`
+- There are multiple legacy/parallel content trees (`info`, `info2`, `newinfo`, `newsite`, `testing`, `updates`, `mod`) that need reference validation before removal.
+
+Cleanup skeleton (target structure concept)
+- `/public` behavior preserved at current docroot path, but reorganize contents by purpose:
+  - `root/` (homepage includes + directly referenced assets)
+  - `apps/` (`stats`, `mapsdb`, `sb`, etc.) [with compatibility URLs preserved]
+  - `legacy/` (kept but isolated)
+  - `_ops/` (scripts, archives, backups, exports; ideally outside docroot)
+  - `_cache/` (runtime-generated files; ideally outside docroot or explicitly managed)
+- Keep URL compatibility first; use wrapper routes/symlinks/aliases while cleaning internals.
+
+Important constraint
+- “Unused file” detection cannot be guaranteed from filesystem scan alone.
+- Must combine static references + web access logs + cron/game-writer knowledge before deletion.

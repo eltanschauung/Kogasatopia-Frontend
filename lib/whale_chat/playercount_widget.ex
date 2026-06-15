@@ -1,9 +1,9 @@
 defmodule WhaleChat.PlayercountWidget do
   @moduledoc false
 
+  alias WhaleChat.LegacyPaths
   alias WhaleChat.Tf2Classes
 
-  @root "/var/www/kogasatopia/playercount_widget"
   @public_ip "173.255.237.230"
   @flag_base "https://bantculture.com/static/flags"
 
@@ -231,13 +231,21 @@ defmodule WhaleChat.PlayercountWidget do
   defp flag_img(title, code), do: ~s(<img title="#{title}" src="#{@flag_base}/#{code}.png">)
 
   defp read_lines(file) do
-    path = Path.join(root(), file)
-
-    if File.exists?(path) do
-      {:ok, path |> File.read!() |> String.split(~r/\R/, trim: false) |> drop_final_empty_line()}
-    else
-      :error
+    file
+    |> quickstats_paths()
+    |> Enum.find(&File.exists?/1)
+    |> case do
+      nil -> :error
+      path -> {:ok, path |> File.read!() |> String.split(~r/\R/, trim: false) |> drop_final_empty_line()}
     end
+  end
+
+  defp quickstats_paths(file) do
+    [
+      Path.join(LegacyPaths.quickstats_dir(), file),
+      Path.join(root(), file)
+    ]
+    |> Enum.uniq()
   end
 
   defp drop_final_empty_line(lines) do
@@ -248,7 +256,7 @@ defmodule WhaleChat.PlayercountWidget do
   end
 
   defp root do
-    Application.get_env(:whale_chat, :playercount_widget_root, @root)
+    LegacyPaths.playercount_widget_dir()
   end
 
   defp html_escape(value) do

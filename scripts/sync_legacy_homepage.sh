@@ -3,7 +3,7 @@ set -euo pipefail
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 source_dir="$repo_root/priv/legacy_site/home/includes"
-target_dir="${1:-/var/www/kogasatopia/home/includes}"
+target_dir="${1:-$source_dir}"
 
 install -d "$target_dir"
 for file in blog.html navBar.html panels.html panels_mobile.html tabs.html; do

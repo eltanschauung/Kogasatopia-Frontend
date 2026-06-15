@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TF2 Weapons Directory</title>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>TF2 Custom Weapons Changes</h1>
+    <p class="sub">Interactive version of tf2.gyate.net/info/weapons</p>
+    <div class="auth">
+      <form method="POST" action="login.php">
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+    </div>
+  </header>
+
+  <div class="app">
+    <aside class="sidebar">
+      <h2>Classes</h2>
+      <ul>
+        <li><button hx-get="weapons.php?class=scout" hx-target="#weapon-list">Scout</button></li>
+        <li><button hx-get="weapons.php?class=soldier" hx-target="#weapon-list">Soldier</button></li>
+        <!-- Add others -->
+      </ul>
+      <form class="filters">
+        <input type="text" name="q" placeholder="Search..." hx-get="weapons.php" hx-trigger="input changed delay:300ms" hx-target="#weapon-list" />
+        <label><input type="checkbox" name="type[]" value="added" checked /> Added</label>
+        <label><input type="checkbox" name="type[]" value="re-added" checked /> Re-added</label>
+        <label><input type="checkbox" name="type[]" value="removed" checked /> Removed</label>
+      </form>
+    </aside>
+    <main>
+      <div id="weapon-list" hx-get="weapons.php?class=scout" hx-trigger="load">
+        <!-- Weapons will load here -->
+      </div>
+    </main>
+  </div>
+</body>
+</html>

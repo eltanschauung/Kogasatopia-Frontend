@@ -1,0 +1,64 @@
+[Scout]
+Back Scatter: +10% more accurate instead of -20% less
+Baby Face's: Boost kept on damage taken, -20% base movement speed
+The Shortstop: +50% reload speed, +20% healing received, +40% damage force taken
+Flying Guillotine: Deals +100% damage to stunned targets
+Crit-a-Cola: No mark for death visual, damage vulnerability reduced to 25%
+The Sandman: Stuns, 512 unit minimum range
+Candy Cane: +40% more health from medkits
+Fan-o-War: +20% deploy and holster speed
+
+[Soldier]
+Air Strike: +15% reload speed
+Liberty Launcher: +10% firing speed
+Righteous Bison: Original hitbox size, ignores bullet resistance, ignites friendly Huntsman arrows
+Base Jumper: Re-deploy, float upwards while on fire
+Equalizer: -20% damage from ranged sources while active
+
+[Pyro]
+Dragon's Fury: Airblast jump
+Degreaser: +35% bonus to all switch speeds
+Detonator: Self-damage penalty reduced from 50% to 25%
+Axtinguisher: Crits burning targets, 50% less damage to non-burning targets
+Volcano Fragment: Mini-crits burning targets
+
+[Demoman]
+Booties: Provide speed even without a shield
+Base Jumper: Re-deploy, float upwards while on fire
+Sticky Jumper: Max stickies 3 -> 8
+Scottish Resistance: Arm time 0.8 -> 0.4
+Shields: Provide 65% blast jump damage resistance, all resistances are changed to 10%
+Caber: Explosion deals 125 damage, deals 175 damage while blast jumping
+Scottish Handshake: Market gardener stats
+
+[Heavy]
+Huo-Long Heater: No damage penalty
+Shotguns: +10% movement speed while held
+Gloves of Running: No health drain, marks for death
+Eviction Notice: No health drain, fires 60% faster instead of 40%
+Warrior's Spirit: No active damage vulnerability, +20 health on hit, no health on kill, -20 max health
+
+[Engineer]
+Pomson: Original hitbox size, penetrates targets, ignores bullet resistances, lights up friendly Huntsman arrows
+The Wrangler: Shield resistance 66% -> 25%
+The Short Circuit: No ammo from dispensers/carts while held
+Southern Hospitality: +10% damage, 15 metal regenerated every 5 seconds on wearer
+
+[Medic]
+Syringe Guns: +1.25% Über on hit, reload on holster
+The Vita-Saw: Retain up to 20% Über after death regardless of organs, wall climbing
+The Vaccinator: +20% damage taken while held
+
+[Sniper]
+The Huntsman: +15 HP on wearer, enables melee wall climbing
+The Classic: +20% charge rate
+The Cozy Camper: No aim flinch at any charge
+The Cleaner's Carbine: Crit-boost on kill (3s)
+The Tribalman's Shiv: -25% damage instead of -50% damage
+
+[Spy]
+The Ambassador: Headshots deal 102 damage
+The Enforcer: 50% less bullet spread, +20% damage, no disguise bonus
+The Big Earner: +5 HP
+Your Eternal Reward: 0% cloak drain penalty, +10% swing speed
+

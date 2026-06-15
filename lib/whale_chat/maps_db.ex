@@ -5,6 +5,7 @@ defmodule WhaleChat.MapsDb do
 
   alias WhaleChat.MapsDb.MapMeta
   alias WhaleChat.Chat.SteamProfiles
+  alias WhaleChat.LegacyPaths
   alias WhaleChat.Repo
   alias WhaleChat.TimeDisplay
 
@@ -48,17 +49,8 @@ defmodule WhaleChat.MapsDb do
       tf_cfg_dir:
         Application.get_env(:whale_chat, :mapsdb_tf_cfg_dir, "/home/kogasa/hlserver/tf2/tf/cfg"),
       preview_dir:
-        Application.get_env(
-          :whale_chat,
-          :mapsdb_preview_dir,
-          "/var/www/kogasatopia/playercount_widget"
-        ),
-      admin_cache_file:
-        Application.get_env(
-          :whale_chat,
-          :mapsdb_admin_cache_file,
-          "/var/www/kogasatopia/stats/cache/admins_cache.json"
-        )
+        Application.get_env(:whale_chat, :mapsdb_preview_dir, LegacyPaths.playercount_widget_dir()),
+      admin_cache_file: LegacyPaths.admin_cache_file()
     }
   end
 

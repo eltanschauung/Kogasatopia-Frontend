@@ -33,9 +33,25 @@ weaponreverts.cfg
 weapons.txt
 
 # Cached assets / mirrored PHP cache directories
-/priv/static/cache/
+/priv/static/stats/cache/
+/priv/static/sb/
+/priv/static/stats/assets/*.jpg
+!/priv/static/stats/assets/background_product_pro.jpg
+!/priv/static/stats/assets/server-chat-avatar.jpg
+!/priv/static/stats/assets/whaley-avatar.jpg
+!/priv/static/stats/assets/whaley-avatar-2.jpg
+/priv/static/**/quickstats*.txt
+/priv/static/**/mapstats_output.txt
 /stats/cache/
 /web/stats/cache/
+
+# Legacy PHP/application material is not part of the Phoenix static mirror.
+/priv/static/**/*.php
+/priv/static/**/.htaccess
+/priv/static/vendor/
+/priv/static/backups/
+/priv/static/stats/backup/
+/priv/static/stats/logs/
 
 # Ignore package tarball (built via "mix hex.build").
 whale_chat-*.tar

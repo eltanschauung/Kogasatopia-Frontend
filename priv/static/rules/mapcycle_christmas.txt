@@ -1,0 +1,231 @@
+workshop/454152123
+//koth aquatic ruin
+koth_lazarus
+workshop/1775576134
+//koth gachimuchi
+workshop/2582084003
+//koth nerve
+workshop/767410655
+//koth kemptown
+
+cp_vanguard
+cp_foundry
+cp_badlands
+
+workshop/619869471
+//cp sulfur
+
+workshop/691700493
+//domination cliffhanger
+
+workshop/873114048
+//cp grotto
+workshop/2741862830
+//cp rokkenjima
+workshop/2823532907
+//cp forest of magic
+
+workshop/633361054
+//pl mountainside
+workshop/2438150405
+//pl deadwood
+workshop/456799153
+//pl boundary
+workshop/2904065412
+//pl cashworks
+
+
+workshop/1586546185
+//plr frostthistle
+workshop/2113711043
+//pl waste
+
+ctf_frosty
+
+koth_viaduct
+workshop/1502062545
+//koth badlands snowy
+workshop/2843470102
+//koth megasnow
+
+workshop/2663835353
+//gorge reborn xmas
+workshop/2893170559
+//dustbowl wutville
+cp_gravelpit_snowy
+cp_altitude
+
+cp_coldfront
+workshop/2877528366
+//cp granary festive
+
+workshop/2886001620
+//pl tundra mountain
+workshop/562822030
+//pl badwater snowy
+workshop/1583805523
+//pl coldrush
+workshop/2883467433
+//pl ice canyon
+pl_pier
+pl_barnblitz
+pl_coal_event
+pl_snowycoast
+pl_wutville_event
+pl_rumford_event
+
+workshop/2887605754
+//ctf turbine christmas mall
+workshop/1194817754
+//ctf 2fort snowy
+ctf_doublecross_snowy
+ctf_snowfall_final
+
+pd_snowville_event
+workshop/2887107457
+//pd suijin event
+workshop/2889125525
+//pd selbyen
+workshop/2890208830
+//pd atom smash
+
+workshop/2888091062
+//cp degrootville
+
+workshop/2889875679
+//sdm christmas
+
+----WINTER STUFF ENDS HERE----
+
+koth_harvest_final
+koth_badlands
+koth_brazil
+koth_cascade
+koth_highpass
+koth_king
+koth_lakeside_final
+koth_nucleus
+koth_sawmill
+koth_suijin
+workshop/2112101546
+//koth watermill
+workshop/2797409745
+//koth creek
+workshop/1962574007
+//koth spillway
+workshop/454272353
+//koth product
+workshop/2685445478
+//koth touharvest
+workshop/2874727006
+//koth factory
+workshop/1555439802
+//koth watchtower
+workshop/2767686435
+//stupidcar
+
+workshop/2303316128
+//koth offblast
+workshop/2303582648
+//koth lumberyard
+workshop/2900733033
+//koth ravine
+
+//cp_coldfront
+cp_powerhouse
+cp_process_final
+cp_snakewater_final
+cp_sunshine
+cp_freight_final
+cp_yukon_final
+cp_fastlane
+cp_gullywash_final1
+workshop/2438149489
+//cp shabbytown
+workshop/570869131
+//cp tidal
+workshop/2823474145
+//cp science
+
+sd_doomsday
+pd_watergate
+
+//cp_egypt_final
+cp_altitude
+cp_steel
+cp_dustbowl
+cp_gorge
+cp_gravelpit
+cp_mountainlab
+cp_mercenarypark
+cp_junction_final
+workshop/460544858
+//cp mojave
+//workshop/2857700485
+//dustbowl bridge
+workshop/2803287932
+//cp hotrod
+workshop/611739229
+//cp whiterock
+
+pl_upward
+workshop/2879804532
+//pl upward pro
+pl_badwater
+pl_enclosure_final
+pl_frontier_final
+pl_goldrush
+pl_borneo
+//pl_barnblitz
+pl_swiftwater_final
+pl_hoodoo_final
+pl_thundermountain
+pl_cactuscanyon
+pl_breadspace
+//pl_pier
+workshop/454137930
+//pl halfacre
+workshop/454194336
+//pl escarpment
+workshop/454262056
+//pl goldrock
+workshop/454619737
+//pl quagmire
+workshop/1266210012
+//pl vigil
+workshop/783080284
+//pl rust
+workshop/454263905
+//pl farmstead
+workshop/2502609756
+//pl cozy canyon
+
+plr_nightfall_final
+plr_pipeline
+plr_hightower
+plr_bananabay
+
+ctf_doublecross
+ctf_landfall
+ctf_well
+workshop/483740681
+//ctf convoy
+workshop/454128304
+//ctf infiltration
+
+tc_hydro
+workshop/454653996
+//tc strata
+
+workshop/695708036
+//dm congo
+workshop/2815181882
+//banana bay twilight deathmatch
+workshop/2903525406
+//dm doublecross
+
+cp_standin_final
+cp_degrootkeep
+//workshop/758374382
+//cp degroot creep
+

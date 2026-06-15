@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Pie Chart</title>
+</head>
+<body>
+    <iframe id="chartFrame" width="400" height="400" frameborder="0" scrolling="no"></iframe>
+
+    <script>
+// Function to generate random data for the pie chart
+function generateRandomData() {
+    const data = [];
+    const colors = ['#191919', '#282828', '#2c2c2c', '#343434', '#303030']; // Base colors
+    const labels = ['Category A', 'Category B', 'Category C', 'Category D', 'Category E'];
+
+    // Generate random values
+    const values = Array.from({ length: labels.length }, () => Math.floor(Math.random() * 100) + 1);
+
+    // Sort the values array in descending order
+    values.sort((a, b) => b - a);
+
+    // Assign colors based on the sorted values
+    for (let i = 0; i < labels.length; i++) {
+        const label = labels[i];
+        let color = colors[i % colors.length];
+        
+        // For "Category E," always use the color #303030
+        if (label === 'Category E') {
+            color = '#303030';
+        }
+
+        data.push({ label, value: values[i], color });
+    }
+
+    return data;
+}
+
+// Function to generate an SVG pie chart with a northeast tilt
+function generateTiltedPieChart(data) {
+    const totalValue = data.reduce((sum, item) => sum + item.value, 0);
+    const centerX = 200;
+    const centerY = 200;
+    const radius = 100;
+    let startAngle = -Math.PI / 4; // Starting angle adjusted for northeast tilt
+
+    let svg = `<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">`;
+
+    for (const item of data) {
+        const segmentAngle = (item.value / totalValue) * (Math.PI * 2);
+        const endAngle = startAngle + segmentAngle;
+
+        const x1 = centerX + radius * Math.cos(startAngle);
+        const y1 = centerY + radius * Math.sin(startAngle);
+        const x2 = centerX + radius * Math.cos(endAngle);
+        const y2 = centerY + radius * Math.sin(endAngle);
+
+        const largeArcFlag = segmentAngle > Math.PI ? 1 : 0;
+
+        svg += `
+            <path d="
+                M ${centerX},${centerY}
+                L ${x1},${y1}
+                A ${radius},${radius} 0 ${largeArcFlag},1 ${x2},${y2}
+                Z"
+                fill="${item.color}"
+            />
+        `;
+
+        startAngle = endAngle;
+    }
+
+    svg += `</svg>`;
+    return svg;
+}
+
+
+        // Generate random data and create the SVG pie chart
+        const randomData = generateRandomData();
+        const svgChart = generateTiltedPieChart(randomData);
+
+        // Display the SVG pie chart in the iframe
+        const chartFrame = document.getElementById('chartFrame');
+        chartFrame.srcdoc = svgChart;
+    </script>
+</body>
+</html>
+
+

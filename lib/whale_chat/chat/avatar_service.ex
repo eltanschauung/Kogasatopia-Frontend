@@ -1,6 +1,8 @@
 defmodule WhaleChat.Chat.AvatarService do
   @moduledoc false
 
+  alias WhaleChat.LegacyPaths
+
   def resolve(%{iphash: "system"}), do: server_avatar_url()
 
   def resolve(%{steamid: steamid, iphash: iphash, personaname: personaname, profile: profile}) do
@@ -68,6 +70,6 @@ defmodule WhaleChat.Chat.AvatarService do
   defp profile_avatar(_), do: nil
 
   defp assets_dir do
-    Application.get_env(:whale_chat, :chat_assets_dir, "/var/www/kogasatopia/stats/assets")
+    LegacyPaths.stats_assets_dir()
   end
 end

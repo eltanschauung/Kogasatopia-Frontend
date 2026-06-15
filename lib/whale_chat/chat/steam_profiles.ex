@@ -1,10 +1,11 @@
 defmodule WhaleChat.Chat.SteamProfiles do
   @moduledoc false
 
+  alias WhaleChat.LegacyPaths
+
   @cache_table :whale_chat_steam_profile_cache
   @ttl_seconds 24 * 3600
   @php_cache_ttl_seconds 24 * 3600
-  @default_php_cache_dir "/var/www/kogasatopia/stats/cache"
 
   def fetch_many(steam_ids) when is_list(steam_ids) do
     ids =
@@ -232,7 +233,7 @@ defmodule WhaleChat.Chat.SteamProfiles do
   end
 
   defp disk_cache_dir do
-    Application.get_env(:whale_chat, :php_stats_cache_dir, @default_php_cache_dir)
+    LegacyPaths.stats_cache_dir()
   end
 
   defp to_string_safe(nil), do: ""

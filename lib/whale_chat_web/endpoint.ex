@@ -17,20 +17,6 @@ defmodule WhaleChatWeb.Endpoint do
 
   plug WhaleChatWeb.Plugs.AccessLog
 
-  # Reuse the existing WhaleTracker assets (avatars, nav icons) for parity on the demo server.
-  plug Plug.Static,
-    at: "/stats",
-    from: "/var/www/kogasatopia/stats",
-    gzip: false,
-    only: ~w(assets css cache),
-    headers: [{"cache-control", "public, max-age=31536000, immutable"}]
-
-  plug Plug.Static,
-    at: "/",
-    from: "/var/www/kogasatopia",
-    gzip: false,
-    only: ~w(leaderboard)
-
   # Serve at "/" the static files from "priv/static" directory.
   #
   # When code reloading is disabled (e.g., in production),

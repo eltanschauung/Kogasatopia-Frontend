@@ -1,0 +1,88 @@
+y<!DOCTYPE html>
+<html>
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Freeman&family=Walter+Turncoat&display=swap" rel="stylesheet">
+  <style type="text/css" media="screen">
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    img.background {
+      position: absolute;
+      z-index: -1;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    img.overlay {
+      position: absolute;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .content-box {
+      background-color: rgba(0, 0, 0, 0.7); /* 70% opaque black */
+      display: inline-block;
+      padding: 20px 20px;
+      border-radius: 8px;
+      margin: 20px 0 0 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    a:link {
+      color: #e3d16d;
+      text-decoration: none;
+    }
+
+    a:visited {
+      color: #e3d16d;
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    a:active {
+      color: #e3d16d;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <img class="background" src="motd_may.jpg">
+ <!-- <img class="overlay" src="armpit.gif">-->
+  
+  <div class="content-box">
+    <div>
+      <span style="color:white; font-family: 'Alfa Slab One', sans-serif; font-size:24px;">
+        Gensokyo
+      </span>
+    </div>
+
+    <div>
+      <span style="color:white; font-family: 'Freeman', sans-serif; font-size: 16px;">
+        Daily | 9:00 EST <br><br>
+        Click <a href="https://steamcommunity.com/chat/invite/Es09gkBm">here</a> to join the Steam chat!
+      </span>
+    </div>
+
+    <div>
+      <br>
+      <span style="color:white; font-family: 'Walter Turncoat'; font-size:18px;">
+        <i>This server has custom weapons and vanilla TF2 weapons!<br>Use !opt to disable Homer Simpson!</i>
+      </span>
+    </div>
+  </div>
+</body>
+</html>

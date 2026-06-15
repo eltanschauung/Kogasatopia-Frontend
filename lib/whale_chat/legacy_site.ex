@@ -1,7 +1,8 @@
 defmodule WhaleChat.LegacySite do
   @moduledoc false
 
-  @docroot "/var/www/kogasatopia"
+  alias WhaleChat.LegacyPaths
+
   @homepage_fragments_root Path.expand("../../priv/legacy_site/home/includes", __DIR__)
   @blog_fragment Path.join(@homepage_fragments_root, "blog.html")
   @homepage_preload_images [
@@ -21,7 +22,7 @@ defmodule WhaleChat.LegacySite do
   @homepage_preload_fonts ["/fonts/TF2Secondary.ttf"]
   @homepage_preload_documents ["/favicon.ico"]
 
-  def docroot, do: @docroot
+  def docroot, do: LegacyPaths.static_root()
   def homepage_fragments_root, do: @homepage_fragments_root
 
   def homepage_preload_images do
@@ -45,8 +46,8 @@ defmodule WhaleChat.LegacySite do
 
   def safe_resolve(request_path) when is_binary(request_path) do
     rel = request_path |> String.trim_leading("/")
-    candidate = Path.expand(rel, @docroot)
-    root = Path.expand(@docroot)
+    root = Path.expand(docroot())
+    candidate = Path.expand(rel, root)
 
     if candidate == root or String.starts_with?(candidate, root <> "/") do
       {:ok, candidate}
