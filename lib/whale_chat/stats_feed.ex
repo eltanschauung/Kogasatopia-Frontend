@@ -575,7 +575,7 @@ defmodule WhaleChat.StatsFeed do
       else
         case fallback_accuracy_counts(row) do
           {fallback_class, fallback_shots, fallback_hits} when fallback_shots > 0 ->
-            {fallback_class, "Accuracy class", fallback_shots, fallback_hits}
+            {fallback_class, "Favorite class", fallback_shots, fallback_hits}
 
           _ ->
             {favorite_class, "Favorite class", int(row["shots"]), int(row["hits"])}

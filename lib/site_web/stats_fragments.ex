@@ -577,7 +577,7 @@ defmodule WhaleChatWeb.StatsFragments do
     |> accuracy_class_id_for_slug()
     |> case do
       0 -> ""
-      class_id -> class_icon_html(class_id, "Accuracy class")
+      class_id -> class_icon_html(class_id, "Favorite class")
     end
   end
 
