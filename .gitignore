@@ -40,7 +40,7 @@ weapons.txt
 !/priv/static/stats/assets/server-chat-avatar.jpg
 !/priv/static/stats/assets/whaley-avatar.jpg
 !/priv/static/stats/assets/whaley-avatar-2.jpg
-/priv/static/**/quickstats*.txt
+/priv/static/**/*quickstats*.txt
 /priv/static/**/mapstats_output.txt
 /stats/cache/
 /web/stats/cache/
