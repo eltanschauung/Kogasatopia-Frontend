@@ -31,6 +31,8 @@ AGENTS.md
 access.log
 weaponreverts.cfg
 weapons.txt
+installed-packages.tsv
+manual-packages.txt
 
 # Cached assets / mirrored PHP cache directories
 /priv/static/stats/cache/
