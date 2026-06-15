@@ -4,20 +4,12 @@ defmodule WhaleChatWeb.InfoController do
   alias WhaleChat.InfoPage
 
   def entry(conn, _params) do
-    case conn.request_path do
-      "/info" ->
-        conn
-        |> put_info_cache_headers()
-        |> redirect(to: "/info/")
+    assigns = InfoPage.assigns()
 
-      _ ->
-        assigns = InfoPage.assigns()
-
-        conn
-        |> put_root_layout(false)
-        |> put_info_cache_headers()
-        |> render(:index, assigns)
-    end
+    conn
+    |> put_root_layout(false)
+    |> put_info_cache_headers()
+    |> render(:index, assigns)
   end
 
   defp put_info_cache_headers(conn) do
