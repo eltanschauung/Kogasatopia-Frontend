@@ -1,4 +1,0 @@
-Hostname:MGE Eientei | New Jersey
-Port:27016
-Player Count:0/18
-Map Name:mge_eientei_v4a

@@ -1,4 +1,0 @@
-Hostname:Misty Lake Ultiduo | New Jersey
-Port:27018
-Player Count:0/8
-Map Name:ultiduo_baloo_v2

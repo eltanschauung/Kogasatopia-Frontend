@@ -1,1 +1,0 @@
-/home/kogasa/hlserver/tf2/tf/addons/sourcemod/logs/connections/server27016_quickstats.txt
