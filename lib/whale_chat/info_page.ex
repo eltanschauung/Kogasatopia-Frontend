@@ -18,6 +18,7 @@ defmodule WhaleChat.InfoPage do
       active_class: @active_class,
       initial_items: Map.get(items_by_class, @active_class, []),
       payload_json: Jason.encode!(%{active_class: @active_class, items_by_class: items_by_class}),
+      asset_version: asset_version(),
       preload_images: preload_images,
       config_update: config_update
     }
@@ -44,11 +45,19 @@ defmodule WhaleChat.InfoPage do
     %{
       name: item.name,
       icon: icon_path(item.image, class_key),
+      is_custom: item.type == "custom",
       title: title_text(item.name, title_segments),
-      search:
-        String.downcase(item.name <> " " <> Enum.join(title_segments, " ") <> " " <> item.type),
+      search: search_text(item.name, title_segments, item.type),
       effects: effects
     }
+  end
+
+  defp search_text(name, title_segments, "custom") do
+    String.downcase(name <> " " <> Enum.join(title_segments, " ") <> " custom cwx")
+  end
+
+  defp search_text(name, title_segments, type) do
+    String.downcase(name <> " " <> Enum.join(title_segments, " ") <> " " <> type)
   end
 
   defp effect_segment(value, class_name) when is_binary(value) do
@@ -90,6 +99,18 @@ defmodule WhaleChat.InfoPage do
     (class_images ++ item_images)
     |> Enum.uniq()
     |> Enum.sort()
+  end
+
+  defp asset_version do
+    ["priv/static/info/css/changes.css", "priv/static/info/js/info_page.js"]
+    |> Enum.flat_map(fn path ->
+      case File.stat(Path.expand(path), time: :posix) do
+        {:ok, %{mtime: mtime}} -> [mtime]
+        _ -> []
+      end
+    end)
+    |> Enum.max(fn -> System.system_time(:second) end)
+    |> Integer.to_string()
   end
 
   defp config_update_metadata do

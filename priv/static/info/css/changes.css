@@ -43,6 +43,8 @@ body {
   margin: 1.25rem auto .45rem;
   display: flex;
   justify-content: flex-start;
+  gap: .5rem;
+  flex-wrap: wrap;
 }
 .home-btn {
   display: inline-flex;
@@ -68,6 +70,17 @@ body {
 }
 .home-btn:active {
   transform: translateY(1px);
+}
+.filter-toggle {
+  gap: .45rem;
+  cursor: pointer;
+  user-select: none;
+}
+.filter-toggle input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  margin: 0;
 }
 /* Opaque content box occupying ~80% width */
 .page {

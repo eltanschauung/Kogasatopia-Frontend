@@ -50,7 +50,8 @@
     const classBar = $("#class-bar");
     const container = $("#button-container");
     const search = $("#search");
-    if (!classBar || !container || !search) return;
+    const customOnly = $("#custom-only");
+    if (!classBar || !container || !search || !customOnly) return;
 
     const clickSound = new Audio("/info/sound/tf2-button-click.mp3");
     clickSound.preload = "auto";
@@ -59,6 +60,7 @@
     const state = {
       activeClass: payload.active_class || "scout",
       filter: "",
+      customOnly: false,
       itemsByClass: payload.items_by_class
     };
 
@@ -69,15 +71,34 @@
     }
 
     function matchingItems() {
-      if (!state.filter) return state.itemsByClass[state.activeClass] || [];
-
+      const classItems = state.itemsByClass[state.activeClass] || [];
+      const sourceItems = state.filter ? Object.values(state.itemsByClass).flat() : classItems;
+      const seen = new Set();
       const list = [];
-      Object.values(state.itemsByClass).forEach((items) => {
-        (items || []).forEach((item) => {
-          if ((item.search || "").includes(state.filter)) list.push(item);
-        });
+
+      sourceItems.forEach((item) => {
+        if (state.customOnly && !item.is_custom) return;
+        if (state.filter && !(item.search || "").includes(state.filter)) return;
+
+        const dedupeKey = item.title || item.name || JSON.stringify(item);
+        if (seen.has(dedupeKey)) return;
+        seen.add(dedupeKey);
+        list.push(item);
       });
+
       return list;
+    }
+
+    function customItemsAvailableForActiveClass() {
+      return (state.itemsByClass[state.activeClass] || []).some((item) => item.is_custom);
+    }
+
+    function firstClassWithCustomItems() {
+      const match = Object.entries(state.itemsByClass).find(([_classKey, items]) => {
+        return (items || []).some((item) => item.is_custom);
+      });
+
+      return match ? match[0] : null;
     }
 
     function renderTiles() {
@@ -87,7 +108,9 @@
       if (!items.length) {
         const empty = document.createElement("div");
         empty.className = "empty";
-        empty.textContent = "No changes for this class match your filter.";
+        empty.textContent = state.customOnly
+          ? "No custom weapons match your filter."
+          : "No changes for this class match your filter.";
         container.appendChild(empty);
         return;
       }
@@ -115,6 +138,18 @@
 
     search.addEventListener("input", () => {
       state.filter = (search.value || "").trim().toLowerCase();
+      renderTiles();
+    });
+
+    customOnly.addEventListener("change", () => {
+      state.customOnly = customOnly.checked;
+
+      if (state.customOnly && !customItemsAvailableForActiveClass()) {
+        const nextClass = firstClassWithCustomItems();
+        if (nextClass) state.activeClass = nextClass;
+      }
+
+      syncClassButtons();
       renderTiles();
     });
 

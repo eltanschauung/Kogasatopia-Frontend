@@ -16,8 +16,8 @@
     />
     <meta property="og:url" content="https://kogasa.tf/info" />
     <meta property="og:type" content="website" />
-    <link rel="preload" as="style" href="/info/css/changes.css" />
-    <link rel="preload" as="script" href="/info/js/info_page.js" />
+    <link rel="preload" as="style" href={"/info/css/changes.css?v=" <> @asset_version} />
+    <link rel="preload" as="script" href={"/info/js/info_page.js?v=" <> @asset_version} />
     <link rel="preload" as="audio" href="/info/sound/tf2-button-click.mp3" />
     <link
       rel="preload"
@@ -26,11 +26,15 @@
       fetchpriority="high"
     />
     <link :for={src <- @preload_images} rel="preload" as="image" href={src} />
-    <link rel="stylesheet" href="/info/css/changes.css" />
+    <link rel="stylesheet" href={"/info/css/changes.css?v=" <> @asset_version} />
   </head>
   <body>
     <div class="top-nav">
       <a class="home-btn" href="/">Home</a>
+      <label class="home-btn filter-toggle" for="custom-only">
+        <input type="checkbox" id="custom-only" />
+        <span>Custom weapons only</span>
+      </label>
     </div>
     <div class="page">
       <header class="header">
@@ -82,7 +86,7 @@
     <script id="info-data" type="application/json">
       <%= Phoenix.HTML.raw(@payload_json) %>
     </script>
-    <script defer src="/info/js/info_page.js">
+    <script defer src={"/info/js/info_page.js?v=" <> @asset_version}>
     </script>
   </body>
 </html>
