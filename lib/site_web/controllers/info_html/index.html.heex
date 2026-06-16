@@ -32,7 +32,7 @@
     <div class="top-nav">
       <a class="home-btn" href="/">Home</a>
       <label class="home-btn filter-toggle" for="custom-only">
-        <input type="checkbox" id="custom-only" />
+        <input type="checkbox" id="custom-only" autocomplete="off" />
         <span>Custom weapons only</span>
       </label>
     </div>
@@ -71,7 +71,9 @@
         <main>
           <div id="button-container">
             <a :for={item <- @initial_items} href="#" class="on" title={item.title}>
-              <img class="btn-icon" src={item.icon} />
+              <div class="tf-backpack-item-center">
+                <img class="btn-icon" src={item.icon} />
+              </div>
               <span class="btn-label">{item.name}</span>
               <div class="effects">
                 <span :for={segment <- item.effects} class={"seg " <> segment.cls}>

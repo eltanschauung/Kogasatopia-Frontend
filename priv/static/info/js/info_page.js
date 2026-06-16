@@ -21,9 +21,13 @@
     link.title = item.title || item.name || "";
     link.addEventListener("click", (event) => event.preventDefault());
 
+    const iconFrame = document.createElement("div");
+    iconFrame.className = "tf-backpack-item-center";
+
     const icon = document.createElement("img");
     icon.className = "btn-icon";
     icon.src = item.icon || "";
+    iconFrame.appendChild(icon);
 
     const label = document.createElement("span");
     label.className = "btn-label";
@@ -39,7 +43,7 @@
       effects.appendChild(span);
     });
 
-    link.append(icon, label, effects);
+    link.append(iconFrame, label, effects);
     return link;
   }
 
@@ -56,6 +60,7 @@
     const clickSound = new Audio("/info/sound/tf2-button-click.mp3");
     clickSound.preload = "auto";
     clickSound.volume = 0.5;
+    customOnly.checked = false;
 
     const state = {
       activeClass: payload.active_class || "scout",
@@ -126,6 +131,10 @@
       syncClassButtons();
       renderTiles();
 
+      playClickSound();
+    }
+
+    function playClickSound() {
       try {
         clickSound.currentTime = 0;
         clickSound.play().catch(() => {});
@@ -134,6 +143,10 @@
 
     classBar.querySelectorAll(".class-btn").forEach((btn) => {
       btn.addEventListener("click", () => setActiveClass(btn.dataset.class));
+    });
+
+    document.querySelectorAll(".home-btn").forEach((btn) => {
+      btn.addEventListener("click", () => playClickSound());
     });
 
     search.addEventListener("input", () => {
