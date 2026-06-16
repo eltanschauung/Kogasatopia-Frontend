@@ -3,6 +3,7 @@ defmodule WhaleChat.MapsDb do
 
   import Ecto.Query
 
+  alias WhaleChat.AdminStatus
   alias WhaleChat.MapsDb.MapMeta
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.LegacyPaths
@@ -61,8 +62,7 @@ defmodule WhaleChat.MapsDb do
           :kogasa_frontend,
           :mapsdb_preview_dir,
           LegacyPaths.playercount_widget_dir()
-        ),
-      admin_cache_file: LegacyPaths.admin_cache_file()
+        )
     }
   end
 
@@ -111,16 +111,7 @@ defmodule WhaleChat.MapsDb do
   def admin?(""), do: false
 
   def admin?(steamid) when is_binary(steamid) do
-    case File.read(config().admin_cache_file) do
-      {:ok, json} ->
-        case Jason.decode(json) do
-          {:ok, %{"admins" => admins}} when is_map(admins) -> truthy?(Map.get(admins, steamid))
-          _ -> false
-        end
-
-      _ ->
-        false
-    end
+    AdminStatus.admin?(steamid)
   end
 
   def list_api_maps do
@@ -1386,7 +1377,4 @@ defmodule WhaleChat.MapsDb do
   end
 
   defp to_float(_), do: 0.0
-
-  defp truthy?(v) when v in [true, 1, "1", "true", "yes", "on"], do: true
-  defp truthy?(_), do: false
 end

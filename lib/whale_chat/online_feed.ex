@@ -1,9 +1,10 @@
 defmodule WhaleChat.OnlineFeed do
   @moduledoc false
 
-  import WhaleChat.Value, only: [float: 1, int: 1, str: 1, truthy?: 1]
+  import WhaleChat.Value, only: [float: 1, int: 1, str: 1]
 
   alias Ecto.Adapters.SQL
+  alias WhaleChat.AdminStatus
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.CountryNames
   alias WhaleChat.LegacyPaths
@@ -262,7 +263,7 @@ defmodule WhaleChat.OnlineFeed do
       |> Enum.uniq()
 
     profiles = fetch_steam_profiles(steam_ids)
-    admin_flags = admin_flags_for_ids(steam_ids)
+    admin_flags = AdminStatus.admin_flags_for_ids(steam_ids)
 
     default_avatar =
       Application.get_env(:kogasa_frontend, :default_avatar_url, @default_avatar_url)
@@ -294,7 +295,7 @@ defmodule WhaleChat.OnlineFeed do
         )
         |> Map.put(
           "is_admin",
-          if(Map.get(admin_flags, steamid, false), do: 1, else: int(row["is_admin"]))
+          if(Map.get(admin_flags, steamid, false), do: 1, else: 0)
         )
 
       {weapon_summary, active_acc} = weapon_summary_for_row(row)
@@ -516,20 +517,6 @@ defmodule WhaleChat.OnlineFeed do
     SteamProfiles.fetch_many(ids) || %{}
   rescue
     _ -> %{}
-  end
-
-  defp admin_flags_for_ids([]), do: %{}
-
-  defp admin_flags_for_ids(ids) do
-    cache_file = LegacyPaths.admin_cache_file()
-
-    with {:ok, json} <- File.read(cache_file),
-         {:ok, %{"admins" => admins}} <- Jason.decode(json) do
-      ids
-      |> Enum.reduce(%{}, fn id, acc -> Map.put(acc, id, truthy?(Map.get(admins, id))) end)
-    else
-      _ -> %{}
-    end
   end
 
   defp log_online_error(context, reason) do

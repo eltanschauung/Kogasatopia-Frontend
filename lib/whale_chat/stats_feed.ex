@@ -5,6 +5,7 @@ defmodule WhaleChat.StatsFeed do
 
   require Logger
   alias Ecto.Adapters.SQL
+  alias WhaleChat.AdminStatus
   alias WhaleChat.Chat.SteamProfiles
   alias WhaleChat.CountryNames
   alias WhaleChat.LegacyPaths
@@ -478,7 +479,7 @@ defmodule WhaleChat.StatsFeed do
       |> Enum.uniq()
 
     profiles = SteamProfiles.fetch_many(steam_ids)
-    admin_flags = admin_flags_for_ids(steam_ids)
+    admin_flags = AdminStatus.admin_flags_for_ids(steam_ids)
     default_avatar = default_avatar_url()
 
     Enum.map(rows, fn row ->
@@ -1071,7 +1072,7 @@ defmodule WhaleChat.StatsFeed do
     sql = """
     SELECT log_id, steamid, personaname, kills, deaths, assists, damage, damage_taken, healing,
            headshots, backstabs, total_ubers, playtime, shots, hits#{category_select_clause},
-           COALESCE(airshots, 0) AS airshots, COALESCE(is_admin, 0) AS is_admin
+           COALESCE(airshots, 0) AS airshots
     FROM #{@log_players_table}
     WHERE log_id IN (#{placeholders})
     ORDER BY log_id ASC, kills DESC, assists DESC
@@ -1117,7 +1118,7 @@ defmodule WhaleChat.StatsFeed do
       |> Enum.uniq()
 
     profiles = SteamProfiles.fetch_many(steam_ids)
-    admin_flags = admin_flags_for_ids(steam_ids)
+    admin_flags = AdminStatus.admin_flags_for_ids(steam_ids)
     default_avatar = default_avatar_url()
 
     Enum.map(rows, fn row ->
@@ -1148,7 +1149,7 @@ defmodule WhaleChat.StatsFeed do
         avatar: avatar,
         profileurl:
           if(steamid != "", do: "https://steamcommunity.com/profiles/" <> steamid, else: nil),
-        is_admin: Map.get(admin_flags, steamid, false) || truthy?(row["is_admin"]),
+        is_admin: Map.get(admin_flags, steamid, false),
         kills: int(row["kills"]),
         deaths: int(row["deaths"]),
         assists: int(row["assists"]),
@@ -1229,19 +1230,6 @@ defmodule WhaleChat.StatsFeed do
       {int(row["shots"]), int(row["hits"])}
     else
       {total_shots, total_hits}
-    end
-  end
-
-  defp admin_flags_for_ids([]), do: %{}
-
-  defp admin_flags_for_ids(ids) do
-    cache_file = LegacyPaths.admin_cache_file()
-
-    with {:ok, json} <- File.read(cache_file),
-         {:ok, %{"admins" => admins}} <- Jason.decode(json) do
-      Enum.reduce(ids, %{}, fn id, acc -> Map.put(acc, id, truthy?(Map.get(admins, id))) end)
-    else
-      _ -> %{}
     end
   end
 

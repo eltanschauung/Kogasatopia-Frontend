@@ -38,12 +38,4 @@ defmodule WhaleChat.LegacyPaths do
       Path.join(static_root(), "stats/cache")
     )
   end
-
-  def admin_cache_file do
-    Application.get_env(
-      :kogasa_frontend,
-      :mapsdb_admin_cache_file,
-      Path.join(stats_cache_dir(), "admins_cache.json")
-    )
-  end
 end
