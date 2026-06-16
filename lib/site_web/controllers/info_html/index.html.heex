@@ -71,9 +71,12 @@
         <main>
           <div id="button-container">
             <a :for={item <- @initial_items} href="#" class="on" title={item.title}>
+              <%!--
               <div class="tf-backpack-item-center">
                 <img class="btn-icon" src={item.icon} />
               </div>
+              --%>
+              <img class="btn-icon" src={item.icon} />
               <span class="btn-label">{item.name}</span>
               <div class="effects">
                 <span :for={segment <- item.effects} class={"seg " <> segment.cls}>

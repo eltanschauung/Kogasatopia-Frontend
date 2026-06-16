@@ -21,13 +21,14 @@
     link.title = item.title || item.name || "";
     link.addEventListener("click", (event) => event.preventDefault());
 
-    const iconFrame = document.createElement("div");
-    iconFrame.className = "tf-backpack-item-center";
+    // Preserved for the TF2 backpack-style item frame experiment.
+    // const iconFrame = document.createElement("div");
+    // iconFrame.className = "tf-backpack-item-center";
 
     const icon = document.createElement("img");
     icon.className = "btn-icon";
     icon.src = item.icon || "";
-    iconFrame.appendChild(icon);
+    // iconFrame.appendChild(icon);
 
     const label = document.createElement("span");
     label.className = "btn-label";
@@ -43,7 +44,8 @@
       effects.appendChild(span);
     });
 
-    link.append(iconFrame, label, effects);
+    // link.append(iconFrame, label, effects);
+    link.append(icon, label, effects);
     return link;
   }
 
