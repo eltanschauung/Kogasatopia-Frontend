@@ -59,12 +59,17 @@ defmodule WhaleChat.Tf2Classes do
 
   @spectator %{id: 0, slug: "spectator", label: "Spectator", leaderboard_icon: "Icon_replay.png"}
   @all_class_info %{id: 10, slug: "all_class", label: "All Class", info_icon: "backpack.png"}
+  @info_class_order ~w(scout soldier pyro demoman heavy engineer medic sniper spy)
   @by_id Map.new(@classes, fn class -> {class.id, class} end)
   @by_label Map.new(@classes, fn class -> {class.label, class} end)
 
   def info_classes do
     info_classes =
-      Enum.map(@classes, fn class ->
+      @classes
+      |> Enum.sort_by(fn class ->
+        Enum.find_index(@info_class_order, &(&1 == class.slug)) || 999
+      end)
+      |> Enum.map(fn class ->
         %{id: class.id, key: class.slug, label: class.label, icon: class.info_icon}
       end)
 
