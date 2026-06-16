@@ -45,7 +45,7 @@ defmodule WhaleChat.LegacySite do
   end
 
   def safe_resolve(request_path) when is_binary(request_path) do
-    rel = request_path |> String.trim_leading("/")
+    rel = request_path |> URI.decode() |> String.trim_leading("/")
     root = Path.expand(docroot())
     candidate = Path.expand(rel, root)
 
