@@ -37,11 +37,6 @@ manual-packages.txt
 # Cached assets / mirrored PHP cache directories
 /priv/static/stats/cache/
 /priv/static/sb/
-/priv/static/stats/assets/*.jpg
-!/priv/static/stats/assets/background_product_pro.jpg
-!/priv/static/stats/assets/server-chat-avatar.jpg
-!/priv/static/stats/assets/whaley-avatar.jpg
-!/priv/static/stats/assets/whaley-avatar-2.jpg
 /priv/static/**/*quickstats*.txt
 /priv/static/**/mapstats_output.txt
 /stats/cache/
