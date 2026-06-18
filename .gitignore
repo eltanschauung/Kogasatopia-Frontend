@@ -51,7 +51,7 @@ manual-packages.txt
 /priv/static/stats/logs/
 
 # Ignore package tarball (built via "mix hex.build").
-whale_chat-*.tar
+kogasa_frontend-*.tar
 
 # Large binary/static asset ignores
 # Gitignore cannot filter by file size; keep this generated list for current images over 0.2 MiB.

@@ -1,0 +1,276 @@
+defmodule KogasaFrontend.Chat do
+  @moduledoc false
+
+  import Ecto.Query
+  alias Ecto.Multi
+
+  alias KogasaFrontend.Chat.{
+    AvatarService,
+    Message,
+    OutboxMessage,
+    Persona,
+    RateLimiter,
+    SteamProfiles
+  }
+
+  alias KogasaFrontend.Repo
+
+  @topic "chat:live"
+
+  def topic, do: @topic
+
+  def list_messages(opts \\ %{}) do
+    limit = opts |> Map.get(:limit, 50) |> normalize_limit()
+    before_id = normalize_id(Map.get(opts, :before))
+    after_id = normalize_id(Map.get(opts, :after))
+    alerts_only = truthy?(Map.get(opts, :alerts_only, false))
+
+    base =
+      from m in Message,
+        select: %{
+          id: m.id,
+          created_at: m.created_at,
+          steamid: m.steamid,
+          personaname: m.personaname,
+          iphash: m.iphash,
+          message: m.message,
+          alert: m.alert
+        }
+
+    base =
+      if alerts_only do
+        from m in base, where: m.alert == true
+      else
+        base
+      end
+
+    {rows, has_more_older} =
+      try do
+        cond do
+          is_integer(after_id) and after_id > 0 ->
+            rows =
+              from(m in base, where: m.id > ^after_id, order_by: [asc: m.id], limit: ^limit)
+              |> Repo.all()
+
+            {rows, false}
+
+          true ->
+            q =
+              if is_integer(before_id) and before_id > 0 do
+                from m in base, where: m.id < ^before_id
+              else
+                base
+              end
+
+            rows =
+              from(m in q, order_by: [desc: m.id], limit: ^(limit + 1))
+              |> Repo.all()
+
+            has_extra = length(rows) > limit
+            rows = if has_extra, do: Enum.take(rows, limit), else: rows
+            {Enum.reverse(rows), has_extra}
+        end
+      rescue
+        _ -> {[], false}
+      end
+
+    steam_profiles =
+      rows
+      |> Enum.map(fn r -> r[:steamid] || r["steamid"] end)
+      |> SteamProfiles.fetch_many()
+
+    messages = Enum.map(rows, &format_message(&1, steam_profiles))
+    ids = Enum.map(messages, & &1.id)
+
+    %{
+      ok: true,
+      messages: Enum.map(messages, &message_to_json/1),
+      oldest_id: List.first(ids),
+      newest_id: List.last(ids),
+      latest_id: if(ids == [], do: nil, else: Enum.max(ids)),
+      has_more_older: has_more_older
+    }
+  end
+
+  def submit_message(actor, message) when is_binary(message) do
+    message = String.trim(message)
+
+    cond do
+      message == "" -> {:error, :invalid}
+      String.length(message) > 180 -> {:error, :invalid}
+      true -> do_submit_message(actor, message)
+    end
+  end
+
+  def ensure_session_persona(persona), do: Persona.ensure_persona(persona)
+
+  def webname_options, do: Persona.webnames()
+
+  defp do_submit_message(actor, "/" <> _ = message) do
+    if actor[:steamid] do
+      create_chat_message(actor, message)
+    else
+      case Persona.try_update_from_command(message) do
+        {:not_command, _} ->
+          create_chat_message(actor, message)
+
+        {:persona_updated, persona} ->
+          {:ok, {:persona_updated, persona}}
+
+        {:persona_not_found, options} ->
+          {:ok, {:persona_not_found, options}}
+      end
+    end
+  end
+
+  defp do_submit_message(actor, message), do: create_chat_message(actor, message)
+
+  def create_chat_message(actor, message) do
+    rate_key = "chat:" <> to_string(actor[:rate_key] || actor[:iphash] || "anon")
+
+    if RateLimiter.allow?(rate_key, 5) do
+      now = System.system_time(:second)
+
+      server_ip =
+        actor[:server_ip] || Application.get_env(:kogasa_frontend, :chat_server_ip, "127.0.0.1")
+
+      server_port =
+        actor[:server_port] || Application.get_env(:kogasa_frontend, :chat_server_port, 443)
+
+      display_name =
+        cond do
+          actor[:steamid] && actor[:personaname] -> actor[:personaname] <> " | Web"
+          actor[:personaname] -> actor[:personaname]
+          true -> "Web Player"
+        end
+
+      attrs = %{
+        created_at: now,
+        steamid: actor[:steamid],
+        personaname: display_name,
+        iphash: actor[:iphash],
+        message: message,
+        server_ip: server_ip,
+        server_port: server_port,
+        alert: true
+      }
+
+      outbox_attrs = %{
+        created_at: now,
+        iphash: actor[:iphash] || "anon",
+        display_name: display_name,
+        message: message,
+        server_ip: server_ip,
+        server_port: server_port
+      }
+
+      multi =
+        Multi.new()
+        |> Multi.insert(:chat, Message.changeset(%Message{}, attrs))
+        |> Multi.insert(:outbox, OutboxMessage.changeset(%OutboxMessage{}, outbox_attrs))
+
+      try do
+        case Repo.transaction(multi) do
+          {:ok, %{chat: msg}} ->
+            payload = msg |> Map.from_struct() |> format_message(%{}) |> message_to_json()
+            Phoenix.PubSub.broadcast(KogasaFrontend.PubSub, @topic, {:new_message, payload})
+            {:ok, :sent}
+
+          {:error, _step, _changeset, _changes} ->
+            {:error, :server}
+        end
+      rescue
+        _ -> {:error, :server}
+      end
+    else
+      {:error, :rate_limited}
+    end
+  end
+
+  defp format_message(row, steam_profiles) do
+    iphash = row[:iphash] || row["iphash"]
+    personaname = row[:personaname] || row["personaname"]
+    steamid = row[:steamid] || row["steamid"]
+
+    profile =
+      if is_binary(steamid) and steamid != "", do: Map.get(steam_profiles, steamid), else: nil
+
+    avatar =
+      AvatarService.resolve(%{
+        iphash: iphash,
+        steamid: steamid,
+        personaname: personaname,
+        profile: profile
+      })
+
+    %{
+      id: row[:id] || row["id"],
+      created_at: row[:created_at] || row["created_at"] || 0,
+      steamid: steamid,
+      name: resolved_name(personaname, steamid, iphash, profile),
+      avatar: avatar,
+      message: row[:message] || row["message"] || "",
+      alert: truthy?(row[:alert] || row["alert"] || false)
+    }
+  end
+
+  defp resolved_name(nil, steamid, iphash, profile),
+    do: resolved_name("", steamid, iphash, profile)
+
+  defp resolved_name("", steamid, iphash, profile) do
+    cond do
+      is_map(profile) and is_binary(profile["personaname"]) and profile["personaname"] != "" ->
+        profile["personaname"]
+
+      is_binary(steamid) and steamid != "" ->
+        steamid
+
+      is_binary(iphash) and iphash != "" ->
+        "Web Player ##{String.slice(iphash, 0, 6)}"
+
+      true ->
+        "Unknown"
+    end
+  end
+
+  defp resolved_name(personaname, _steamid, _iphash, _profile), do: personaname
+
+  defp message_to_json(msg) do
+    %{
+      id: msg.id,
+      created_at: msg.created_at,
+      steamid: msg.steamid,
+      name: msg.name,
+      avatar: msg.avatar,
+      message: msg.message,
+      alert: msg.alert
+    }
+  end
+
+  defp normalize_limit(value) when is_integer(value), do: value |> max(1) |> min(200)
+
+  defp normalize_limit(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, _} -> normalize_limit(int)
+      _ -> 50
+    end
+  end
+
+  defp normalize_limit(_), do: 50
+
+  defp normalize_id(nil), do: nil
+  defp normalize_id(""), do: nil
+
+  defp normalize_id(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {id, _} when id > 0 -> id
+      _ -> nil
+    end
+  end
+
+  defp normalize_id(value) when is_integer(value) and value > 0, do: value
+  defp normalize_id(_), do: nil
+
+  defp truthy?(value) when value in [true, 1, "1", "true", "TRUE", "yes", "on"], do: true
+  defp truthy?(_), do: false
+end

@@ -1,4 +1,4 @@
-defmodule WhaleChat.MixProject do
+defmodule KogasaFrontend.MixProject do
   use Mix.Project
 
   def project do
@@ -20,7 +20,7 @@ defmodule WhaleChat.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {WhaleChat.Application, []},
+      mod: {KogasaFrontend.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end

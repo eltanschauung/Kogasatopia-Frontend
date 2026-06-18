@@ -1,0 +1,220 @@
+<Layouts.app flash={@flash} wide={true}>
+  <link rel="stylesheet" href="/stats/css/whaletracker.css" />
+  <style>
+    .logs-page {}
+    .logs-shell {}
+    .logs-topbar {}
+    .logs-topbar-meta {}
+    .logs-subnav {}
+    .logs-mode-row {}
+    .logs-mode-pill {}
+    .logs-refresh {}
+    .logs-content-shell {}
+    .logs-container {
+      min-height: 240px;
+    }
+    .logs-empty { margin-top: .65rem; color: #b7c0d2; }
+    .logs-pagination {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+      justify-content: center;
+      margin-top: .8rem;
+    }
+    .logs-page-button {}
+    .logs-container .logs-fragment-root {}
+    .logs-container .log-entry {}
+    .logs-container .log-summary {}
+    .logs-container .log-body {}
+    .logs-container .log-title { color: #eff3fb; }
+    .logs-container .log-meta { color: #b9c4d7; }
+    .logs-container .gamemode-label {}
+    .logs-topbar-meta { }
+    .logs-subnav { }
+    .logs-topbar ~ div,
+    .logs-topbar ~ div div {
+      border-radius: 0 !important;
+    }
+    @media (max-width: 700px) {
+      .logs-page { padding-left: 0; padding-right: 0; }
+      .logs-topbar.wt-topbar { padding: .5rem .55rem; }
+      .logs-topbar h1 { font-size: .95rem; }
+      .logs-shell.wt-shell { padding: .5rem; }
+      .logs-content-shell.wt-content-shell { padding: .45rem; }
+      .logs-container.wt-content-box { padding: .25rem; }
+      .logs-pagination { gap: .3rem; margin-top: .55rem; }
+    }
+  </style>
+
+  <div class="logs-page wt-page-pad">
+    <.section_nav active={:logs} chat_label_id="nav-chat-label" />
+
+    <div class="logs-topbar wt-topbar">
+      <div>
+        <h1>{if @scope == "short", do: "Match Logs (Short)", else: "Match Logs"}</h1>
+      </div>
+      <div class="logs-topbar-meta wt-topbar-badge">
+        {@total_logs} logs · Page {@page}/{@total_pages}
+      </div>
+    </div>
+
+    <div class="logs-shell wt-shell">
+      <div class="logs-subnav wt-subnav">
+        <div class="logs-mode-row">
+          <a
+            href="/logs"
+            class={["logs-mode-pill wt-pill-link", @scope == "regular" && "is-active"]}
+          >
+            Recent Logs
+          </a>
+          <a
+            href="/logs/short"
+            class={["logs-mode-pill wt-pill-link", @scope == "short" && "is-active"]}
+          >
+            Short Logs
+          </a>
+          <a href="/logs/current" class="logs-mode-pill wt-pill-link">Current Match</a>
+        </div>
+        <button type="button" class="logs-refresh wt-action-btn" id="logs-refresh">
+          Refresh Logs
+        </button>
+      </div>
+
+      <div class="logs-content-shell wt-content-shell">
+        <div
+          class="logs-container wt-content-box"
+          id="logs-container"
+          data-scope={@scope}
+          data-current-page={@page}
+          data-total-pages={@total_pages}
+          data-total-logs={@total_logs}
+          data-per-page={@per_page}
+        >
+          {Phoenix.HTML.raw(@logs_html || "")}
+        </div>
+        <div class="empty-state logs-empty" id="logs-empty" style="display:none">
+          No logs available.
+        </div>
+        <div class="logs-pagination" id="logs-pagination"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const logsFragmentEndpoint = "/stats/logs_fragment.php";
+      const onlineSummaryEndpoint = "/stats/online_summary.php";
+      const onlineCountEl = document.getElementById("nav-online-count");
+      const navChatLabel = document.getElementById("nav-chat-label");
+      const logsContainer = document.getElementById("logs-container");
+      const logsEmpty = document.getElementById("logs-empty");
+      const logsRefreshButton = document.getElementById("logs-refresh");
+      const paginationContainer = document.getElementById("logs-pagination");
+      const scope = logsContainer?.dataset.scope || "regular";
+      const perPage = Number(logsContainer?.dataset.perPage || <%= @per_page %>);
+      let currentPage = Number(logsContainer?.dataset.currentPage || <%= @page %>);
+      let totalPages = Number(logsContainer?.dataset.totalPages || <%= @total_pages %>);
+      let loading = false;
+
+      function updateOnlineCountLabel() {
+        if (!onlineCountEl) return;
+        fetch(onlineSummaryEndpoint + "?t=" + Date.now(), { cache: "no-store" })
+          .then((r) => r.ok ? r.json() : Promise.reject(new Error("summary request failed")))
+          .then((data) => {
+            const online = Number(data?.player_count || data?.online_players || data?.players || 0);
+            const max = Number(data?.visible_max || data?.visible_max_players || data?.max_players || data?.max || 32) || 32;
+            onlineCountEl.textContent = `${online} / ${max}`;
+            window.WTOnlineCountCache?.write?.({ player_count: online, visible_max: max, updated: data?.updated });
+          })
+          .catch(() => {});
+      }
+
+      async function updateNavChatLabel() {
+        if (!navChatLabel) return;
+        return window.WTChatAgeLabel?.update?.(navChatLabel);
+      }
+
+      function setEmptyState(visible, message) {
+        if (!logsEmpty) return;
+        logsEmpty.style.display = visible ? "" : "none";
+        if (message) logsEmpty.textContent = message;
+      }
+
+      function updateEmptyStateFromContent() {
+        if (!logsContainer) return;
+        const hasContent = logsContainer.textContent.trim().length > 0;
+        setEmptyState(!hasContent, hasContent ? "" : "No logs available.");
+      }
+
+      function buildPagination() {
+        if (!paginationContainer) return;
+        paginationContainer.innerHTML = "";
+        if (totalPages <= 1) return;
+        for (let page = 1; page <= totalPages; page += 1) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "logs-page-button" + (page === currentPage ? " active" : "");
+          btn.textContent = String(page);
+          btn.disabled = loading;
+          btn.addEventListener("click", () => {
+            if (page !== currentPage && !loading) fetchLogs(page);
+          });
+          paginationContainer.appendChild(btn);
+        }
+      }
+
+      async function fetchLogs(targetPage = currentPage) {
+        if (!logsContainer || loading) return;
+        loading = true;
+        if (logsRefreshButton) logsRefreshButton.disabled = true;
+        setEmptyState(true, "Loading logs...");
+        buildPagination();
+
+        try {
+          const params = new URLSearchParams({
+            page: String(targetPage),
+            per_page: String(perPage),
+            scope,
+            include_players: "1",
+            t: String(Date.now())
+          });
+          const response = await fetch(`${logsFragmentEndpoint}?${params.toString()}`, { cache: "no-store" });
+          if (!response.ok) throw new Error("Failed request");
+          const html = await response.text();
+          logsContainer.innerHTML = html || "";
+          currentPage = Number(response.headers.get("x-logs-page") || targetPage) || targetPage;
+          totalPages = Number(response.headers.get("x-logs-total-pages") || 1) || 1;
+          logsContainer.dataset.currentPage = String(currentPage);
+          logsContainer.dataset.totalPages = String(totalPages);
+          updateEmptyStateFromContent();
+          buildPagination();
+          history.replaceState(null, "", (scope === "short" ? "/logs/short" : "/logs") + `?page=${currentPage}`);
+        } catch (err) {
+          console.error("[WhaleTracker] Failed to fetch logs:", err);
+          setEmptyState(true, "Failed to load logs.");
+        } finally {
+          loading = false;
+          if (logsRefreshButton) logsRefreshButton.disabled = false;
+          buildPagination();
+        }
+      }
+
+      function init() {
+        updateEmptyStateFromContent();
+        buildPagination();
+        if (logsRefreshButton) logsRefreshButton.addEventListener("click", () => fetchLogs(currentPage));
+        window.WTOnlineCountCache?.apply?.(onlineCountEl);
+        updateOnlineCountLabel();
+        updateNavChatLabel();
+        window.setInterval(updateOnlineCountLabel, 10000);
+        window.setInterval(updateNavChatLabel, 60000);
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init, { once: true });
+      } else {
+        init();
+      }
+    })();
+  </script>
+</Layouts.app>

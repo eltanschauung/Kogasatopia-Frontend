@@ -1,7 +1,7 @@
 import Config
 
 # Configure your database
-config :kogasa_frontend, WhaleChat.Repo,
+config :kogasa_frontend, KogasaFrontend.Repo,
   username: "root",
   password: "",
   hostname: "localhost",
@@ -16,7 +16,7 @@ config :kogasa_frontend, WhaleChat.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
-config :kogasa_frontend, WhaleChatWeb.Endpoint,
+config :kogasa_frontend, KogasaFrontendWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {0, 0, 0, 0}],
@@ -50,7 +50,7 @@ config :kogasa_frontend, WhaleChatWeb.Endpoint,
 # different ports.
 
 # Reload browser tabs when matching files change.
-config :kogasa_frontend, WhaleChatWeb.Endpoint,
+config :kogasa_frontend, KogasaFrontendWeb.Endpoint,
   live_reload: [
     web_console_logger: true,
     patterns: [
@@ -59,8 +59,8 @@ config :kogasa_frontend, WhaleChatWeb.Endpoint,
       # Gettext translations
       ~r"priv/gettext/.*\.po$",
       # Router, Controllers, LiveViews and LiveComponents
-      ~r"lib/site_web/router\.ex$",
-      ~r"lib/site_web/(controllers|live|components)/.*\.(ex|heex)$"
+      ~r"lib/kogasa_frontend_web/router\.ex$",
+      ~r"lib/kogasa_frontend_web/(controllers|live|components)/.*\.(ex|heex)$"
     ]
   ]
 

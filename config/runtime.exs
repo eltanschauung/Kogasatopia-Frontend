@@ -17,7 +17,7 @@ import Config
 # Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
 # script that automatically sets the env var above.
 if System.get_env("PHX_SERVER") do
-  config :kogasa_frontend, WhaleChatWeb.Endpoint, server: true
+  config :kogasa_frontend, KogasaFrontendWeb.Endpoint, server: true
 end
 
 ip =
@@ -30,7 +30,7 @@ ip =
 http_port = String.to_integer(System.get_env("PORT", "80"))
 
 if config_env() == :dev do
-  config :kogasa_frontend, WhaleChat.Repo,
+  config :kogasa_frontend, KogasaFrontend.Repo,
     username: System.get_env("WT_DB_USER", "youruserhere"),
     password: System.get_env("WT_DB_PASS", "yourpasswordhere"),
     hostname: System.get_env("WT_DB_HOST", "127.0.0.1"),
@@ -51,12 +51,12 @@ if config_env() == :prod do
   pool_size = String.to_integer(System.get_env("POOL_SIZE") || "10")
 
   if database_url = System.get_env("DATABASE_URL") do
-    config :kogasa_frontend, WhaleChat.Repo,
+    config :kogasa_frontend, KogasaFrontend.Repo,
       url: database_url,
       pool_size: pool_size,
       socket_options: maybe_ipv6
   else
-    config :kogasa_frontend, WhaleChat.Repo,
+    config :kogasa_frontend, KogasaFrontend.Repo,
       username:
         System.get_env("WT_DB_USER") ||
           raise("set WT_DB_USER or DATABASE_URL in prod"),
@@ -156,14 +156,14 @@ if config_env() == :prod do
       )
     end
 
-  config :kogasa_frontend, WhaleChatWeb.Endpoint, endpoint_opts
+  config :kogasa_frontend, KogasaFrontendWeb.Endpoint, endpoint_opts
 
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key
   # to your endpoint configuration:
   #
-  #     config :kogasa_frontend, WhaleChatWeb.Endpoint,
+  #     config :kogasa_frontend, KogasaFrontendWeb.Endpoint,
   #       https: [
   #         ...,
   #         port: 443,
@@ -185,7 +185,7 @@ if config_env() == :prod do
   # We also recommend setting `force_ssl` in your config/prod.exs,
   # ensuring no data is ever sent via http, always redirecting to https:
   #
-  #     config :kogasa_frontend, WhaleChatWeb.Endpoint,
+  #     config :kogasa_frontend, KogasaFrontendWeb.Endpoint,
   #       force_ssl: [hsts: true]
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.

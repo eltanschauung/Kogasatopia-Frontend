@@ -8,7 +8,7 @@
 import Config
 
 config :kogasa_frontend,
-  ecto_repos: [WhaleChat.Repo],
+  ecto_repos: [KogasaFrontend.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 config :kogasa_frontend,
@@ -25,14 +25,14 @@ config :kogasa_frontend,
   access_log_path: Path.expand("access.log")
 
 # Configure the endpoint
-config :kogasa_frontend, WhaleChatWeb.Endpoint,
+config :kogasa_frontend, KogasaFrontendWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
-    formats: [html: WhaleChatWeb.ErrorHTML, json: WhaleChatWeb.ErrorJSON],
+    formats: [html: KogasaFrontendWeb.ErrorHTML, json: KogasaFrontendWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: WhaleChat.PubSub,
+  pubsub_server: KogasaFrontend.PubSub,
   live_view: [
     signing_salt: System.get_env("PHX_LIVE_VIEW_SIGNING_SALT") || "public-live-view-salt"
   ]

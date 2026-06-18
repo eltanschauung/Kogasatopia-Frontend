@@ -1,2 +1,2 @@
 ExUnit.start()
-Ecto.Adapters.SQL.Sandbox.mode(WhaleChat.Repo, :manual)
+Ecto.Adapters.SQL.Sandbox.mode(KogasaFrontend.Repo, :manual)
