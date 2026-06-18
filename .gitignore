@@ -26,6 +26,7 @@ erl_crash.dump
 .explanation.txt
 project.md
 phoenix_webserver_explanation.txt
+refactor_plan.txt
 AGENTS.md
 .server4001.log
 access.log
