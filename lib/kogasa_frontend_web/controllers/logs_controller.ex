@@ -39,8 +39,8 @@ defmodule KogasaFrontendWeb.LogsController do
     render(conn, :index,
       page_title:
         if(scope == "short",
-          do: "Match Logs (Short)",
-          else: "Match Logs"
+          do: "Matches (Short)",
+          else: "Matches"
         ),
       logs_html: StatsFragments.logs_fragment_html(logs),
       page: logs[:page] || page,
