@@ -69,8 +69,16 @@ defmodule KogasaFrontend.MixProject do
       setup: ["deps.get", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      test: test_alias(),
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
     ]
+  end
+
+  defp test_alias do
+    if System.get_env("KOGASA_SKIP_TEST_DB") in ["1", "true"] do
+      ["test"]
+    else
+      ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+    end
   end
 end

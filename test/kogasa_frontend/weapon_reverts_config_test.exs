@@ -6,7 +6,8 @@ defmodule KogasaFrontend.WeaponRevertsConfigTest do
   @classes [
     %{key: "scout"},
     %{key: "soldier"},
-    %{key: "heavy"}
+    %{key: "heavy"},
+    %{key: "all_class"}
   ]
 
   test "merges weaponreverts and cwx display data by class" do
@@ -64,6 +65,17 @@ defmodule KogasaFrontend.WeaponRevertsConfigTest do
           "negative" ""
         }
       }
+      "custom_all_class"
+      {
+        "all_class" "true"
+        "name" "All Class Item"
+        "description"
+        {
+          "positive" "Everyone can equip it"
+          "neutral" ""
+          "negative" ""
+        }
+      }
     }
     """)
 
@@ -83,5 +95,9 @@ defmodule KogasaFrontend.WeaponRevertsConfigTest do
                negative: ""
              }
            ] = items["soldier"]
+
+    assert [%{name: "All Class Item", positive: "Everyone can equip it"}] = items["all_class"]
+
+    refute Enum.any?(items["scout"], &(&1.name == "All Class Item"))
   end
 end
