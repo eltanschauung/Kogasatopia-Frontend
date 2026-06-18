@@ -36,6 +36,14 @@ defmodule KogasaFrontend.DataCase do
   Sets up the sandbox based on the test tags.
   """
   def setup_sandbox(tags) do
+    if System.get_env("KOGASA_SKIP_TEST_DB") in ["1", "true"] do
+      :ok
+    else
+      start_sandbox(tags)
+    end
+  end
+
+  defp start_sandbox(tags) do
     pid = Ecto.Adapters.SQL.Sandbox.start_owner!(KogasaFrontend.Repo, shared: not tags[:async])
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
   end

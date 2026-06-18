@@ -40,10 +40,10 @@ defmodule KogasaFrontendWeb.LegacyControllerTest do
     assert redirected_to(conn, 302) == "/online"
   end
 
-  test "generic php passthrough does not redirect to localhost backend", %{conn: conn} do
+  test "generic php passthrough returns not found", %{conn: conn} do
     conn = get(conn, "/foo.php")
 
-    assert response(conn, 502) == "Legacy PHP backend unavailable"
+    assert response(conn, 404) == "Not Found"
     assert get_resp_header(conn, "location") == []
   end
 end

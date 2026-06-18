@@ -7,18 +7,20 @@ defmodule KogasaFrontend.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      KogasaFrontendWeb.Telemetry,
-      KogasaFrontend.Repo,
-      KogasaFrontend.Chat.RateLimiter,
-      KogasaFrontend.AccessLog,
-      {DNSCluster, query: Application.get_env(:kogasa_frontend, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: KogasaFrontend.PubSub},
-      # Start a worker by calling: KogasaFrontend.Worker.start_link(arg)
-      # {KogasaFrontend.Worker, arg},
-      # Start to serve requests, typically the last entry
-      KogasaFrontendWeb.Endpoint
-    ]
+    children =
+      [
+        KogasaFrontendWeb.Telemetry,
+        repo_child(),
+        KogasaFrontend.Chat.RateLimiter,
+        KogasaFrontend.AccessLog,
+        {DNSCluster, query: Application.get_env(:kogasa_frontend, :dns_cluster_query) || :ignore},
+        {Phoenix.PubSub, name: KogasaFrontend.PubSub},
+        # Start a worker by calling: KogasaFrontend.Worker.start_link(arg)
+        # {KogasaFrontend.Worker, arg},
+        # Start to serve requests, typically the last entry
+        KogasaFrontendWeb.Endpoint
+      ]
+      |> Enum.reject(&is_nil/1)
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -32,5 +34,11 @@ defmodule KogasaFrontend.Application do
   def config_change(changed, _new, removed) do
     KogasaFrontendWeb.Endpoint.config_change(changed, removed)
     :ok
+  end
+
+  defp repo_child do
+    unless Application.get_env(:kogasa_frontend, :skip_repo, false) do
+      KogasaFrontend.Repo
+    end
   end
 end
