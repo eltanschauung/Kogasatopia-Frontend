@@ -146,7 +146,7 @@ defmodule KogasaFrontendWeb.ChatLive do
 
         <div class="chat-topbar">
           <div>
-            <h1 class="chat-title">KogasaFrontend</h1>
+            <h1 class="chat-title">Whale Chat</h1>
             <p id="nav-chat-label" class="chat-subtitle">Last msg. --</p>
           </div>
           <div class="chat-topbar-right">
