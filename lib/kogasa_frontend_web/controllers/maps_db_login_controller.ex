@@ -8,7 +8,7 @@ defmodule KogasaFrontendWeb.MapsDbLoginController do
     SteamLogin.handle(conn, params,
       login_path: "/mapsdb/login.php",
       default_return: "/mapsdb",
-      title: "MapsDB Login",
+      title: "Maps Login",
       return_label: "mapsdb",
       session_detail: &admin_session_detail/2
     )

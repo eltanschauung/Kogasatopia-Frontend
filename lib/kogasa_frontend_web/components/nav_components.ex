@@ -25,7 +25,7 @@ defmodule KogasaFrontendWeb.NavComponents do
       <.nav_item
         active={@active == :mapsdb}
         href="/mapsdb"
-        label="MapsDB"
+        label="Maps"
         kind="pill"
         class="site-nav-navy"
       />
