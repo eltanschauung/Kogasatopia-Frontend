@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Kogasatopia at kogasa.tf is the website for Kogasatopia | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
+      content="kogasa.tf is the website for Kogasatopia | New Jersey, a Team Fortress 2 community server"
     />
     <meta property="og:site_name" content="Kogasatopia" />
     <meta property="og:title" content="Kogasatopia" />
     <meta
       property="og:description"
-      content="Kogasatopia at kogasa.tf is the website for Kogasatopia | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
+      content="kogasa.tf is the website for Kogasatopia | New Jersey, a Team Fortress 2 community server"
     />
     <meta property="og:url" content="https://kogasa.tf/" />
     <meta property="og:type" content="website" />
@@ -58,6 +58,24 @@
       type="text/javascript"
       src={~p"/assets/js/phoenix_live_view.min.js"}
     >
+    </script>
+    <script
+      defer
+      phx-track-static
+      type="text/javascript"
+      src={~p"/assets/js/app/online_count_cache.js"}
+    >
+    </script>
+    <script
+      defer
+      phx-track-static
+      type="text/javascript"
+      src={~p"/assets/js/app/chat_age_label.js"}
+    >
+    </script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app/time.js"}>
+    </script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app/flash.js"}>
     </script>
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>

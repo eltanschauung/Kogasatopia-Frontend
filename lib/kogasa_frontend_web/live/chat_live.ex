@@ -30,7 +30,7 @@ defmodule KogasaFrontendWeb.ChatLive do
 
     {:ok,
      socket
-     |> assign(:page_title, "Live Chat · KogasaFrontend")
+     |> assign(:page_title, "Live Chat")
      |> assign(:messages, payload.messages || [])
      |> assign(:latest_id, payload.latest_id || payload.newest_id)
      |> assign(:oldest_id, payload.oldest_id)

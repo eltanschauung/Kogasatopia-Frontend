@@ -19,7 +19,7 @@ defmodule KogasaFrontendWeb.LogsController do
     current_log = StatsFeed.current_log()
 
     render(conn, :current,
-      page_title: "Current Match Log · WhaleTracker",
+      page_title: "Current Log",
       current_log_html:
         StatsFragments.current_log_fragment_html(current_log, default_avatar_url: default_avatar)
     )
@@ -39,8 +39,8 @@ defmodule KogasaFrontendWeb.LogsController do
     render(conn, :index,
       page_title:
         if(scope == "short",
-          do: "Match Logs (Short) · WhaleTracker",
-          else: "Match Logs · WhaleTracker"
+          do: "Match Logs (Short)",
+          else: "Match Logs"
         ),
       logs_html: StatsFragments.logs_fragment_html(logs),
       page: logs[:page] || page,
