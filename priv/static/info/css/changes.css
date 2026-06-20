@@ -98,7 +98,7 @@ body {
 .subtitle { font-size: 1rem; color: var(--muted); }
 
 .class-bar { display: grid; grid-template-columns: repeat(10, 1fr); gap: .5rem; margin-bottom: 1rem; }
-.class-btn { display: flex; flex-direction: column; align-items: center; gap: .25rem; padding: .5rem .25rem; background: var(--panel); border: 1px solid #857d7a; border-radius: 8px; cursor: pointer; transition: transform .08s ease; }
+.class-btn { display: flex; flex-direction: column; align-items: center; gap: .25rem; padding: .5rem .25rem; background: var(--panel); border: 1px solid#000; border-radius: 8px; cursor: pointer; transition: transform .08s ease; }
 .class-btn:hover { transform: translateY(-1px); }
 .class-btn.active { outline: 2px solid var(--accent); }
 .class-icon { width: 40px; height: 40px; object-fit: contain; image-rendering: -webkit-optimize-contrast; }
