@@ -166,9 +166,7 @@ body {
 }
 
 .stat-card {
-    background: transparent;
-    border: 0;
-    box-shadow: none;
+    background: var(--panel-bg);
     padding: 1.2rem 1.5rem;
 }
 

@@ -2,7 +2,6 @@
   <style>
     .table-wrapper {
       background: rgba(16,17,23,.92);
-      border-radius: 18px;
       border: 1px solid rgba(255,255,255,.1);
       overflow-x: auto;
       overflow-y: hidden;
@@ -39,7 +38,7 @@
     tbody tr.player-faded:hover { opacity: .9; }
     .player-cell { display:flex; align-items:center; gap:.2rem; }
     .player-avatar {
-      width: 38px; height: 38px; border-radius: 50%;
+      width: 38px; height: 38px;
       border: 1px solid rgba(255,255,255,.12); box-shadow: 0 4px 16px rgba(0,0,0,.35);
       object-fit: cover;
     }
@@ -50,8 +49,7 @@
     .info-card-grid { display:flex; flex-wrap:wrap; gap:1rem; }
     .info-card {
       display:flex; justify-content:space-between; gap:.75rem;
-      background: rgba(16,17,23,.92); border:1px solid rgba(255,255,255,.1);
-      border-radius:14px; padding:1rem;
+      background: rgba(16,17,23,.92); border:1px solid rgba(255,255,255,.1); padding:1rem;
       flex: 1 1 calc(33.333% - 1rem); max-width: calc(33.333% - 1rem); min-width:340px; min-height:220px;
     }
     .info-card-left { display:flex; flex-direction:column; gap:.4rem; flex:1 1 auto; min-width: 0; }
@@ -62,7 +60,6 @@
     .info-card-image {
       width: 160px;
       height: 120px;
-      border-radius:12px;
       border:1px solid rgba(255,255,255,.12);
       object-fit: cover;
       max-height: none;
@@ -80,14 +77,14 @@
     }
     @media (max-width: 640px) {
       .online-page { padding-left: 0; padding-right: 0; }
-      .online-shell { padding: .45rem; border-radius: 10px; }
+      .online-shell { padding: .45rem; }
       .online-topbar.wt-topbar { padding: .5rem .55rem; }
       .online-topbar h1 { font-size: .95rem; }
       .info-card-grid { gap: .55rem; }
-      .info-card { flex:1 1 100%; max-width:100%; flex-direction:column; min-height:auto; min-width: 0; padding: .65rem; border-radius: 10px; }
+      .info-card { flex:1 1 100%; max-width:100%; flex-direction:column; min-height:auto; min-width: 0; padding: .65rem; }
       .info-card-right { flex:0 0 auto; margin-top:.75rem; }
       .info-card-image { width: 160px; height: 120px; max-height:none; }
-      .table-wrapper { margin: 0; border-radius: 10px; }
+      .table-wrapper { margin: 0; }
       table.stats-table { min-width: 980px; }
       th { padding: .42rem .42rem; font-size: .62rem; }
       td { padding: .4rem .42rem; font-size: .78rem; }

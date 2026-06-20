@@ -13,10 +13,11 @@
     .stats-shell { color: #edf1f8; }
     .stats-shell { --stats-cumulative-surface: rgba(12, 16, 25, .70); }
     .stats-card {
-      background: transparent;
-      border: 0;
+      background: linear-gradient(160deg, rgba(18, 23, 34, .850), rgba(11, 14, 22, .90));
+      border: 1px solid var(--border-color, rgba(255,255,255,.10));
       padding: 1.1rem 1.1rem 1rem;
-      box-shadow: none;
+      box-shadow: 0 18px 44px rgba(0,0,0,.30);
+      backdrop-filter: blur(8px);
     }
     .stats-home-row { margin: .25rem 0 .95rem; }
     .stats-home-row .tab-controls { margin-bottom: 0; gap: .6rem; }
@@ -25,6 +26,7 @@
     .stats-home-row .tab-button:visited {
       padding: .55rem 1.1rem;
       gap: .45rem;
+      border-radius: 5px;
       box-shadow: none !important;
       text-shadow: none !important;
       filter: none !important;
@@ -133,9 +135,9 @@
     }
     .streak-podium__value { flex: 0 0 auto; }
     .stats-card .stat-grid .stat-card {
-      background: transparent;
-      border: 0;
-      box-shadow: none;
+      background: rgba(20, 25, 36, .25);
+      border: 1px solid rgba(142,186,255,.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
     }
     .stats-panel { display:none; }
     .stats-panel.is-active { display:block; }

@@ -158,9 +158,9 @@ defmodule KogasaFrontendWeb.SteamLogin do
       <title>#{esc.(title)}</title>
       <style>
         body { font-family: sans-serif; background:#0f1118; color:#eee; margin:0; padding:2rem; }
-        .card { max-width:760px; margin:0 auto; background:#171b26; border:1px solid #303749; border-radius:12px; padding:1rem 1.25rem; }
-        a { display:inline-block; margin-top:.6rem; padding:.5rem .9rem; border-radius:8px; border:1px solid #51607d; background:#36455f; color:#fff; text-decoration:none; }
-        .muted { color:#aab2c5; } .err { color:#ff9b9b; } code { background:#0b0f18; padding:.1rem .3rem; border-radius:4px; }
+        .card { max-width:760px; margin:0 auto; background:#171b26; border:1px solid #303749; padding:1rem 1.25rem; }
+        a { display:inline-block; margin-top:.6rem; padding:.5rem .9rem; border:1px solid #51607d; background:#36455f; color:#fff; text-decoration:none; }
+        .muted { color:#aab2c5; } .err { color:#ff9b9b; } code { background:#0b0f18; padding:.1rem .3rem; }
       </style>
     </head><body><div class="card">
       <h1>Steam Login Error</h1>
