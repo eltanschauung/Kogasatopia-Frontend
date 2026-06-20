@@ -900,6 +900,10 @@ a {
     display: none;
   }
 
+  .tab-button[aria-current="page"] {
+    display: none;
+  }
+
   .wt-topbar {
     flex-direction: column;
     align-items: flex-start;

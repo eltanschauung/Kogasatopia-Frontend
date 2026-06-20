@@ -142,6 +142,13 @@ body {
     background: transparent;
 }
 
+@media (max-width: 700px) {
+    .steam-login,
+    .steam-login-image {
+        display: none;
+    }
+}
+
 .search-bar {
     display: flex;
     gap: 0.75rem;
