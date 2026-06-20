@@ -129,7 +129,38 @@ defmodule KogasaFrontendWeb.SteamLogin do
         _ -> List.first(get_req_header(conn, "host")) || "localhost"
       end
 
-    scheme <> "://" <> host
+    if localhost?(host) do
+      configured_realm()
+    else
+      scheme <> "://" <> host
+    end
+  end
+
+  defp localhost?(host) when is_binary(host) do
+    host
+    |> String.downcase()
+    |> String.split(":", parts: 2)
+    |> List.first()
+    |> then(&(&1 in ["localhost", "127.0.0.1", "::1"]))
+  end
+
+  defp localhost?(_), do: true
+
+  defp configured_realm do
+    url_config = Application.get_env(:kogasa_frontend, KogasaFrontendWeb.Endpoint, [])[:url] || []
+    scheme = Keyword.get(url_config, :scheme, "https")
+    host = Keyword.get(url_config, :host, System.get_env("PHX_HOST") || "kogasa.tf")
+    port = Keyword.get(url_config, :port)
+
+    port_part =
+      case {scheme, port} do
+        {"https", port} when port in [nil, 443] -> ""
+        {"http", port} when port in [nil, 80] -> ""
+        {_scheme, nil} -> ""
+        {_scheme, port} -> ":#{port}"
+      end
+
+    scheme <> "://" <> host <> port_part
   end
 
   defp append_query_flag(path, key, value) do
