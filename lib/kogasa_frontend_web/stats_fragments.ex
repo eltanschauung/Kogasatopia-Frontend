@@ -53,7 +53,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
   def focused_player_html(row, default_avatar, opts) do
     avatar = fallback(row[:avatar], default_avatar)
     name = fallback(row[:personaname], fallback(row[:steamid], "Unknown"))
-    name_html = player_name_html(name, row[:country_code], row[:country_name])
+    name_html = e(name)
     perf = get_opt(opts, :performance_averages, %{})
 
     comparison_enabled =
