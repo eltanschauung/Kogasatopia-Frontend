@@ -1,3 +1,51 @@
+:root {
+  --bg: #2e2a24;
+  --panel: #3a352e;
+  --slot: #5b5246;
+  --slot-edge: #2a2520;
+  --text: #f3e8d0;
+  --muted: #cdbfa3;
+  --accent: #e5a04d;
+  --positive: #6cc04a;
+  --negative: #ff5d5d;
+}
+
+@font-face {
+  font-family: 'TF2Build';
+  src: url('../fonts/TF2Build.woff2') format('woff2'), url('../fonts/TF2Build.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'TF2Secondary';
+  src: url('../fonts/TF2Secondary.woff2') format('woff2'), url('../fonts/TF2Secondary.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  /* Background image as requested */
+  background-image: url('../icons/backgrounds/tf2full.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: TF2Secondary, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+}
+.top-nav {
+  width: 80%;
+  max-width: 1400px;
+  margin: 1.25rem auto .45rem;
+  display: flex;
+  justify-content: flex-start;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
 .home-btn {
   display: inline-flex;
   align-items: center;
@@ -15,72 +63,69 @@
   text-shadow: 1px 1px 0 #000;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
-
-.class-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: .25rem;
-  padding: .5rem .25rem;
-  background: var(--panel);
-  border: 1px solid #000;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform .08s ease;
-}
-
-.filters {
-  background: var(--panel);
-  border: 1px solid #000;
-  border-radius: 8px;
-  padding: .75rem;
-  height: fit-content;
-}
-
-.search {
-  width: 100%;
-  padding: .6rem .7rem;
-  border: 1px solid #000;
-  border-radius: 8px;
-  background: #2b2722;
+.home-btn:hover {
+  border-color: var(--accent);
   color: var(--text);
+  transform: translateY(-1px);
 }
-
-.slot {
-  background: linear-gradient(#6b6052, var(--slot));
-  border: 2px solid var(--slot-edge);
-  border-radius: 8px;
-  min-height: 110px;
-  display: grid;
-  grid-template-columns: 64px 1fr;
-  gap: .6rem;
-  padding: .6rem;
-  align-items: center;
-  position: relative;
+.home-btn:active {
+  transform: translateY(1px);
 }
-
-.slot:before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 8px;
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.06), inset 0 -2px 0 rgba(0,0,0,0.35);
-  pointer-events: none;
+.filter-toggle {
+  gap: .45rem;
+  cursor: pointer;
+  user-select: none;
 }
+.filter-toggle input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  margin: 0;
+}
+/* Opaque content box occupying ~80% width */
+.page {
+  width: 80%;
+  max-width: 1400px;
+  margin: 0 auto 1.25rem;
+  padding: 1.25rem;
+  background: rgba(58, 53, 46, 0.8);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(0,0,0,0.35);
+}
+.header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; }
+.title-group { display: flex; flex-direction: column; gap: .2rem; }
+.brand-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: .6rem; }
+.brand { font-family: TF2Build, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; font-size: 2.25rem; letter-spacing: .02em; color: var(--text); text-shadow: 2px 2px 0 #000; }
+.subtitle { font-size: 1rem; color: var(--muted); }
 
-.empty {
-  grid-column: 1 / -1;
-  text-align: center;
-  color: var(--muted);
-  padding: 2rem 1rem;
-  border: 1px dashed rgba(0,0,0,0.5);
-  border-radius: 8px;
-  background: rgba(0,0,0,0.1);
+.class-bar { display: grid; grid-template-columns: repeat(10, 1fr); gap: .5rem; margin-bottom: 1rem; }
+.class-btn { display: flex; flex-direction: column; align-items: center; gap: .25rem; padding: .5rem .25rem; background: var(--panel); border: 1px solid #000; border-radius: 8px; cursor: pointer; transition: transform .08s ease; }
+.class-btn:hover { transform: translateY(-1px); }
+.class-btn.active { outline: 2px solid var(--accent); box-shadow: 0 0 0 2px #000 inset; }
+.class-icon { width: 40px; height: 40px; object-fit: contain; image-rendering: -webkit-optimize-contrast; }
+.class-label { font-family: TF2Build, Impact, sans-serif; font-size: .85rem; color: var(--muted); }
+
+.content { display: grid; grid-template-columns: 260px 1fr; gap: 1rem; }
+.filters { background: var(--panel); border: 1px solid #000; border-radius: 6px; padding: .75rem; height: fit-content; }
+.filter-label { display: block; color: var(--muted); margin-bottom: .25rem; font-size: .85rem; }
+.search { width: 100%; padding: .6rem .7rem; border: 1px solid #000; background: #2b2722; color: var(--text); }
+
+.backpack { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; align-content: start; }
+.slot { background: linear-gradient(#6b6052, var(--slot)); border: 2px solid var(--slot-edge); min-height: 110px; display: grid; grid-template-columns: 64px 1fr; gap: .6rem; padding: .6rem; align-items: center; position: relative; }
+.slot:before { content: ""; position: absolute; inset: 0; box-shadow: inset 0 2px 0 rgba(255,255,255,0.06), inset 0 -2px 0 rgba(0,0,0,0.35); pointer-events: none; }
+.slot-icon { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 1px 0 #000); }
+.slot-meta { display: flex; flex-direction: column; gap: .25rem; }
+.weapon-name { font-family: TF2Build, Impact, sans-serif; font-size: 1rem; color: #fff1d2; text-shadow: 1px 1px 0 #000; }
+.effects { font-size: .92rem; line-height: 1.25; color: var(--text); }
+.empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 2rem 1rem; border: 1px dashed rgba(0,0,0,0.5); background: rgba(0,0,0,0.1); }
+
+@media (max-width: 960px) {
+  .content { grid-template-columns: 1fr; }
+  .backpack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 div#button-container > a.on {
-    width: 330px;
-    height: 255px;
+    width: 330px;  /* ~3x width */
+    height: 255px; /* ~3x height */
     border-style: solid;
     border-width: 2px;
     border-radius: 8px;
@@ -98,13 +143,14 @@ div#button-container > a.on {
     color: var(--text);
     text-decoration: none;
 }
-
+div#button-container > a.on:hover {
+    border-color: rgb(255,214,2);
+}
 div#button-container > a.onU {
     width: 330px;
     height: 255px;
     border-style: solid;
     border-width: 2px;
-    border-radius: 8px;
     background-color: rgb(33,29,26);
     border-color: rgb(178, 178, 178);
     float: left;
@@ -118,4 +164,157 @@ div#button-container > a.onU {
     gap: 10px;
     color: var(--text);
     text-decoration: none;
+}
+div#button-container > a.onU:hover {
+    border-color: rgb(255,214,2);
+}
+
+#button-container::after { content: ""; display: block; clear: both; }
+/* Preserved for the TF2 backpack-style item frame experiment.
+.tf-backpack-item-center {
+  width: 120px;
+  height: 90px;
+  background: #3C362F;
+  margin-bottom: 5px;
+  position: relative;
+}
+.tf-backpack-item-center .btn-icon {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+*/
+.btn-icon { width: 96px; height: 96px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
+.btn-label { font-family: TF2Build, Impact, sans-serif; font-size: 1.05rem; color: #fff1d2; text-shadow: 1px 1px 0 #000; }
+/* Effects inside tiles */
+.effects { max-width: 90%; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+/* Remove background/border for chips and apply config description colors */
+.effects .seg { display: inline-block; padding: .08rem .4rem; background: none; border: none; font-size: .95rem; }
+.effects .positive,
+.effects .upside { color: #99ccff; background: none; border: none; }
+.effects .negative,
+.effects .downside { color: #dc322f; background: none; border: none; }
+.effects .neutral { color: white; background: none; border: none; }
+
+/* Also support the legacy id-based selectors you provided */
+div#positive,
+div#upside{ color: #99ccff; }
+div#negative,
+div#downside{ color: #dc322f; }
+div#neutral{ color: white; }
+
+@media (max-width: 1200px) {
+  .page { width: 92%; }
+}
+
+@media (max-width: 900px) {
+  body {
+    background-attachment: scroll;
+  }
+  .top-nav {
+    width: 100%;
+    max-width: none;
+    margin: .35rem 0 .2rem;
+    padding: 0 .35rem;
+  }
+  .page {
+    width: 100%;
+    max-width: none;
+    margin: 0 0 .35rem;
+    padding: .6rem;
+  }
+  .header {
+    margin-bottom: .55rem;
+  }
+  .brand {
+    font-size: 1.55rem;
+  }
+  .subtitle {
+    font-size: .88rem;
+  }
+  .class-bar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .35rem;
+    margin-bottom: .6rem;
+  }
+  .class-btn {
+    padding: .35rem .2rem;
+  }
+  .class-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .class-label {
+    font-size: .72rem;
+  }
+  .content {
+    gap: .55rem;
+  }
+  .filters {
+    padding: .5rem;
+  }
+  .search {
+    padding: .5rem .55rem;
+  }
+  div#button-container > a.on,
+  div#button-container > a.onU {
+    width: calc(50% - 10px);
+    min-width: 0;
+    height: auto;
+    border-radius: 8px;
+    min-height: 180px;
+    margin: 4px;
+    gap: 6px;
+    padding: 10px 6px;
+  }
+  .btn-icon {
+    width: 72px;
+    height: 72px;
+  }
+  .btn-label {
+    font-size: .88rem;
+    line-height: 1.1;
+  }
+  .effects {
+    max-width: 96%;
+    gap: 2px;
+  }
+  .effects .seg {
+    font-size: .8rem;
+    padding: .02rem .24rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .top-nav {
+    padding: 0 .2rem;
+    margin-top: .2rem;
+  }
+  .home-btn {
+    min-width: 78px;
+    padding: .34rem .55rem;
+    font-size: .78rem;
+  }
+  .page {
+    padding: .4rem;
+  }
+  .class-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  div#button-container > a.on,
+  div#button-container > a.onU {
+    width: calc(100% - 8px);
+    margin: 4px;
+    min-height: 150px;
+  }
+  .btn-icon {
+    width: 56px;
+    height: 56px;
+  }
+  .btn-label {
+    font-size: .8rem;
+  }
+  .effects .seg {
+    font-size: .72rem;
+  }
 }
