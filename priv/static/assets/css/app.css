@@ -185,10 +185,6 @@ a {
   text-shadow: 0 0 10px rgba(242, 162, 74, 0.4);
 }
 
-.stats-home-row {
-  margin: 0.25rem 0 0.95rem;
-}
-
 .stats-home-row .tab-controls {
   display: flex;
   flex-wrap: wrap;
