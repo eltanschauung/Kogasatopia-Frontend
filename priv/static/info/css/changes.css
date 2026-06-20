@@ -185,7 +185,7 @@ div#button-container > a.onU:hover {
 }
 */
 .btn-icon { width: 96px; height: 96px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
-.btn-label { font-family: TF2Build, Impact, sans-serif; font-size: 1.05rem; color: #fff1d2; text-shadow: 1px 1px 0 #000; }
+.btn-label { font-family: TF2Build, Impact, sans-serif; font-size: 1.2rem; color: rgb(255,214,02); text-shadow: 1px 1px 0 #000; }
 /* Effects inside tiles */
 .effects { max-width: 90%; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
 /* Remove background/border for chips and apply config description colors */
