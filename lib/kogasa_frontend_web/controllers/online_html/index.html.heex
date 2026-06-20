@@ -80,8 +80,6 @@
     @media (max-width: 640px) {
       .online-page { padding-left: 0; padding-right: 0; }
       .online-shell { padding: .45rem; }
-      .online-topbar.wt-topbar { padding: .5rem .55rem; }
-      .online-topbar h1 { font-size: .95rem; }
       .info-card-grid { gap: .55rem; }
       .info-card { flex:1 1 100%; max-width:100%; flex-direction:column; min-height:auto; min-width: 0; padding: .65rem; }
       .info-card-right { flex:0 0 auto; margin-top:.75rem; }
@@ -98,11 +96,11 @@
   <div class="online-page wt-page-pad">
     <.section_nav active={:online} chat_label_id="nav-chat-label" />
 
-    <div class="online-topbar wt-topbar">
+    <div class="wt-topbar">
       <div>
         <h1>Online Now</h1>
       </div>
-      <span id="online-topbar-count" class="online-nav-count">-- / --</span>
+      <span id="online-topbar-count" class="wt-topbar-count">-- / --</span>
     </div>
 
     <div class="online-shell">

@@ -144,20 +144,18 @@ defmodule KogasaFrontendWeb.ChatLive do
           online_count_id="chat-nav-online-count-top"
         />
 
-        <div class="chat-topbar">
+        <div class="wt-topbar">
           <div>
-            <h1 class="chat-title">WhaleChat</h1>
-            <p id="nav-chat-label" class="chat-subtitle">Last msg. --</p>
+            <h1>WhaleChat</h1>
+            <p id="nav-chat-label">Last msg. --</p>
           </div>
-          <div class="chat-topbar-right">
-            <span
-              id="nav-online-count"
-              class="chat-online-count"
-              data-mirror-target="chat-nav-online-count-top"
-            >
-              -- / --
-            </span>
-          </div>
+          <span
+            id="nav-online-count"
+            class="wt-topbar-count"
+            data-mirror-target="chat-nav-online-count-top"
+          >
+            -- / --
+          </span>
         </div>
 
         <div id="chat-panel" class="players-list">
