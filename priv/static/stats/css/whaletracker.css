@@ -62,7 +62,6 @@ body {
 .brand-gif {
     width: 92px;
     height: 92px;
-    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.25);
     object-fit: cover;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
@@ -85,7 +84,6 @@ body {
 .header-user-avatar {
     width: 42px;
     height: 42px;
-    border-radius: 50%;
     border: 2px solid rgba(255, 255, 255, 0.35);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
@@ -111,7 +109,6 @@ body {
     padding: 0.65rem 1.1rem;
     background: var(--accent-soft);
     color: var(--text-primary);
-    border-radius: 999px;
     border: 1px solid var(--border-color);
     text-decoration: none;
     font-weight: 500;
@@ -139,7 +136,6 @@ body {
     flex: 1;
     min-width: 240px;
     padding: 0.75rem 1rem;
-    border-radius: 12px;
     border: 1px solid var(--border-color);
     background: rgba(27, 31, 43, 0.8);
     color: var(--text-primary);
@@ -148,7 +144,6 @@ body {
 
 .search-bar button {
     padding: 0.75rem 1.5rem;
-    border-radius: 12px;
     border: none;
     background: var(--accent);
     color: #04142a;
@@ -171,8 +166,9 @@ body {
 }
 
 .stat-card {
-    background: var(--panel-bg);
-    border-radius: 16px;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
     padding: 1.2rem 1.5rem;
 }
 
@@ -220,7 +216,6 @@ body {
 .chat-avatar {
     width: 32px;
     height: 32px;
-    border-radius: 3px;
 }
 
 .chat-content {
@@ -261,7 +256,6 @@ body {
     flex: 1;
     min-width: 240px;
     padding: 0.75rem 1rem;
-    border-radius: 12px;
     border: 1px solid var(--border-color, #444);
     background: rgba(27, 31, 43, 0.8);
     color: var(--text-primary, #f6f6f6);
@@ -301,9 +295,8 @@ body {
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--accent);
-    background: rgba(127, 200, 255, 0.18);
-    border-radius: 999px;
-    border: 1px solid rgba(127, 200, 255, 0.35);
+    background: transparent;
+    border: 0;
     padding: 0.2rem 0.7rem;
 }
 
@@ -420,24 +413,23 @@ body {
     flex-direction: row;
     gap: 0.65rem;
     padding: 0.6rem 0.85rem;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: transparent;
+    border: 0;
     min-width: 0;
 }
 
 .streak-podium__entry--rank1 {
-    background: linear-gradient(120deg, rgba(127, 200, 255, 0.2), rgba(255, 255, 255, 0.02));
-    border-color: rgba(127, 200, 255, 0.45);
-    box-shadow: 0 12px 26px rgba(12, 18, 32, 0.35);
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
 }
 
 .streak-podium__entry--rank2 {
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: transparent;
 }
 
 .streak-podium__entry--rank3 {
-    border-color: rgba(255, 255, 255, 0.05);
+    border-color: transparent;
 }
 
 .streak-podium__avatar-wrap {
@@ -448,7 +440,6 @@ body {
 .streak-podium__avatar-wrap img {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.2);
     object-fit: cover;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
@@ -479,7 +470,6 @@ body {
     font-weight: 700;
     line-height: 1;
     padding: 0.15rem 0.45rem;
-    border-radius: 999px;
     border: 2px solid #04142a;
 }
 
@@ -583,7 +573,6 @@ body {
 .stat-card-player img {
     width: 52px;
     height: 52px;
-    border-radius: 50%;
     border: 1px solid var(--border-color);
     object-fit: cover;
 }
@@ -650,7 +639,6 @@ body {
 
 .table-wrapper {
     background: var(--panel-bg);
-    border-radius: 18px;
     border: 1px solid var(--border-color);
     overflow-x: auto;
     overflow-y: hidden;
@@ -673,7 +661,6 @@ body {
     transform: translate(-50%, -50%);
     background: rgba(15, 17, 24, 0.9);
     padding: 0.75rem 1.25rem;
-    border-radius: 999px;
     font-weight: 600;
     font-size: 0.9rem;
     letter-spacing: 0.04em;
@@ -766,7 +753,6 @@ body {
     align-items: center;
     justify-content: center;
     padding: 0.4rem 0.95rem;
-    border-radius: 999px;
     border: 1px solid var(--border-color);
     background: rgba(27, 31, 43, 0.85);
     color: var(--text-primary);
@@ -884,7 +870,6 @@ body {
 
 .logs-refresh {
     padding: 0.55rem 1.3rem;
-    border-radius: 999px;
     border: 1px solid var(--border-color);
     background: rgba(27, 31, 43, 0.8);
     color: var(--text-primary);
@@ -931,7 +916,6 @@ body {
 .logs-page-button {
     min-width: 40px;
     padding: 0.45rem 0.9rem;
-    border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     background: rgba(16, 22, 33, 0.7);
     color: var(--text-primary);
@@ -953,7 +937,6 @@ body {
 
 .log-entry {
     border: 1px solid var(--border-color);
-    border-radius: 16px;
     background: rgba(27, 31, 43, 0.82);
     overflow: hidden;
 }
@@ -981,7 +964,6 @@ body {
     justify-content: center;
     min-width: 2.5rem;
     height: 2.5rem;
-    border-radius: 50%;
     background: rgba(127, 200, 255, 0.14);
     border: 1px solid rgba(255, 255, 255, 0.18);
     font-weight: 600;
@@ -997,7 +979,6 @@ body {
     padding: 0.25rem 0.6rem;
     height: auto;
     min-width: 0;
-    border-radius: 999px;
 }
 
 .gamemode-icon img {
@@ -1071,7 +1052,6 @@ body {
 .log-weapon-card {
     background: rgba(14, 18, 32, 0.82);
     border: 1px solid rgba(127, 200, 255, 0.18);
-    border-radius: 10px;
     padding: 0;
     overflow: hidden;
 }
@@ -1204,7 +1184,6 @@ body {
     align-items: center;
     gap: 0.5rem;
     padding: 0.6rem 1.4rem;
-    border-radius: 999px;
     border: 1px solid var(--border-color);
     background: rgba(27, 31, 43, 0.8);
     color: var(--text-primary);
@@ -1237,7 +1216,6 @@ body {
 
 .tab-button-count {
     padding: 0.15rem 0.6rem;
-    border-radius: 999px;
     background: rgba(127, 200, 255, 0.14);
     color: var(--text-primary);
     font-size: 0.85rem;
@@ -1379,7 +1357,6 @@ td {
 .player-avatar {
     width: 60px;
     height: 60px;
-    border-radius: 50%;
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
@@ -1421,7 +1398,6 @@ td {
     gap: 0.75rem;
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
-    border-radius: 14px;
     padding: 1rem;
     flex: 1 1 calc(32% - 1rem);
     max-width: calc(32% - 1rem);
@@ -1462,7 +1438,6 @@ td {
 
 .info-card-image {
     width: 100%;
-    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     object-fit: cover;
     max-height: 140px;
@@ -1546,7 +1521,6 @@ td {
     padding: 1.5rem;
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
-    border-radius: 18px;
     display: grid;
     grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
     gap: 1rem;
@@ -1563,7 +1537,6 @@ td {
 .detail-profile img {
     width: 128px;
     height: 128px;
-    border-radius: 16px;
     border: 2px solid var(--accent);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4);
 }
@@ -1649,7 +1622,6 @@ td {
 
     .table-wrapper {
         margin: 0 -1rem;
-        border-radius: 14px;
     }
 
     .stats-table,
