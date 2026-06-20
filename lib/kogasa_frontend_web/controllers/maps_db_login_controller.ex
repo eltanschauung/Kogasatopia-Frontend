@@ -6,10 +6,10 @@ defmodule KogasaFrontendWeb.MapsDbLoginController do
 
   def show(conn, params) do
     SteamLogin.handle(conn, params,
-      login_path: "/mapsdb/login.php",
-      default_return: "/mapsdb",
+      login_path: "/maps/login.php",
+      default_return: "/maps",
       title: "Maps Login",
-      return_label: "mapsdb",
+      return_label: "maps",
       session_detail: &admin_session_detail/2
     )
   end

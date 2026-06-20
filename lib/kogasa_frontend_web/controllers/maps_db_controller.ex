@@ -20,4 +20,8 @@ defmodule KogasaFrontendWeb.MapsDbController do
       map_previews: data.map_previews
     )
   end
+
+  def legacy_redirect(conn, _params) do
+    redirect(conn, to: "/maps")
+  end
 end

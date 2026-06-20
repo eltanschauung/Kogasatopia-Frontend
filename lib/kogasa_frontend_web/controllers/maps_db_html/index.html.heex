@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Maps</title>
+    <link rel="stylesheet" href="/assets/css/app.css" />
     <link rel="stylesheet" href="/stats/css/whaletracker.css" />
     <style>
       body { margin: 0; }
@@ -31,48 +32,6 @@
         line-height: 1.15;
         word-break: break-all;
         white-space: normal;
-      }
-      .mapsdb-page-actions .tab-button,
-      .mapsdb-page-actions .tab-button:link,
-      .mapsdb-page-actions .tab-button:visited {
-        box-shadow: none !important;
-        text-shadow: none !important;
-        filter: none !important;
-        transition: background .2s ease, border-color .2s ease, color .2s ease;
-      }
-      .mapsdb-page-actions .tab-button.wt-tab--orange {
-        background: rgba(242, 162, 74, .10);
-        border-color: rgba(242, 162, 74, .34);
-        color: #ffe0b2;
-      }
-      .mapsdb-page-actions .tab-button.wt-tab--orange:hover {
-        background: rgba(242, 162, 74, .16);
-        border-color: rgba(242, 162, 74, .52);
-      }
-      .mapsdb-page-actions .tab-button.wt-tab--navy {
-        background: rgba(47, 59, 82, .28);
-        border-color: rgba(93, 106, 130, .46);
-        color: #e7eefc;
-      }
-      .mapsdb-page-actions .tab-button.wt-tab--navy:hover {
-        background: rgba(65, 80, 107, .34);
-        border-color: rgba(93, 106, 130, .72);
-      }
-      .mapsdb-page-actions .tab-button.wt-tab--gold {
-        background: rgba(243, 207, 103, .08);
-        border-color: rgba(243, 207, 103, .28);
-        color: #f6ebbd;
-      }
-      .mapsdb-page-actions .tab-button.wt-tab--gold:hover {
-        background: rgba(243, 207, 103, .14);
-        border-color: rgba(243, 207, 103, .44);
-      }
-      .mapsdb-page-actions .tab-button:hover,
-      .mapsdb-page-actions .tab-button.tab-button-glow {
-        transform: none !important;
-        box-shadow: none !important;
-        text-shadow: none !important;
-        filter: none !important;
       }
       .stats-sub { margin:.2rem 0 0; color:#b5bfd0; font-size:.9rem; }
       .mapsdb-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1.25rem; }
@@ -241,40 +200,7 @@
             </div>
           </div>
 
-          <div class="mapsdb-page-actions">
-            <div class="tab-controls">
-              <a href="/" class="tab-button wt-tab--orange">
-                <span class="tab-button-label tab-button-label--desktop">Blog</span>
-                <span class="tab-button-label tab-button-label--mobile">Blog</span>
-              </a>
-              <a href="/stats" class="tab-button wt-tab--navy">
-                <span class="tab-button-label tab-button-label--desktop">Stats</span>
-                <span class="tab-button-label tab-button-label--mobile">Stats</span>
-              </a>
-              <span class="tab-button wt-tab--navy" aria-current="page">
-                <span class="tab-button-label tab-button-label--desktop">Maps</span>
-                <span class="tab-button-label tab-button-label--mobile">Maps</span>
-              </span>
-              <a href="/online" class="tab-button wt-tab--gold">
-                <span class="tab-button-label tab-button-label--desktop">Online Now</span>
-                <span class="tab-button-label tab-button-label--mobile">Online</span>
-                <span id="nav-online-count" class="tab-button-count" aria-live="polite">
-                  -- / --
-                </span>
-              </a>
-              <a href="/chat" class="tab-button wt-tab--gold">
-                <span class="tab-button-label tab-button-label--desktop">Chat</span>
-                <span class="tab-button-label tab-button-label--mobile">Chat</span>
-                <span id="nav-chat-label" class="tab-button-count" aria-live="polite">
-                  Last msg. --
-                </span>
-              </a>
-              <a href="/logs" class="tab-button wt-tab--gold">
-                <span class="tab-button-label tab-button-label--desktop">Match Logs</span>
-                <span class="tab-button-label tab-button-label--mobile">Logs</span>
-              </a>
-            </div>
-          </div>
+          <.section_nav active={:maps} chat_label_id="nav-chat-label" />
 
           <div class="popularity-card">
             <h2 class="popularity-title">Server popularity (last 90 days)</h2>
@@ -895,7 +821,7 @@
             setButtonsEnabled(false);
             setStatus('Loading ' + name + '...');
             try {
-              const res = await fetch('/mapsdb/api.php?action=load&map=' + encodeURIComponent(name) + '&source=' + encodeURIComponent(source), { credentials: 'same-origin', cache: 'no-store' });
+              const res = await fetch('/maps/api.php?action=load&map=' + encodeURIComponent(name) + '&source=' + encodeURIComponent(source), { credentials: 'same-origin', cache: 'no-store' });
               const payload = await res.json();
               if (!res.ok) throw new Error(payload.error || ('Load failed (' + res.status + ')'));
               textarea.value = payload.content || '';
@@ -917,7 +843,7 @@
             setButtonsEnabled(false);
             setStatus('Saving ' + activeMap + '...');
             try {
-              const res = await fetch('/mapsdb/api.php', {
+              const res = await fetch('/maps/api.php', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
@@ -963,7 +889,7 @@
               massStatus.textContent = 'Running replace...';
               massStatus.style.color = 'var(--text-muted, #95a5b7)';
               try {
-                const res = await fetch('/mapsdb/api.php', {
+                const res = await fetch('/maps/api.php', {
                   method: 'POST',
                   credentials: 'same-origin',
                   headers: { 'Content-Type': 'application/json' },

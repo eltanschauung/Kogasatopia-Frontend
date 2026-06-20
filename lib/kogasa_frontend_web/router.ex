@@ -52,8 +52,11 @@ defmodule KogasaFrontendWeb.Router do
     get "/logs/current", LogsController, :current
     get "/logs/current/index.php", LogsController, :current
     get "/stats/login.php", StatsLoginController, :show
-    get "/mapsdb", MapsDbController, :index
-    get "/mapsdb/index.php", MapsDbController, :index
+    get "/maps", MapsDbController, :index
+    get "/maps/index.php", MapsDbController, :index
+    get "/maps/login.php", MapsDbLoginController, :show
+    get "/mapsdb", MapsDbController, :legacy_redirect
+    get "/mapsdb/index.php", MapsDbController, :legacy_redirect
     get "/mapsdb/login.php", MapsDbLoginController, :show
   end
 
@@ -71,6 +74,13 @@ defmodule KogasaFrontendWeb.Router do
   end
 
   scope "/mapsdb", KogasaFrontendWeb do
+    pipe_through :mapsdb_api
+
+    get "/api.php", MapsDbApiController, :handle
+    post "/api.php", MapsDbApiController, :handle
+  end
+
+  scope "/maps", KogasaFrontendWeb do
     pipe_through :mapsdb_api
 
     get "/api.php", MapsDbApiController, :handle

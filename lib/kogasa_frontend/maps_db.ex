@@ -75,8 +75,8 @@ defmodule KogasaFrontend.MapsDb do
       map_analytics: map_detail_analytics(),
       map_previews: map_previews(cfg.preview_dir),
       map_sections: if(maps_dir_missing, do: [], else: build_page_sections(cfg)),
-      login_url: "/mapsdb/login.php?return=" <> URI.encode("/mapsdb"),
-      logout_url: "/mapsdb/login.php?action=logout&return=" <> URI.encode("/mapsdb")
+      login_url: "/maps/login.php?return=" <> URI.encode("/maps"),
+      logout_url: "/maps/login.php?action=logout&return=" <> URI.encode("/maps")
     }
   end
 
