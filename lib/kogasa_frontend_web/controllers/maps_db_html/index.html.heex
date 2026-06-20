@@ -162,11 +162,17 @@
                 <%= if @mapsdb.is_logged_in && @mapsdb.current_steamid do %>
                   <div class="header-user">
                     <%= if @mapsdb.viewer_profile do %>
-                      <img
-                        class="header-user-avatar"
-                        src={@mapsdb.viewer_profile[:avatar] || "/stats/assets/whaley-avatar.jpg"}
-                        alt=""
-                      />
+                      <a
+                        href={"https://steamcommunity.com/profiles/#{@mapsdb.current_steamid}"}
+                        target="_blank"
+                        rel="noopener"
+                      >
+                        <img
+                          class="header-user-avatar"
+                          src={@mapsdb.viewer_profile[:avatar] || "/stats/assets/whaley-avatar.jpg"}
+                          alt=""
+                        />
+                      </a>
                       <div class="header-user-meta">
                         <span
                           class={["header-user-name", @mapsdb.is_admin && "admin-name"]}
@@ -186,7 +192,12 @@
                   </div>
                   <a class="steam-logout" href={@mapsdb.logout_url}>Logout</a>
                 <% else %>
-                  <a class="steam-login" href={@mapsdb.login_url}>Login with Steam</a>
+                  <a class="steam-login steam-login-image" href={@mapsdb.login_url}>
+                    <img
+                      src="https://community.fastly.steamstatic.com/public/images/signinthroughsteam/sits_01.png"
+                      alt="Sign in through Steam"
+                    />
+                  </a>
                 <% end %>
               </div>
             </header>

@@ -203,7 +203,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.55rem 1.1rem;
+  padding: 0.4rem 0.8rem;
   border: 1px solid var(--border-color, rgba(142, 186, 255, 0.14));
   border-radius: 5px;
   color: var(--text-primary, #f2f6ff);
@@ -885,7 +885,7 @@ a {
   .tab-button,
   .tab-button:link,
   .tab-button:visited {
-    padding: 0.45rem 0.7rem;
+    padding: 0.4rem 0.8rem;
   }
 
   .tab-button-label--desktop {

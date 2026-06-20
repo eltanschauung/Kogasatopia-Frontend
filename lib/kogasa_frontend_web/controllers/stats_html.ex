@@ -53,6 +53,26 @@ defmodule KogasaFrontendWeb.StatsHTML do
 
   def avatar_or_default(_, default), do: default
 
+  def steam_profile_url(nil), do: nil
+
+  def steam_profile_url(%{profileurl: url}) when is_binary(url) and url != "", do: url
+  def steam_profile_url(%{"profileurl" => url}) when is_binary(url) and url != "", do: url
+
+  def steam_profile_url(map) when is_map(map) do
+    steamid = map[:steamid] || map["steamid"] || map[:steamid64] || map["steamid64"]
+    steam_profile_url(steamid)
+  end
+
+  def steam_profile_url(steamid) when is_binary(steamid) do
+    trimmed = String.trim(steamid)
+
+    if Regex.match?(~r/^7656\d+$/, trimmed),
+      do: "https://steamcommunity.com/profiles/" <> trimmed,
+      else: nil
+  end
+
+  def steam_profile_url(_), do: nil
+
   def display_name(nil), do: "Unknown"
 
   def display_name(map) when is_map(map),

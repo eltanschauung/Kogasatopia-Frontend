@@ -10,6 +10,7 @@ defmodule KogasaFrontendWeb.NavComponents do
   attr :online_count_class, :string, default: "tab-button-count"
   attr :chat_label_id, :string, default: nil
   attr :chat_label_class, :string, default: "tab-button-count"
+  slot :inner_block
 
   def section_nav(assigns) do
     ~H"""
@@ -52,6 +53,7 @@ defmodule KogasaFrontendWeb.NavComponents do
           mobile_label="Logs"
           class="wt-tab--gold"
         />
+        {render_slot(@inner_block)}
       </div>
     </div>
     """

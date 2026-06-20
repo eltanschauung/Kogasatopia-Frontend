@@ -125,6 +125,22 @@ body {
     transform: translateY(-1px);
 }
 
+.steam-login-image {
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.steam-login-image img {
+    display: block;
+    width: 180px;
+    height: auto;
+}
+
+.steam-login-image:hover {
+    background: transparent;
+}
+
 .search-bar {
     display: flex;
     gap: 0.75rem;

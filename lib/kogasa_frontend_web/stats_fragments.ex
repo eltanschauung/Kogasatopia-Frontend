@@ -328,10 +328,17 @@ defmodule KogasaFrontendWeb.StatsFragments do
         ~s(<span class="#{e(name_classes)}" title="#{e(name_title)}">#{player_name_html}</span>)
       end
 
+    avatar_html =
+      if is_binary(profile_url) and profile_url != "" do
+        ~s(<a class="player-avatar-link" href="#{e(profile_url)}" target="_blank" rel="noopener"><img class="player-avatar" src="#{e(avatar)}" alt="" onerror="this.onerror=null;this.src='#{e(default_avatar)}'"></a>)
+      else
+        ~s(<img class="player-avatar" src="#{e(avatar)}" alt="" onerror="this.onerror=null;this.src='#{e(default_avatar)}'">)
+      end
+
     """
     <tr#{tr_class} data-steamid="#{e(steamid)}" data-player="#{e(String.downcase(personaname))}" data-kills="#{row[:kills] || 0}" data-deaths="#{row[:deaths] || 0}" data-assists="#{row[:assists] || 0}" data-kd="#{decimal(kd, 4)}" data-damage="#{row[:damage_dealt] || 0}" data-damage_taken="#{row[:damage_taken] || 0}" data-dpm="#{decimal(row[:dpm] || 0, 4)}" data-dtpm="#{decimal(row[:dtpm] || 0, 4)}" data-accuracy="#{decimal(acc, 4)}" data-accuracy_class="#{accuracy_class}" data-airshots="#{row[:airshots] || 0}" data-drops="#{row[:medic_drops] || 0}" data-dropped="#{row[:uber_drops] || 0}" data-healing="#{row[:healing] || 0}" data-headshots="#{row[:headshots] || 0}" data-backstabs="#{row[:backstabs] || 0}" data-streak="#{row[:best_killstreak] || 0}" data-playtime="#{row[:playtime] || 0}" data-score="#{row[:score] || 0}" data-online="#{if row[:is_online], do: 1, else: 0}">
       <td class="player-cell">
-        <img class="player-avatar" src="#{e(avatar)}" alt="" onerror="this.onerror=null;this.src='#{e(default_avatar)}'">
+        #{avatar_html}
         <div>#{player_link}</div>
       </td>
       <td>#{number(row[:kills])}|#{number(row[:deaths])}|#{number(row[:assists])}</td>

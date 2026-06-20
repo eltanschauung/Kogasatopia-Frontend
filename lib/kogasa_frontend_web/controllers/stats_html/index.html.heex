@@ -37,6 +37,12 @@
       height: 48px;
       flex: 0 0 auto;
     }
+    .stats-header-shell .header-user > a,
+    .stat-card-player > a,
+    .streak-podium__avatar-wrap > a {
+      display: inline-flex;
+      flex: 0 0 auto;
+    }
     .stats-header-shell .header-user-meta {
       min-width: 0;
       max-width: 100%;
@@ -88,8 +94,6 @@
     .streak-podium__value { flex: 0 0 auto; }
     .stats-card .stat-grid .stat-card {
       background: rgba(20, 25, 36, .25);
-      border: 1px solid rgba(142,186,255,.08);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
     }
     .stats-panel { display:none; }
     .stats-panel.is-active { display:block; }
@@ -158,11 +162,18 @@
     .stats-cumulative-fragment-host #stats-table-cumulative thead th {
       background: rgba(12, 17, 28, .92);
       color: #b8c9e2;
-      border-bottom: 1px solid rgba(142,186,255,.10);
+      border-bottom: 1px solid rgba(142,186,255,.045);
+      border-right: 1px solid rgba(142,186,255,.045);
+    }
+    .stats-cumulative-fragment-host #stats-table-cumulative thead th:last-child,
+    .stats-cumulative-fragment-host #stats-table-cumulative tbody td:last-child {
+      border-right: 0;
     }
     .stats-cumulative-fragment-host #stats-table-cumulative tbody td {
-      border-top-color: rgba(142,186,255,.06);
+      border-top-color: rgba(142,186,255,.045);
+      border-right: 1px solid rgba(142,186,255,.045);
     }
+    .stats-cumulative-fragment-host #stats-table-cumulative tbody tr:nth-child(even) td { background: rgba(255,255,255,.014); }
     .stats-cumulative-fragment-host #stats-table-cumulative tbody tr:hover td { background: rgba(102, 181, 255, .08); }
     .stats-cumulative-fragment-host #stats-table-cumulative tr.player-highlight td {
       background: rgba(102, 181, 255, .14);
@@ -255,11 +266,21 @@
             <%= if @logged_in do %>
               <div class="header-user">
                 <%= if @viewer_profile do %>
-                  <img
-                    class="header-user-avatar"
-                    src={@viewer_profile[:avatar] || "/stats/assets/whaley-avatar.jpg"}
-                    alt=""
-                  />
+                  <%= if profile_url = steam_profile_url(@viewer_profile) || steam_profile_url(@steamid) do %>
+                    <a href={profile_url} target="_blank" rel="noopener">
+                      <img
+                        class="header-user-avatar"
+                        src={@viewer_profile[:avatar] || "/stats/assets/whaley-avatar.jpg"}
+                        alt=""
+                      />
+                    </a>
+                  <% else %>
+                    <img
+                      class="header-user-avatar"
+                      src={@viewer_profile[:avatar] || "/stats/assets/whaley-avatar.jpg"}
+                      alt=""
+                    />
+                  <% end %>
                   <div class="header-user-meta">
                     <span
                       class={["header-user-name", @viewer_profile[:is_admin] && "admin-name"]}
@@ -277,18 +298,22 @@
                 Logout
               </a>
             <% else %>
-              <a class="steam-login" href="/stats/login.php?return=/stats">Login with Steam</a>
+              <a class="steam-login steam-login-image" href="/stats/login.php?return=/stats">
+                <img
+                  src="https://community.fastly.steamstatic.com/public/images/signinthroughsteam/sits_01.png"
+                  alt="Sign in through Steam"
+                />
+              </a>
             <% end %>
           </div>
         </header>
       </div>
 
-      <.section_nav active={:stats} chat_label_id="nav-chat-label" />
-      <%= if @tab_hash do %>
-        <div class="stats-home-row">
+      <.section_nav active={:stats} chat_label_id="nav-chat-label">
+        <%= if @tab_hash do %>
           <span class="tab-hash" title="Build Hash">#{@tab_hash}</span>
-        </div>
-      <% end %>
+        <% end %>
+      </.section_nav>
 
       <div class="stats-focused-slot" id="stats-focused-player">
         {Phoenix.HTML.raw(@focused_html || "")}
@@ -357,7 +382,13 @@
           <h3>Best Killstreak</h3>
           <%= if owner = map_get(s, :top_killstreak_owner, nil) do %>
             <div class="stat-card-player">
-              <img src={avatar_or_default(owner, @default_avatar_url)} alt="" />
+              <%= if profile_url = steam_profile_url(owner) do %>
+                <a href={profile_url} target="_blank" rel="noopener">
+                  <img src={avatar_or_default(owner, @default_avatar_url)} alt="" />
+                </a>
+              <% else %>
+                <img src={avatar_or_default(owner, @default_avatar_url)} alt="" />
+              <% end %>
               <div>
                 <div class="stat-card-value">{number_format(map_get(s, :top_killstreak, 0))}</div>
                 <div class="stat-card-player-name">{display_name(owner)}</div>
@@ -377,7 +408,13 @@
                 <% rank = index + 1 %>
                 <div class={"streak-podium__entry streak-podium__entry--rank#{rank}"}>
                   <div class="streak-podium__avatar-wrap">
-                    <img src={avatar_or_default(leader, @default_avatar_url)} alt="" />
+                    <%= if profile_url = steam_profile_url(leader) do %>
+                      <a href={profile_url} target="_blank" rel="noopener">
+                        <img src={avatar_or_default(leader, @default_avatar_url)} alt="" />
+                      </a>
+                    <% else %>
+                      <img src={avatar_or_default(leader, @default_avatar_url)} alt="" />
+                    <% end %>
                     <span class="streak-podium__badge">{rank}</span>
                   </div>
                   <div class="streak-podium__details">
@@ -412,7 +449,13 @@
           <h3>Highest DPM / Week</h3>
           <%= if owner = map_get(s, :weekly_top_dpm_owner, nil) do %>
             <div class="stat-card-player">
-              <img src={avatar_or_default(owner, @default_avatar_url)} alt="" />
+              <%= if profile_url = steam_profile_url(owner) do %>
+                <a href={profile_url} target="_blank" rel="noopener">
+                  <img src={avatar_or_default(owner, @default_avatar_url)} alt="" />
+                </a>
+              <% else %>
+                <img src={avatar_or_default(owner, @default_avatar_url)} alt="" />
+              <% end %>
               <div>
                 <div class="stat-card-value">
                   {format_decimal(map_get(s, :weekly_top_dpm, 0.0), 1)}
