@@ -58,9 +58,6 @@ a {
 }
 
 #chat-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   padding: 0.5rem 0.75rem 1rem;
 }
 
