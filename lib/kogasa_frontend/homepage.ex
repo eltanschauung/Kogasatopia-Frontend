@@ -5,7 +5,7 @@ defmodule KogasaFrontend.Homepage do
 
   @fragments_root LegacySite.homepage_fragments_root()
   @site_title "Kogasatopia"
-  @site_description "Kogasatopia at kogasa.tf is the website for Kogasatopia | New Jersey, a Team Fortress 2 server with player stats, maps, weapon changes, custom weapons, and community pages."
+  @site_description "Kogasatopia is a TF2 server focused on being the best place to play. We have new weapons, weapon nerf reverts, buffs for bad weapons and the best maps possible for good gameplay and fun."
 
   def render_html(opts \\ []) do
     is_mobile = Keyword.get(opts, :mobile?, false)
