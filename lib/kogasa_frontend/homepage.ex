@@ -9,7 +9,7 @@ defmodule KogasaFrontend.Homepage do
 
   def render_html(opts \\ []) do
     is_mobile = Keyword.get(opts, :mobile?, false)
-    default_tab = Keyword.get(opts, :default_tab, "blog")
+    default_tab = Keyword.get(opts, :default_tab, "introduction")
     scroll_target = Keyword.get(opts, :scroll_target)
 
     viewport =
