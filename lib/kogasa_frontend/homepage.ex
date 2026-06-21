@@ -83,7 +83,24 @@ defmodule KogasaFrontend.Homepage do
     #{blog_html}
     #{tabs_html}
     <script>
+    function populateIntroductionBlogEntries() {
+      var target = document.getElementById("introduction_blog_entries");
+      var source = document.getElementById("blogMain");
+      if (!target || !source || target.childNodes.length > 0) return;
+
+      for (var i = 0; i < source.children.length; i++) {
+        var clone = source.children[i].cloneNode(true);
+        if (clone.id) clone.id = "introduction-" + clone.id;
+        var descendants = clone.querySelectorAll("[id]");
+        for (var j = 0; j < descendants.length; j++) {
+          descendants[j].id = "introduction-" + descendants[j].id;
+        }
+        target.appendChild(clone);
+      }
+    }
+
     (function () {
+      populateIntroductionBlogEntries();
       var defaultTab = document.getElementById("#{default_tab}");
       if (defaultTab) defaultTab.click();
       var scrollTargetId = #{js_string_or_null(scroll_target)};
