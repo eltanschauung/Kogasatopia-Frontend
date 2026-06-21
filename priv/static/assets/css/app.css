@@ -872,6 +872,17 @@ a {
     font-size: 0.95rem;
   }
 
+  .online-page .wt-topbar {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .online-page .wt-topbar-count {
+    flex: 0 0 auto;
+  }
+
   .wt-topbar-badge {
     white-space: normal;
   }
