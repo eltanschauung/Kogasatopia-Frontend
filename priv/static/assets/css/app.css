@@ -821,24 +821,25 @@ a {
   .stats-home-row {
     margin: 0.1rem 0 0.55rem;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .stats-home-row .tab-controls {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.15rem;
     width: 100%;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .tab-button,
   .tab-button:link,
   .tab-button:visited {
-    flex: 1 1 0;
+    flex: 1 1 calc((100% - 0.3rem) / 3);
     justify-content: center;
+    max-width: calc((100% - 0.3rem) / 3);
     min-width: 0;
     padding: 0.3rem 0.6rem;
     font-size: clamp(0.62rem, 2.5vw, 0.78rem);

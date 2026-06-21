@@ -30,6 +30,12 @@ defmodule KogasaFrontendWeb.NavComponents do
           class="wt-tab--navy"
         />
         <.nav_item
+          active={false}
+          href="/maps"
+          label="Weapons"
+          class="wt-tab--navy"
+        />
+        <.nav_item
           active={@active == :online}
           href="/online"
           label="Online Now"
