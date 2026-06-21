@@ -49,6 +49,43 @@
     return link;
   }
 
+  function bootNavLabels() {
+    const onlineCount = document.getElementById("nav-online-count");
+    const chatLabel = document.getElementById("nav-chat-label");
+
+    if (onlineCount && window.WTOnlineCountCache) {
+      window.WTOnlineCountCache.apply(onlineCount);
+    }
+    if (chatLabel && window.WTChatAgeLabel) {
+      window.WTChatAgeLabel.apply(chatLabel);
+    }
+
+    async function updateOnlineCount() {
+      if (!onlineCount) return;
+
+      try {
+        const res = await fetch("/stats/online_summary.php", { cache: "no-store" });
+        if (!res.ok) throw new Error("Request failed");
+        const payload = await res.json();
+        const count = Number(payload.player_count || 0);
+        const max = Number(payload.visible_max || payload.visible_max_players || 0);
+        if (!Number.isFinite(count) || !Number.isFinite(max) || max <= 0) return;
+
+        onlineCount.textContent = `${Math.max(0, count)} / ${max}`;
+        if (window.WTOnlineCountCache) window.WTOnlineCountCache.write(payload);
+      } catch (_err) {}
+    }
+
+    function updateChatAge() {
+      if (chatLabel && window.WTChatAgeLabel) window.WTChatAgeLabel.update(chatLabel);
+    }
+
+    updateOnlineCount();
+    updateChatAge();
+    window.setInterval(updateOnlineCount, 10000);
+    window.setInterval(updateChatAge, 60000);
+  }
+
   function boot() {
     const payload = parsePayload();
     if (!payload || !payload.items_by_class) return;
@@ -147,7 +184,7 @@
       btn.addEventListener("click", () => setActiveClass(btn.dataset.class));
     });
 
-    document.querySelectorAll(".home-btn").forEach((btn) => {
+    document.querySelectorAll(".home-btn, .weapons-nav .tab-button").forEach((btn) => {
       btn.addEventListener("click", () => playClickSound());
     });
 
@@ -173,8 +210,16 @@
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot, { once: true });
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => {
+        bootNavLabels();
+        boot();
+      },
+      { once: true }
+    );
   } else {
+    bootNavLabels();
     boot();
   }
 })();

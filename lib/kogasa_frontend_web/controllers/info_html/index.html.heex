@@ -29,13 +29,7 @@
     <link rel="stylesheet" href={"/info/css/changes.css?v=" <> @asset_version} />
   </head>
   <body>
-    <div class="top-nav">
-      <a class="home-btn" href="/">Home</a>
-      <label class="home-btn filter-toggle" for="custom-only">
-        <input type="checkbox" id="custom-only" autocomplete="off" />
-        <span>Custom weapons only</span>
-      </label>
-    </div>
+    <.section_nav active={:weapons} class="weapons-nav" chat_label_id="nav-chat-label" />
     <div class="page">
       <header class="header">
         <div class="title-group">
@@ -67,6 +61,10 @@
         <aside class="filters">
           <label class="filter-label">Search</label>
           <input type="text" id="search" class="search" placeholder="Find a weapon or effect..." />
+          <label class="home-btn filter-toggle custom-only-toggle" for="custom-only">
+            <input type="checkbox" id="custom-only" autocomplete="off" />
+            <span>Custom weapons only</span>
+          </label>
         </aside>
         <main>
           <div id="button-container">
@@ -90,6 +88,10 @@
     </div>
     <script id="info-data" type="application/json">
       <%= Phoenix.HTML.raw(@payload_json) %>
+    </script>
+    <script defer src="/assets/js/app/online_count_cache.js">
+    </script>
+    <script defer src="/assets/js/app/chat_age_label.js">
     </script>
     <script defer src={"/info/js/info_page.js?v=" <> @asset_version}>
     </script>

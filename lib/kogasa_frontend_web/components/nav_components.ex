@@ -4,8 +4,9 @@ defmodule KogasaFrontendWeb.NavComponents do
 
   attr :active, :atom,
     required: true,
-    values: [:blog, :stats, :online, :logs, :chat, :maps]
+    values: [:blog, :stats, :online, :logs, :chat, :maps, :weapons]
 
+  attr :class, :any, default: nil
   attr :online_count_id, :string, default: "nav-online-count"
   attr :online_count_class, :string, default: "tab-button-count"
   attr :chat_label_id, :string, default: nil
@@ -14,7 +15,7 @@ defmodule KogasaFrontendWeb.NavComponents do
 
   def section_nav(assigns) do
     ~H"""
-    <div class="stats-home-row">
+    <div class={["stats-home-row", @class]}>
       <div class="tab-controls">
         <.nav_item active={@active == :blog} href="/" label="Blog" class="wt-tab--orange" />
         <.nav_item
@@ -30,8 +31,8 @@ defmodule KogasaFrontendWeb.NavComponents do
           class="wt-tab--navy"
         />
         <.nav_item
-          active={false}
-          href="/maps"
+          active={@active == :weapons}
+          href="/weapons"
           label="Weapons"
           class="wt-tab--navy"
         />

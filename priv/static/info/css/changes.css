@@ -37,15 +37,20 @@ body {
   color: var(--text);
   font-family: TF2Secondary, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
 }
-.top-nav {
+.weapons-nav {
   width: 80%;
   max-width: 1400px;
   margin: 1.25rem auto .45rem;
+}
+.weapons-nav .tab-controls {
   display: flex;
   justify-content: flex-start;
   gap: .5rem;
   flex-wrap: wrap;
 }
+.weapons-nav .tab-button,
+.weapons-nav .tab-button:link,
+.weapons-nav .tab-button:visited,
 .home-btn {
   display: inline-flex;
   align-items: center;
@@ -63,18 +68,36 @@ body {
   text-shadow: 1px 1px 0 #000;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
+.weapons-nav .tab-button:hover,
 .home-btn:hover {
   border-color: var(--accent);
   color: var(--text);
   transform: translateY(-1px);
 }
+.weapons-nav .tab-button:active,
 .home-btn:active {
   transform: translateY(1px);
+}
+.weapons-nav .tab-button[aria-current="page"] {
+  border-color: var(--accent);
+  color: var(--text);
+  background: #463f35;
+}
+.weapons-nav .tab-button-label--mobile {
+  display: none;
+}
+.weapons-nav .tab-button-count {
+  color: var(--accent);
+  font-size: .78rem;
 }
 .filter-toggle {
   gap: .45rem;
   cursor: pointer;
   user-select: none;
+}
+.custom-only-toggle {
+  width: 100%;
+  margin-top: .7rem;
 }
 .filter-toggle input {
   width: 15px;
@@ -196,11 +219,41 @@ div#neutral{ color: white; }
   body {
     background-attachment: scroll;
   }
-  .top-nav {
+  .weapons-nav {
     width: 100%;
     max-width: none;
     margin: .35rem 0 .2rem;
     padding: 0 .35rem;
+  }
+  .weapons-nav .tab-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .15rem;
+    width: 100%;
+    min-width: 0;
+  }
+  .weapons-nav .tab-button,
+  .weapons-nav .tab-button:link,
+  .weapons-nav .tab-button:visited {
+    flex: 1 1 calc((100% - .3rem) / 3);
+    max-width: calc((100% - .3rem) / 3);
+    min-width: 0;
+    padding: .3rem .55rem;
+    font-size: clamp(.62rem, 2.5vw, .78rem);
+    white-space: nowrap;
+  }
+  .weapons-nav .tab-button-label--desktop {
+    display: none;
+  }
+  .weapons-nav .tab-button-label--mobile {
+    display: inline;
+  }
+  .weapons-nav .tab-button-count {
+    display: none;
+  }
+  .weapons-nav .tab-button[aria-current="page"] {
+    display: none;
   }
   .page {
     width: 100%;
@@ -268,7 +321,7 @@ div#neutral{ color: white; }
 }
 
 @media (max-width: 520px) {
-  .top-nav {
+  .weapons-nav {
     padding: 0 .2rem;
     margin-top: .2rem;
   }
