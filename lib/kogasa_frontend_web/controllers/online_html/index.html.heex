@@ -57,6 +57,7 @@
     .info-card-left { display:flex; flex-direction:column; gap:.4rem; flex:1 1 auto; min-width: 0; }
     .info-card-right { flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
     .info-card .label { font-size:.75rem; color:#aeb7c8; text-transform:uppercase; }
+    .info-card .hostname { font-size:1.25rem; font-weight:600; color:#f1f4fb; }
     .info-card .value { font-size:1rem; font-weight:600; color:#f1f4fb; }
     .info-card .subvalue { font-size:.9rem; color:#aeb7c8; }
     .info-card-image {
@@ -285,6 +286,7 @@
               const extra = createFlagImage(normalized, `${flagName}`);
               label.appendChild(document.createTextNode(' ')); label.appendChild(extra);
             });
+            const hostname = document.createElement('div'); hostname.className = 'hostname'; hostname.textContent = server.server_name || 'Unknown';
             const value = document.createElement('div'); value.className = 'value'; value.textContent = server.map_name || 'Unknown';
             const players = document.createElement('div'); players.className = 'subvalue'; const max = Number(server.visible_max) || visibleMaxPlayers; players.textContent = `Players: ${server.player_count || 0} / ${max}`;
             const game = document.createElement('div'); game.className = 'subvalue';
@@ -292,7 +294,7 @@
             const gameAppId = String(server.game_url || '440').trim() || '440';
             const gameLink = document.createElement('a'); gameLink.className = 'wt-accent-link'; gameLink.href = `https://store.steampowered.com/app/${encodeURIComponent(gameAppId)}`; gameLink.target = '_blank'; gameLink.rel = 'noopener noreferrer'; gameLink.textContent = gameName;
             game.append('Game: ', gameLink);
-            infoSide.append(label, value, players, game);
+            infoSide.append(label, hostname, value, players, game);
             const img = document.createElement('img'); img.className = 'info-card-image'; img.alt = server.map_name ? `${server.map_name} preview` : 'Map preview'; img.src = server.map_image || '';
             imageSide.appendChild(img); card.append(infoSide, imageSide); mapCardsContainer.appendChild(card);
         });
