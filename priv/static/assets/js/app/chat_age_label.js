@@ -1,9 +1,48 @@
 (() => {
   const WTChatAgeLabel = {
     endpointBase: "/stats/chat.php?limit=1&alerts_only=1",
+    key: "wt_chat_age_v1",
     lastText: null,
     latestCreatedAt: 0,
     requestSeq: 0,
+
+    read() {
+      try {
+        const raw = window.localStorage?.getItem(this.key);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        const createdAt = Number(parsed?.created_at || 0);
+        if (!Number.isFinite(createdAt) || createdAt <= 0) return null;
+        return { created_at: createdAt, updated: Number(parsed?.updated) || 0 };
+      } catch (_err) {
+        return null;
+      }
+    },
+
+    write(createdAt) {
+      try {
+        const timestamp = Number(createdAt || 0);
+        if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
+        this.latestCreatedAt = Math.max(Number(this.latestCreatedAt || 0), timestamp);
+        window.localStorage?.setItem(this.key, JSON.stringify({
+          created_at: this.latestCreatedAt,
+          updated: Math.floor(Date.now() / 1000)
+        }));
+        return true;
+      } catch (_err) {
+        return false;
+      }
+    },
+
+    clear() {
+      this.latestCreatedAt = 0;
+      this.lastText = null;
+      try {
+        window.localStorage?.removeItem(this.key);
+      } catch (_err) {
+        // ignore cache errors
+      }
+    },
 
     format(diffSeconds) {
       if (!Number.isFinite(diffSeconds) || diffSeconds < 0) return "--";
@@ -43,13 +82,22 @@
     },
 
     apply(labelEl) {
-      if (!labelEl || !this.lastText) return false;
+      if (!labelEl) return false;
+      const cached = this.read();
+      const createdAt = Math.max(
+        Number(this.latestCreatedAt || 0),
+        Number(cached?.created_at || 0)
+      );
+      if (createdAt <= 0) return false;
+      this.latestCreatedAt = createdAt;
+      this.lastText = this.textForCreatedAt(createdAt);
       labelEl.textContent = this.lastText;
       return true;
     },
 
     async update(labelEl) {
       if (!labelEl) return null;
+      this.apply(labelEl);
       const requestId = ++this.requestSeq;
 
       try {
@@ -60,13 +108,15 @@
         const last = this.newestMessage(messages);
 
         let nextText = "Last msg. --";
+        let nextCreatedAt = 0;
         if (last) {
-          const createdAt = Math.max(Number(last.created_at || 0), Number(this.latestCreatedAt || 0));
-          this.latestCreatedAt = createdAt;
-          nextText = this.textForCreatedAt(createdAt);
+          nextCreatedAt = Math.max(Number(last.created_at || 0), Number(this.latestCreatedAt || 0));
+          nextText = this.textForCreatedAt(nextCreatedAt);
         }
 
         if (requestId !== this.requestSeq) return this.lastText;
+        if (nextCreatedAt > 0) this.write(nextCreatedAt);
+        else this.clear();
         this.lastText = nextText;
         labelEl.textContent = nextText;
         return nextText;
