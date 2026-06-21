@@ -56,14 +56,14 @@ body {
   align-items: center;
   justify-content: center;
   min-width: 96px;
-  padding: .45rem .8rem;
+  padding: .2rem .4rem;
   border: 1px solid #000;
   border-radius: 8px;
   background: var(--panel);
   color: var(--muted);
   text-decoration: none;
   font-family: TF2Build, Impact, sans-serif;
-  font-size: .9rem;
+  font-size: 1.2rem;
   letter-spacing: .02em;
   text-shadow: 1px 1px 0 #000;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
@@ -85,10 +85,6 @@ body {
 }
 .weapons-nav .tab-button-label--mobile {
   display: none;
-}
-.weapons-nav .tab-button-count {
-  color: var(--accent);
-  font-size: .78rem;
 }
 .filter-toggle {
   gap: .45rem;
@@ -239,8 +235,8 @@ div#neutral{ color: white; }
     flex: 1 1 calc((100% - .3rem) / 3);
     max-width: calc((100% - .3rem) / 3);
     min-width: 0;
-    padding: .3rem .55rem;
-    font-size: clamp(.62rem, 2.5vw, .78rem);
+    padding: .2rem .4rem;
+    font-size: 1.2rem;
     white-space: nowrap;
   }
   .weapons-nav .tab-button-label--desktop {

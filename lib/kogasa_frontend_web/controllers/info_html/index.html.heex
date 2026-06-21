@@ -29,7 +29,7 @@
     <link rel="stylesheet" href={"/info/css/changes.css?v=" <> @asset_version} />
   </head>
   <body>
-    <.section_nav active={:weapons} class="weapons-nav" chat_label_id="nav-chat-label" />
+    <.section_nav active={:weapons} class="weapons-nav" online_count_id={nil} />
     <div class="page">
       <header class="header">
         <div class="title-group">
@@ -88,10 +88,6 @@
     </div>
     <script id="info-data" type="application/json">
       <%= Phoenix.HTML.raw(@payload_json) %>
-    </script>
-    <script defer src="/assets/js/app/online_count_cache.js">
-    </script>
-    <script defer src="/assets/js/app/chat_age_label.js">
     </script>
     <script defer src={"/info/js/info_page.js?v=" <> @asset_version}>
     </script>

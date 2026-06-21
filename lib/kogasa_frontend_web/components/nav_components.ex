@@ -7,9 +7,9 @@ defmodule KogasaFrontendWeb.NavComponents do
     values: [:blog, :stats, :online, :logs, :chat, :maps, :weapons]
 
   attr :class, :any, default: nil
-  attr :online_count_id, :string, default: "nav-online-count"
+  attr :online_count_id, :any, default: "nav-online-count"
   attr :online_count_class, :string, default: "tab-button-count"
-  attr :chat_label_id, :string, default: nil
+  attr :chat_label_id, :any, default: nil
   attr :chat_label_class, :string, default: "tab-button-count"
   slot :inner_block
 
@@ -71,9 +71,9 @@ defmodule KogasaFrontendWeb.NavComponents do
   attr :label, :string, required: true
   attr :mobile_label, :string, default: nil
   attr :class, :string, default: nil
-  attr :online_count_id, :string, default: nil
+  attr :online_count_id, :any, default: nil
   attr :online_count_class, :string, default: "tab-button-count"
-  attr :chat_label_id, :string, default: nil
+  attr :chat_label_id, :any, default: nil
   attr :chat_label_class, :string, default: "tab-button-count"
 
   defp nav_item(assigns) do
