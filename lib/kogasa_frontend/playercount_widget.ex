@@ -44,7 +44,7 @@ defmodule KogasaFrontend.PlayercountWidget do
     case read_lines(file) do
       {:ok, lines} ->
         stats = parse_stats(lines, trim_lines?: false)
-        server_name = "Gensokyo | New Jersey"
+        server_name = main_server_name(stats.server_name)
         map_name = stats.map_name
         map_image = map_image(map_name, false)
 
@@ -153,6 +153,19 @@ defmodule KogasaFrontend.PlayercountWidget do
       ~s(<div class="value3"><img src="chaos_emerald_green.png" title="Important Map" style="margin-right:0px;">#{map_name}</div>)
     else
       ~s(<div class="value">#{map_name}</div>)
+    end
+  end
+
+  defp main_server_name(server_name) do
+    server_name
+    |> to_string()
+    |> String.split("|")
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.take(2)
+    |> case do
+      [] -> "kogasa.tf | New Jersey"
+      parts -> Enum.join(parts, " | ")
     end
   end
 
