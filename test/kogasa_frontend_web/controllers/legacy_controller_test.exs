@@ -23,7 +23,7 @@ defmodule KogasaFrontendWeb.LegacyControllerTest do
   test "playercount widget mge iframe renders natively", %{conn: conn} do
     conn = get(conn, "/playercount_widget/index3.php")
 
-    assert html_response(conn, 200) =~ ~s(<div class="server-name">MGE Eientei | New Jersey</div>)
+    assert html_response(conn, 200) =~ ~s(<div class="server-name">kogasa.tf | MGE | New Jersey</div>)
     assert response(conn, 200) =~ "https://bantculture.com/static/flags/kaguya.png"
     assert get_resp_header(conn, "location") == []
   end

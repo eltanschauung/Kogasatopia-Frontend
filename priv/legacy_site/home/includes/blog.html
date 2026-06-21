@@ -386,7 +386,7 @@
       font-size: 14px;
   ">
     Last updated:
-    <span class="fire">03/06/2026</span>
+    <span class="fire">20/06/2026</span>
     <br>
     This page is meant to be a server manual that contains literally every last drop of information that isn't secret.
   </div><br>
@@ -434,22 +434,27 @@
             <a href="#gamemode-settings" style="text-decoration:none; color:green;">4. Gamemode Settings</a>
         </li>
         <li style="margin-bottom:4px;">
-            <a href="#gems" style="text-decoration:none; color:green;">5. Currency</a>
+            <a href="#stattracker" style="text-decoration:none; color:green;">5. Stat Tracker</a>
         </li>
         <li style="margin-bottom:4px;">
-            <a href="#clans" style="text-decoration:none; color:green;">6. Clans/Factions</a>
+            <a href="#gems" style="text-decoration:none; color:green;">6. Currency</a>
         </li>
         <li style="margin-bottom:4px;">
-            <a href="#saysounds" style="text-decoration:none; color:green;">7. Saysounds</a>
+            <a href="#clans" style="text-decoration:none; color:green;">7. Clans/Factions</a>
+        </li>
+        <li style="margin-bottom:4px;">
+            <a href="#saysounds" style="text-decoration:none; color:green;">8. Saysounds</a>
         </li>
     </ul>
 </div>
 
-<h6 id="weapon-changes">Weapon Changes</h6>
-<p2>This server has weapon nerf reverts and buffs for bad weapons; however, it's been moved from here to our weapons page at <a href="/info">kogasa.tf/weapons</a>. We also have new weapons, which you can view those at the weapon page too. Tip: use !cw in-game to open the custom weapons equip menu.</p2>
+<div style="background-color: #fffcf6; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+<h6 id="weapon-changes">1. Weapon Changes</h6>
+<p2>This server has weapon nerf reverts, new weapons and buffs for bad weapons; check them out at <a href="/weapons">kogasa.tf/weapons</a>. Tip: use !cw in-game to open the custom weapons equip menu.</p2>
+</div>
 <br><hr><br>
 <div style="background-color: #fffcf6; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
-<h6 id="new-buildings">New Engineer Buildings</h6>
+<h6 id="new-buildings">2. New Engineer Buildings</h6>
 <p2>This server has two Engineer buildings. Use !a or !p to toggle them.</p2><br>
 <p2><img class="blog_image" src="new_buildings.jpg" width="500" height="auto"></p2>
 <hr>
@@ -472,7 +477,7 @@
 </div>
 <br><hr><br>
 <div style="background-color: #fffcf6; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
-  <h6 id="server-commands">Server Commands</h6>
+  <h6 id="server-commands">3. Server Commands</h6>
   <p2>This server now has many commands, here's a comprehensive list:</p2><br>
   <h5>Weapons and Buildings</h5>
   <p3-p><span style="color:green;">!info !center !reverts !r !c !cw !amp !ah !a !pads !p</span></p3-p>
@@ -489,10 +494,10 @@
   <h5>Server</h5>
   <p3-p><span style="color:green;">!steam !chat !rules !news !git !feedback</span></p3-p>
 </div>
-<br><hr>
-<br><h6 id="gamemode-settings">Server Settings</h6>
-<p2>This server has specific settings depending on the gamemode and sometimes the map. Clients can also use !votemenu to disable Sentries, enable bhop or restrict certain classes as a vote.</p2><br>
+<br><hr><br>
 <div style="background-color: #fffcf6; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+<br><h6 id="gamemode-settings">4. Server Settings</h6>
+<p2>This server has specific settings depending on the gamemode and map. Clients can also use !votemenu to call votes to change certain settings until the map or round end.</p2><br>
     <h5>Default Server Rules</h5>
     <p3-p>
       <ul>
@@ -500,7 +505,7 @@
           <li>Random bullet spread is disabled</li>
           <li>Default player limit is now 24 instead of being modified, this helps the server remain populated</li>
           <li>Default time limit is 50 minutes and default max rounds are 8</li>
-          <li>Heavy is restricted to 2 at all times, but there are no other class limits</li>
+          <li>Heavy is restricted to 2, but there are no other class limits</li>
           <li>Waiting for players time is usually disabled, setup times are reduced</li>
           <li>Sprays and local mods are allowed, sv_pure is 0</li>
           <li>This server has custom plugins for autobalance, scrambles and so on</li>
@@ -519,10 +524,9 @@
     <h5>Payload and Attack/Defend</h5>
     <p3-p>
       <ul>
-          <li>Payload currently uses a 24 player visible cap, 60 minute timelimit, and 5 max rounds</li>
-          <li>Setup time is reduced by 15 seconds on average</li>
-          <li>Bhop is enabled during setup time (WIP)</li>
-          <li>Heavies are limited to 1 per team to prevent cart stacking</li>
+          <li>Payload has a 60 minute timelimit and 5 max rounds</li>
+          <li>Setup time is reduced by 10 seconds, this is further reduced by 20 seconds if no Engineers are detected on Red after a time passes</li>
+          <li>Bhop and fast building construction are enabled during setup time (WIP)</li>
       </ul>
     </p3-p>
 
@@ -535,8 +539,13 @@
     </p3-p>
 </div>
 <br><hr>
+<div style="background-color: #fffcf6; border-radius: 12px; padding: 12px; margin-bottom: 12px;"></div>
+<br><h6 id="gems">5. Stat Tracker</h6>
+<p2>This server has a stats tracker plugin like Hlstats, it tracks typical things like kills, deaths and playtime, but also more specific things like highest killstreak, uber drops, accuracy and airshots. The stat tracker's page is at <a href="/stats">kogasa.tf/stats</a> but it also contains pages for things like map stats, match logs and it's where our live chat system is hosted. You can view your stats once you have at least 3 hours of playtime and 200 kills, and you can log in through Steam too.</p2><br>
+</div>
+<br><hr><br>
 <br><h6 id="gems">6. Currency</h6>
-<p2>This server has a currency system. You can acquire currency through gameplay actions like airshot kills and other badass stuff. you can use the currency to buy content packs such as Peter Griffin announcer pack, play in lotteries, send it to your friends, or spend it to create a clan/faction type of thing.</p2><br>
+<p2>This server has a currency system. You can acquire currency through gameplay actions like airshot kills and other badass stuff. You can use the currency to buy content packs such as Peter Griffin announcer pack, play in lotteries, send it to your friends, or spend it to create a clan/faction type of thing.</p2><br>
 <div style="background-color: #fffcf6; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
     <h5>Basic Commands</h5>
     <p3-p>
@@ -579,10 +588,11 @@
       </ul>
     </p3-p>
 
-    <h5>Current Shop Uses</h5>
+    <h5>Some Popular Shop Items</h5>
     <p3-p>
       <ul>
           <li><strong>Diamond Pickaxe</strong>: unlocks the Diamond Pickaxe custom weapon. This provides an all-class Diamond Pickaxe, which is a reskin of the Prinny Machete with the unique ability to random crit. Soldier has access to an Enchanted Diamond Pickaxe, which is an Equalizer that swings really fast. Both turn enemies to gold on kill.</li>
+          <li><strong>Miyu in Garbage Can</strong>: unlocks a custom hat which places Miyu from Blue Archive in her garbage can on your back.</strong></li>
           <li><strong>Peter Griffin Announcer</strong>: unlocks 9 Peter Griffin sounds such as !children and acts as an announcer.</li>
           <li><strong>Autobalance Immunity (16 times)</strong>: protects against selected autobalance moves until the uses run out.</li>
           <li><strong>Scramble Immunity (8 times)</strong>: protects against selected scramble moves until the uses run out.</li>
