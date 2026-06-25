@@ -259,8 +259,7 @@
               <div class="map-analytics-sessions">
                 <div class="map-analytics-band">
                   <div class="map-analytics-header">
-                    <h3 class="map-analytics-title">Top Sessions</h3>
-                    <span class="map-analytics-sub">By average population</span>
+                    <h3 class="map-analytics-title">Playercount Up</h3>
                   </div>
                   <ol class="map-analytics-list">
                     <%= for session <- analytics[:top_sessions] || [] do %>
@@ -286,7 +285,7 @@
                 </div>
                 <div class="map-analytics-band">
                   <div class="map-analytics-header">
-                    <h3 class="map-analytics-title">Worst Sessions</h3>
+                    <h3 class="map-analytics-title">Playercount Down</h3>
                   </div>
                   <ol class="map-analytics-list">
                     <%= for session <- analytics[:worst_sessions] || [] do %>
