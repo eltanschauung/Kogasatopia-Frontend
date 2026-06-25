@@ -449,7 +449,7 @@
           hour: 'numeric',
           hour12: false
         });
-        const isSixAmServerTime = (ts) => serverHourFmt.format(new Date(Number(ts) * 1000)) === '06';
+        const isSixAmServerTime = (ts) => Number(serverHourFmt.format(new Date(Number(ts) * 1000))) === 6;
         const localTimeLabel = time?.timeZoneLabel?.() || (userTimeZone === serverTimeZone ? 'ET' : userTimeZone);
 
         const sliceChartData = (days) => {

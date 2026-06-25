@@ -572,7 +572,7 @@ defmodule KogasaFrontend.MapsDb do
       |> Map.update!("earlier", &smooth_line(&1, 0.35))
       |> shift_comparison_series(hours_per_range)
 
-    compressed = compress_idle_periods(labels, series, 3, 0.01)
+    compressed = compress_idle_periods(labels, series, 3, 0.01, MapSet.new(restart_ts))
 
     %{
       chart: %{
@@ -676,7 +676,13 @@ defmodule KogasaFrontend.MapsDb do
     end
   end
 
-  defp compress_idle_periods(labels, series, chunk_size, threshold) do
+  defp compress_idle_periods(
+         labels,
+         series,
+         chunk_size,
+         threshold,
+         preserve_timestamps
+       ) do
     current = Map.get(series, "current", [])
     count = length(labels)
 
@@ -694,6 +700,7 @@ defmodule KogasaFrontend.MapsDb do
           count,
           chunk_size,
           threshold,
+          preserve_timestamps,
           0,
           [],
           Map.new(keys, &{&1, []})
@@ -714,6 +721,7 @@ defmodule KogasaFrontend.MapsDb do
          count,
          _chunk_size,
          _threshold,
+         _preserve_timestamps,
          i,
          acc_labels,
          acc_series
@@ -730,6 +738,7 @@ defmodule KogasaFrontend.MapsDb do
          count,
          chunk_size,
          threshold,
+         preserve_timestamps,
          i,
          acc_labels,
          acc_series
@@ -754,6 +763,7 @@ defmodule KogasaFrontend.MapsDb do
           count,
           chunk_size,
           threshold,
+          preserve_timestamps,
           i + run_len,
           labels2,
           series2
@@ -770,7 +780,11 @@ defmodule KogasaFrontend.MapsDb do
               {lacc, sacc}
             else
               len = max(1, chunk_end - chunk_start)
-              lacc2 = [Enum.at(labels, chunk_start) | lacc]
+
+              label_idx =
+                preserved_label_index(labels, chunk_start, chunk_end, preserve_timestamps)
+
+              lacc2 = [Enum.at(labels, label_idx || chunk_start) | lacc]
 
               sacc2 =
                 Enum.reduce(keys, sacc, fn key, map_acc ->
@@ -794,6 +808,7 @@ defmodule KogasaFrontend.MapsDb do
           count,
           chunk_size,
           threshold,
+          preserve_timestamps,
           i + run_len,
           labels2,
           series2
@@ -810,11 +825,18 @@ defmodule KogasaFrontend.MapsDb do
         count,
         chunk_size,
         threshold,
+        preserve_timestamps,
         i + 1,
         labels2,
         series2
       )
     end
+  end
+
+  defp preserved_label_index(labels, chunk_start, chunk_end, preserve_timestamps) do
+    Enum.find(chunk_start..(chunk_end - 1), fn idx ->
+      MapSet.member?(preserve_timestamps, Enum.at(labels, idx))
+    end)
   end
 
   defp add_point(labels, series, keys, idx, acc_labels, acc_series) do
