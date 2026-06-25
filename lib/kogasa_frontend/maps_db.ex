@@ -7,7 +7,6 @@ defmodule KogasaFrontend.MapsDb do
   alias KogasaFrontend.MapsDb.MapMeta
   alias KogasaFrontend.MapsDb.Sections
   alias KogasaFrontend.MapsDb.Source
-  alias KogasaFrontend.Chat.SteamProfiles
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.Repo
   alias KogasaFrontend.TimeDisplay
@@ -39,44 +38,20 @@ defmodule KogasaFrontend.MapsDb do
     }
   end
 
-  def page_data(steamid \\ nil) do
+  def page_data do
     cfg = config()
     maps_dir_missing = not File.dir?(cfg.maps_dir)
-    is_logged_in = is_binary(steamid) and steamid != ""
-    is_admin = is_logged_in and admin?(steamid)
-    can_edit_maps = is_logged_in and is_admin
     chart_bundle = popularity_chart_bundle()
-
-    viewer_profile =
-      case steamid do
-        sid when is_binary(sid) and sid != "" ->
-          SteamProfiles.fetch_many([sid])
-          |> Map.get(sid)
-          |> case do
-            %{} = profile -> %{personaname: profile["personaname"], avatar: profile["avatarfull"]}
-            _ -> nil
-          end
-
-        _ ->
-          nil
-      end
 
     %{
       maps_dir: cfg.maps_dir,
       maps_dir_missing: maps_dir_missing,
-      is_logged_in: is_logged_in,
-      current_steamid: steamid,
-      viewer_profile: viewer_profile,
-      is_admin: is_admin,
-      can_edit_maps: can_edit_maps,
       popular_maps: fetch_map_popularity(25),
       popularity_chart: chart_bundle.chart,
       popularity_active_hours: chart_bundle.active_hours,
       map_analytics: map_detail_analytics(),
       map_previews: map_previews(cfg.preview_dir),
-      map_sections: if(maps_dir_missing, do: [], else: build_page_sections(cfg)),
-      login_url: "/maps/login.php?return=" <> URI.encode("/maps"),
-      logout_url: "/maps/login.php?action=logout&return=" <> URI.encode("/maps")
+      map_sections: if(maps_dir_missing, do: [], else: build_page_sections(cfg))
     }
   end
 
@@ -132,52 +107,6 @@ defmodule KogasaFrontend.MapsDb do
     else
       {:error, _} = err -> err
       {:file_error, reason} -> {:error, {:io, reason}}
-    end
-  end
-
-  def mass_edit(search, replace) when is_binary(search) and is_binary(replace) do
-    if String.trim(search) == "" do
-      {:error, :search_required}
-    else
-      cfg = config()
-
-      {modified, total} =
-        Path.wildcard(Path.join(cfg.maps_dir, "*.cfg"))
-        |> Enum.reduce({[], 0}, fn file, {mods, total_replacements} ->
-          if File.regular?(file) do
-            case File.read(file) do
-              {:ok, contents} ->
-                {updated, count} = replace_count(contents, search, replace)
-
-                if count > 0 do
-                  case write_file(file, updated) do
-                    :ok ->
-                      file_name = Path.basename(file)
-
-                      {[%{file: file_name, replacements: count} | mods],
-                       total_replacements + count}
-
-                    _ ->
-                      {mods, total_replacements}
-                  end
-                else
-                  {mods, total_replacements}
-                end
-
-              _ ->
-                {mods, total_replacements}
-            end
-          else
-            {mods, total_replacements}
-          end
-        end)
-
-      {:ok,
-       %{
-         modified: Enum.reverse(modified),
-         filesEdited: length(modified),
-         totalReplacements: total
-       }}
     end
   end
 
@@ -1070,15 +999,6 @@ defmodule KogasaFrontend.MapsDb do
 
       {:error, reason} ->
         {:file_error, reason}
-    end
-  end
-
-  defp replace_count(contents, search, replace) do
-    parts = String.split(contents, search)
-
-    case parts do
-      [_single] -> {contents, 0}
-      _ -> {Enum.join(parts, replace), length(parts) - 1}
     end
   end
 

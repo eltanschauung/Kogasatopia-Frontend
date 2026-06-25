@@ -4,13 +4,8 @@ defmodule KogasaFrontendWeb.MapsDbApiController do
   alias KogasaFrontend.MapsDb
 
   def handle(conn, params) do
-    with {:ok, steamid} <- require_logged_in(conn),
-         :ok <- require_admin(steamid) do
-      action = params["action"] || conn.body_params["action"] || "list"
-      dispatch(conn, action, params)
-    else
-      {:error, {status, message}} -> json_error(conn, status, message)
-    end
+    action = params["action"] || conn.body_params["action"] || "list"
+    dispatch(conn, action, params)
   end
 
   defp dispatch(conn, "list", _params) do
@@ -25,22 +20,16 @@ defmodule KogasaFrontendWeb.MapsDbApiController do
   end
 
   defp dispatch(conn, "save", params) do
-    content = to_string(params["content"] || "")
+    with {:ok, steamid} <- require_logged_in(conn),
+         :ok <- require_admin(steamid) do
+      content = to_string(params["content"] || "")
 
-    case MapsDb.save_config_file(params["map"], params["source"], content) do
-      {:ok, payload} -> json(conn, payload)
-      {:error, reason} -> mapsdb_reason(conn, reason)
-    end
-  end
-
-  defp dispatch(conn, "mass_edit", params) do
-    search = to_string(params["search"] || "")
-    replace = to_string(params["replace"] || "")
-
-    case MapsDb.mass_edit(search, replace) do
-      {:ok, payload} -> json(conn, payload)
-      {:error, :search_required} -> json_error(conn, 400, "Search text is required")
-      {:error, reason} -> mapsdb_reason(conn, reason)
+      case MapsDb.save_config_file(params["map"], params["source"], content) do
+        {:ok, payload} -> json(conn, payload)
+        {:error, reason} -> mapsdb_reason(conn, reason)
+      end
+    else
+      {:error, {status, message}} -> json_error(conn, status, message)
     end
   end
 

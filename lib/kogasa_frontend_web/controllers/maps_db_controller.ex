@@ -4,8 +4,7 @@ defmodule KogasaFrontendWeb.MapsDbController do
   alias KogasaFrontend.MapsDb
 
   def index(conn, _params) do
-    steamid = get_session(conn, "steamid")
-    data = MapsDb.page_data(steamid)
+    data = MapsDb.page_data()
 
     render(conn, :index,
       mapsdb: data,

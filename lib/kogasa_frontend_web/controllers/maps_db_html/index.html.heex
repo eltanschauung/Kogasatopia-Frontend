@@ -16,23 +16,6 @@
         box-shadow: none;
       }
       .stats-header-shell .header { margin: 0; }
-      .stats-auth { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; justify-content:flex-end; }
-      .stats-header-shell .header-actions { gap: .75rem; }
-      .stats-header-shell .header-user .steam-logout { margin-top: 0; }
-      .stats-header-shell .header-user { gap: .9rem; }
-      .stats-header-shell .header-user-avatar {
-        width: 48px;
-        height: 48px;
-        flex: 0 0 auto;
-      }
-      .stats-header-shell .header-user-meta { min-width: 0; max-width: 100%; }
-      .stats-header-shell .header-user-meta .stats-sub {
-        display: block;
-        font-size: .75rem;
-        line-height: 1.15;
-        word-break: break-all;
-        white-space: normal;
-      }
       .stats-sub { margin:.2rem 0 0; color:#b5bfd0; font-size:.9rem; }
       .mapsdb-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1.25rem; }
       .mapsdb-stats { display:flex; gap:.8rem; align-items:center; }
@@ -50,21 +33,14 @@
       .map-entry.active { border-color: var(--accent, #7fc8ff); background: rgba(127,200,255,.08); }
       .map-editor { min-height:60vh; }
       .map-editor-toolbar { display:flex; align-items:center; gap:.6rem; }
-      .map-editor-toolbar button { padding:.45rem .9rem; border:none; background: var(--accent, #7fc8ff); color:#04142a; font-weight:600; cursor:pointer; }
-      .map-editor-toolbar button:disabled { opacity:.4; cursor:not-allowed; }
       #map-content { flex:1; width:100%; background: rgba(17,18,25,.95); border:1px solid rgba(255,255,255,.08); padding:1rem; color:#f5f6fa; font-family: monospace; font-size:.95rem; resize:none; min-height:420px; }
-      .map-editor-status, .mass-edit-status { font-size:.9rem; color: var(--text-muted, #95a5b7); }
+      .map-editor-status { font-size:.9rem; color: var(--text-muted, #95a5b7); }
       .map-popularity { border:1px solid rgba(255,255,255,.08); padding:.75rem; background: rgba(10,12,20,.5); display:flex; flex-direction:column; gap:.45rem; }
       .map-popularity-header { display:flex; justify-content:space-between; align-items:baseline; gap:.5rem; }
       .map-popularity-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.35rem; max-height:280px; overflow-y:auto; }
       .map-popularity-entry { display:flex; justify-content:space-between; align-items:center; padding:.35rem .2rem; border-bottom:1px solid rgba(255,255,255,.05); font-size:.92rem; }
       .map-popularity-entry:last-child { border-bottom:none; }
       .map-popularity-count { font-weight:600; color: var(--accent, #7fc8ff); }
-      .mapsdb-alert { margin: .75rem 0; padding:.75rem .9rem; background: rgba(255, 193, 7, .12); border:1px solid rgba(255,193,7,.28); }
-      .mass-edit-card { margin-top:1.25rem; padding:1rem 1.15rem; border:1px solid rgba(255,255,255,.08); background: rgba(12,14,21,.7); }
-      .mass-edit-card form { display:flex; flex-direction:column; gap:.55rem; }
-      .mass-edit-card textarea { width:100%; min-height:80px; border:1px solid rgba(255,255,255,.1); background: rgba(17,19,28,.9); color:#f5f6fa; padding:.6rem .75rem; }
-      .mass-edit-card button { align-self:flex-start; padding:.5rem 1rem; border:none; background: var(--accent, #7fc8ff); color:#04142a; font-weight:600; cursor:pointer; }
       .map-preview-wall { margin-top:1.2rem; padding:1rem; border:1px solid rgba(255,255,255,.08); background: rgba(12,14,21,.6); }
       .map-preview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; }
       .map-preview-card { display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
@@ -116,7 +92,7 @@
         .map-preview-grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
         .map-preview-card img { width: 132px; height: 99px; }
         .map-preview-title { max-width: 132px; }
-        .mass-edit-card, .popularity-card, .map-preview-wall { padding: .7rem; }
+        .popularity-card, .map-preview-wall { padding: .7rem; }
         .map-analytics-band { padding: .7rem; }
         .map-analytics-chart-frame { height:220px; max-height:220px; }
       }
@@ -128,10 +104,7 @@
         }
         .stats-header-shell .brand img { width: 100% !important; max-width: 260px; }
         .stats-header-shell .animation img { width: 100%; max-width: 180px; }
-        .stats-auth { justify-content: flex-start; }
         .mapsdb-sub { font-size: .8rem; }
-        .map-editor-toolbar { flex-wrap: wrap; }
-        .map-editor-toolbar button { width: 100%; }
         .map-popularity-list { max-height: 220px; }
       }
     </style>
@@ -158,55 +131,13 @@
                   style="height:auto"
                 />
               </div>
-              <div class="header-actions stats-auth">
-                <%= if @mapsdb.is_logged_in && @mapsdb.current_steamid do %>
-                  <div class="header-user">
-                    <%= if @mapsdb.viewer_profile do %>
-                      <a
-                        href={"https://steamcommunity.com/profiles/#{@mapsdb.current_steamid}"}
-                        target="_blank"
-                        rel="noopener"
-                      >
-                        <img
-                          class="header-user-avatar"
-                          src={@mapsdb.viewer_profile[:avatar] || "/stats/assets/whaley-avatar.jpg"}
-                          alt=""
-                        />
-                      </a>
-                      <div class="header-user-meta">
-                        <span
-                          class={["header-user-name", @mapsdb.is_admin && "admin-name"]}
-                          title={if(@mapsdb.is_admin, do: "Admin", else: nil)}
-                        >
-                          {@mapsdb.viewer_profile[:personaname] || @mapsdb.current_steamid}
-                        </span>
-                        <span class="stats-sub" style="margin:0;">
-                          {@mapsdb.current_steamid}{if !@mapsdb.is_admin,
-                            do: " (browse-only)",
-                            else: ""}
-                        </span>
-                      </div>
-                    <% else %>
-                      <span class="stats-sub" style="margin:0;">Signed in</span>
-                    <% end %>
-                  </div>
-                  <a class="steam-logout" href={@mapsdb.logout_url}>Logout</a>
-                <% else %>
-                  <a class="steam-login steam-login-image" href={@mapsdb.login_url}>
-                    <img
-                      src="https://community.fastly.steamstatic.com/public/images/signinthroughsteam/sits_01.png"
-                      alt="Sign in through Steam"
-                    />
-                  </a>
-                <% end %>
-              </div>
             </header>
           </div>
 
           <div class="mapsdb-title-row">
             <div>
               <p class="mapsdb-sub">
-                This page contains server statistics and a list of maps. Admins can log in to edit config files.
+                This page contains server statistics and config file previews.
               </p>
             </div>
           </div>
@@ -394,17 +325,7 @@
             </div>
           <% end %>
 
-          <%= if @mapsdb.maps_dir_missing do %>
-            <div class="mapsdb-alert">Directory <code>{@mapsdb.maps_dir}</code> is missing.</div>
-          <% else %>
-            <%= if !@mapsdb.is_logged_in do %>
-              <div class="mapsdb-alert">Sign in to load/edit configs via the API.</div>
-            <% else %>
-              <%= if !@mapsdb.is_admin do %>
-                <div class="mapsdb-alert">Your Steam ID is not marked as admin.</div>
-              <% end %>
-            <% end %>
-
+          <%= if !@mapsdb.maps_dir_missing do %>
             <div class="mapsdb-layout">
               <div class="map-panel">
                 <%= if @popular_maps != [] do %>
@@ -424,7 +345,7 @@
                   </div>
                 <% end %>
 
-                <input type="text" id="map-filter" placeholder="Filter maps..." />
+                <input type="text" id="map-filter" placeholder="Filter config files..." />
                 <div class="map-list" id="map-list">
                   <%= for section <- @map_sections do %>
                     <details class="map-section" data-section={section.slug}>
@@ -455,46 +376,15 @@
               <div class="map-editor">
                 <div class="map-editor-toolbar">
                   <h2 id="map-title">Select a config</h2>
-                  <div style="margin-left:auto;display:flex;gap:.6rem;">
-                    <button id="reload-btn" type="button" disabled>Reload</button>
-                    <button id="save-btn" type="button" disabled>Save</button>
-                  </div>
                 </div>
                 <textarea
                   id="map-content"
                   disabled
-                  placeholder="Logged-in Admins can select a config from the left to see what's in it."
+                  placeholder="You can click a config file to see what's in it!"
                 ></textarea>
                 <div class="map-editor-status" id="map-status">No map loaded.</div>
               </div>
             </div>
-
-            <%= if @mapsdb.can_edit_maps do %>
-              <div class="mass-edit-card">
-                <h2 style="margin-top:0">Mass Replace</h2>
-                <p style="margin-top:0;margin-bottom:.5rem;">
-                  Search and replace across every <code>.cfg</code>
-                  inside <code>tf/cfg/mapsdb</code>.
-                </p>
-                <form id="mass-edit-form">
-                  <label>
-                    Search text <textarea
-                      id="mass-search"
-                      required
-                      placeholder="Text to search..."
-                    ></textarea>
-                  </label>
-                  <label>
-                    Replace with <textarea
-                      id="mass-replace"
-                      placeholder="Replacement text (can be empty)"
-                    ></textarea>
-                  </label>
-                  <button type="submit">Run replace</button>
-                </form>
-                <div class="mass-edit-status" id="mass-edit-status">Idle.</div>
-              </div>
-            <% end %>
 
             <%= if @map_previews != [] do %>
               <div class="map-preview-wall">
@@ -763,21 +653,12 @@
     <%= if !@mapsdb.maps_dir_missing and @map_sections != [] do %>
       <script>
         (function() {
-          const canEdit = <%= if @mapsdb.can_edit_maps, do: "true", else: "false" %>;
           const mapButtons = Array.from(document.querySelectorAll('.map-entry'));
           const sections = Array.from(document.querySelectorAll('.map-section'));
           const filterInput = document.getElementById('map-filter');
           const titleEl = document.getElementById('map-title');
           const statusEl = document.getElementById('map-status');
           const textarea = document.getElementById('map-content');
-          const reloadBtn = document.getElementById('reload-btn');
-          const saveBtn = document.getElementById('save-btn');
-          const massForm = document.getElementById('mass-edit-form');
-          const massStatus = document.getElementById('mass-edit-status');
-          const massSearch = document.getElementById('mass-search');
-          const massReplace = document.getElementById('mass-replace');
-
-          if (textarea) textarea.readOnly = !canEdit;
 
           let activeMap = null;
           let activeSource = 'mapsdb';
@@ -798,10 +679,8 @@
           const setButtonsEnabled = (enabled) => {
             if (textarea) {
               textarea.disabled = !enabled;
-              textarea.readOnly = !canEdit;
+              textarea.readOnly = true;
             }
-            if (reloadBtn) reloadBtn.disabled = !enabled || !canEdit;
-            if (saveBtn) saveBtn.disabled = !enabled || !canEdit;
           };
 
           const highlightSelection = (name, source) => {
@@ -849,28 +728,6 @@
             }
           };
 
-          const saveMap = async () => {
-            if (!activeMap || !canEdit) return;
-            setButtonsEnabled(false);
-            setStatus('Saving ' + activeMap + '...');
-            try {
-              const res = await fetch('/maps/api.php', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'save', map: activeMap, source: activeSource, content: textarea.value })
-              });
-              const payload = await res.json();
-              if (!res.ok) throw new Error(payload.error || ('Save failed (' + res.status + ')'));
-              setStatus('Saved at ' + formatLocalDateTime(payload.modified || 0));
-            } catch (err) {
-              console.error(err);
-              setStatus('Error: ' + err.message, true);
-            } finally {
-              setButtonsEnabled(true);
-            }
-          };
-
           mapButtons.forEach((btn) => {
             btn.addEventListener('click', () => {
               const mapName = btn.dataset.map;
@@ -880,42 +737,6 @@
           });
 
           if (filterInput) filterInput.addEventListener('input', () => filterMaps(filterInput.value));
-
-          if (reloadBtn) reloadBtn.addEventListener('click', () => {
-            if (activeMap) loadMap(activeMap, activeSource);
-          });
-
-          if (saveBtn) saveBtn.addEventListener('click', saveMap);
-
-          if (massForm) {
-            massForm.addEventListener('submit', async (event) => {
-              event.preventDefault();
-              const search = massSearch.value;
-              const replace = massReplace.value;
-              if (!search || !search.trim()) {
-                massStatus.textContent = 'Search text is required.';
-                massStatus.style.color = '#ff9a9a';
-                return;
-              }
-              massStatus.textContent = 'Running replace...';
-              massStatus.style.color = 'var(--text-muted, #95a5b7)';
-              try {
-                const res = await fetch('/maps/api.php', {
-                  method: 'POST',
-                  credentials: 'same-origin',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ action: 'mass_edit', search, replace })
-                });
-                const payload = await res.json();
-                if (!res.ok) throw new Error(payload.error || ('Mass edit failed (' + res.status + ')'));
-                massStatus.textContent = `Updated ${payload.filesEdited ?? 0} file(s), ${payload.totalReplacements ?? 0} replacement(s).`;
-              } catch (err) {
-                console.error(err);
-                massStatus.textContent = 'Error: ' + err.message;
-                massStatus.style.color = '#ff9a9a';
-              }
-            });
-          }
 
           const navOnlineCount = document.getElementById('nav-online-count');
           const navChatLabel = document.getElementById('nav-chat-label');

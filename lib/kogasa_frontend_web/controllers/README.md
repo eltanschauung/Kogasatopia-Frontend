@@ -7,11 +7,10 @@ Only route-facing controller actions are listed here.
 - `create` - Submits a web chat message or updates the sender persona.
 
 ## maps_db_api_controller.ex
-- `handle` - Authenticates the session, checks admin access, and dispatches the requested Maps action.
-- `handle/list` - Returns the editable map config list.
+- `handle` - Dispatches public map config reads and admin-gated writes.
+- `handle/list` - Returns the map config list.
 - `handle/load` - Returns one map config file.
 - `handle/save` - Saves one map config file.
-- `handle/mass_edit` - Replaces text across map config files.
 
 ## online_api_controller.ex
 - `index` - Returns the current online-player payload without HTTP caching.
