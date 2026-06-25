@@ -150,48 +150,53 @@ defmodule KogasaFrontend.MapsDb do
 
     sessions =
       query_rows("""
-      SELECT map_name,
-             MIN(gamemode) AS gamemode,
+      SELECT s.map_name,
+             MIN(s.gamemode) AS gamemode,
              COUNT(*) AS sessions,
-             ROUND(AVG(avg_players), 2) AS avg_players,
-             MAX(peak_players) AS peak_players,
-             ROUND(SUM(player_seconds) / 3600, 1) AS player_hours,
-             SUM(joins) AS joins,
-             SUM(leaves) AS leaves
-      FROM #{@map_session_statistics_table}
-      WHERE peak_players > 4 AND duration >= 300
-      GROUP BY map_name
+             ROUND(AVG(s.avg_players), 2) AS avg_players,
+             MAX(s.peak_players) AS peak_players,
+             ROUND(SUM(s.player_seconds) / 3600, 1) AS player_hours,
+             SUM(s.joins) AS joins,
+             SUM(s.leaves) AS leaves
+      FROM #{@map_session_statistics_table} s
+      WHERE #{valid_map_session_sql("s")}
+      GROUP BY s.map_name
       ORDER BY player_hours DESC, avg_players DESC
       LIMIT #{lim}
       """)
 
     first15 =
       query_rows("""
-      SELECT map_name,
-             ROUND(AVG(CASE WHEN map_elapsed_seconds BETWEEN 0 AND 899 THEN player_count END), 2) AS first15_avg,
+      SELECT p.map_name,
+             ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 899 THEN p.player_count END), 2) AS first15_avg,
              ROUND(
-               COALESCE(AVG(CASE WHEN map_elapsed_seconds BETWEEN 600 AND 899 THEN player_count END), 0) -
-               COALESCE(AVG(CASE WHEN map_elapsed_seconds BETWEEN 0 AND 299 THEN player_count END), 0),
+               COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 600 AND 899 THEN p.player_count END), 0) -
+               COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN p.player_count END), 0),
                2
              ) AS first15_growth
-      FROM #{@population_statistics_table}
-      WHERE map_elapsed_seconds BETWEEN 0 AND 899
-        AND player_count > 0
-      GROUP BY map_name
+      FROM #{@population_statistics_table} p
+      JOIN #{@map_session_statistics_table} s
+        ON s.host_port = p.host_port
+       AND s.map_session_id = p.map_session_id
+       AND s.map_name = p.map_name
+      WHERE p.map_elapsed_seconds BETWEEN 0 AND 899
+        AND #{valid_map_session_sql("s")}
+        AND #{valid_population_sample_sql("p", "s")}
+      GROUP BY p.map_name
       """)
       |> Map.new(fn row -> {row.map_name, row} end)
 
     best_slots =
       query_rows("""
-      SELECT map_name,
-             weekday,
-             hour_of_day,
+      SELECT s.map_name,
+             s.weekday,
+             s.hour_of_day,
              COUNT(*) AS sessions,
-             ROUND(AVG(avg_players), 2) AS avg_players
-      FROM #{@map_session_statistics_table}
-      WHERE peak_players > 4 AND duration >= 300
-      GROUP BY map_name, weekday, hour_of_day
-      ORDER BY map_name ASC, avg_players DESC, sessions DESC
+             ROUND(AVG(s.avg_players), 2) AS avg_players
+      FROM #{@map_session_statistics_table} s
+      WHERE #{valid_map_session_sql("s")}
+      GROUP BY s.map_name, s.weekday, s.hour_of_day
+      ORDER BY s.map_name ASC, avg_players DESC, sessions DESC
       """)
       |> Enum.group_by(& &1.map_name)
       |> Map.new(fn {map_name, slots} -> {map_name, List.first(slots)} end)
@@ -251,7 +256,9 @@ defmodule KogasaFrontend.MapsDb do
     JOIN #{@population_statistics_table} p
       ON p.host_port = s.host_port
      AND p.map_session_id = s.map_session_id
-    WHERE s.duration >= 600
+     AND p.map_name = s.map_name
+    WHERE #{valid_map_session_sql("s")}
+      AND #{valid_population_sample_sql("p", "s")}
       AND p.player_count > 3
       AND FLOOR(MOD(p.sampled_at, 86400) / 3600) >= 2
       AND FLOOR(MOD(p.sampled_at, 86400) / 3600) < 6
@@ -267,19 +274,19 @@ defmodule KogasaFrontend.MapsDb do
     lim = max(1, min(limit, 25))
 
     query_rows("""
-    SELECT map_name,
-           map_session_id,
-           started_at,
-           duration,
-           peak_players,
-           avg_players,
-           player_seconds,
-           joins,
-           leaves,
-           end_reason
-    FROM #{@map_session_statistics_table}
-    WHERE peak_players > 4 AND duration >= 600
-    ORDER BY avg_players DESC, peak_players DESC, duration DESC
+    SELECT s.map_name,
+           s.map_session_id,
+           s.started_at,
+           s.duration,
+           s.peak_players,
+           s.avg_players,
+           s.player_seconds,
+           s.joins,
+           s.leaves,
+           s.end_reason
+    FROM #{@map_session_statistics_table} s
+    WHERE #{valid_map_session_sql("s")}
+    ORDER BY s.avg_players DESC, s.peak_players DESC, s.duration DESC
     LIMIT #{lim}
     """)
     |> format_session_extreme_rows()
@@ -311,15 +318,15 @@ defmodule KogasaFrontend.MapsDb do
     lim = max(1, min(limit, 48))
 
     query_rows("""
-    SELECT weekday,
-           hour_of_day,
+    SELECT s.weekday,
+           s.hour_of_day,
            COUNT(*) AS sessions,
-           ROUND(AVG(avg_players), 2) AS avg_players,
-           MAX(peak_players) AS peak_players,
-           ROUND(SUM(player_seconds) / 3600, 1) AS player_hours
-    FROM #{@map_session_statistics_table}
-    WHERE peak_players > 4 AND duration >= 600
-    GROUP BY weekday, hour_of_day
+           ROUND(AVG(s.avg_players), 2) AS avg_players,
+           MAX(s.peak_players) AS peak_players,
+           ROUND(SUM(s.player_seconds) / 3600, 1) AS player_hours
+    FROM #{@map_session_statistics_table} s
+    WHERE #{valid_map_session_sql("s")}
+    GROUP BY s.weekday, s.hour_of_day
     ORDER BY avg_players DESC, sessions DESC
     LIMIT #{lim}
     """)
@@ -349,16 +356,21 @@ defmodule KogasaFrontend.MapsDb do
     else
       rows =
         query_rows("""
-        SELECT map_name,
-               FLOOR(map_elapsed_seconds / #{bucket_seconds}) AS bucket,
-               ROUND(AVG(player_count), 2) AS avg_players
-        FROM #{@population_statistics_table}
-        WHERE map_name IN (#{sql_string_list(map_names)})
-          AND map_elapsed_seconds >= 0
-          AND map_elapsed_seconds < #{minutes * 60}
-          AND player_count > 0
-        GROUP BY map_name, bucket
-        ORDER BY map_name ASC, bucket ASC
+        SELECT p.map_name,
+               FLOOR(p.map_elapsed_seconds / #{bucket_seconds}) AS bucket,
+               ROUND(AVG(p.player_count), 2) AS avg_players
+        FROM #{@population_statistics_table} p
+        JOIN #{@map_session_statistics_table} s
+          ON s.host_port = p.host_port
+         AND s.map_session_id = p.map_session_id
+         AND s.map_name = p.map_name
+        WHERE p.map_name IN (#{sql_string_list(map_names)})
+          AND p.map_elapsed_seconds >= 0
+          AND p.map_elapsed_seconds < #{minutes * 60}
+          AND #{valid_map_session_sql("s")}
+          AND #{valid_population_sample_sql("p", "s")}
+        GROUP BY p.map_name, bucket
+        ORDER BY p.map_name ASC, bucket ASC
         """)
 
       values =
@@ -1098,6 +1110,23 @@ defmodule KogasaFrontend.MapsDb do
     else
       _ -> {:error, :not_found}
     end
+  end
+
+  defp valid_map_session_sql(alias_name) do
+    """
+    #{alias_name}.peak_players >= 8
+    AND #{alias_name}.duration >= 600
+    AND #{alias_name}.end_reason IN ('map_end', 'historical', 'synthetic_backfill')
+    """
+  end
+
+  defp valid_population_sample_sql(sample_alias, session_alias) do
+    """
+    #{sample_alias}.player_count > 0
+    AND #{sample_alias}.player_count <= 32
+    AND #{sample_alias}.sampled_at BETWEEN #{session_alias}.started_at AND #{session_alias}.ended_at + 120
+    AND #{sample_alias}.map_elapsed_seconds BETWEEN 0 AND #{session_alias}.duration + 120
+    """
   end
 
   defp query_rows(sql) do
