@@ -1008,7 +1008,14 @@ defmodule KogasaFrontend.MapsDb do
       cfg = config()
       base = if source == "tfcfg", do: cfg.tf_cfg_dir, else: cfg.maps_dir
       path = Path.join(base, map <> ".cfg")
-      if File.regular?(path), do: {:ok, path, map}, else: {:error, :not_found}
+
+      with true <- allowed_config?(map, source, cfg),
+           true <- File.regular?(path),
+           {:ok, safe_path} <- contained_path(path, base) do
+        {:ok, safe_path, map}
+      else
+        _ -> {:error, :not_found}
+      end
     else
       {:error, :invalid_map}
     end
@@ -1017,11 +1024,78 @@ defmodule KogasaFrontend.MapsDb do
   defp write_file(path, content) do
     case File.write(path, content) do
       :ok ->
-        _ = File.chmod(path, 0o777)
+        _ = File.chmod(path, 0o664)
         :ok
 
       {:error, reason} ->
         {:file_error, reason}
+    end
+  end
+
+  defp allowed_config?(map, "tfcfg", cfg) do
+    cfg.tf_cfg_dir
+    |> allowed_tfcfg_entries()
+    |> MapSet.member?(map)
+  end
+
+  defp allowed_config?(map, _source, cfg) do
+    cfg.maps_dir
+    |> allowed_mapsdb_entries()
+    |> MapSet.member?(map)
+  end
+
+  defp allowed_mapsdb_entries(maps_dir) do
+    maps_dir
+    |> wildcard_cfg_names()
+    |> MapSet.new()
+  end
+
+  defp allowed_tfcfg_entries(tf_cfg_dir) do
+    server_configs =
+      list_tfcfg_files(
+        tf_cfg_dir,
+        fn _base, lower ->
+          String.contains?(lower, "server") && not String.contains?(lower, "mapcycle")
+        end,
+        "server",
+        "server",
+        "tfcfg"
+      )
+
+    mapcycles =
+      list_tfcfg_files(
+        tf_cfg_dir,
+        fn _base, lower -> String.contains?(lower, "mapcycle") end,
+        "mapcycle",
+        "mapcycle",
+        "tfcfg"
+      )
+
+    (server_configs ++ mapcycles)
+    |> Enum.map(& &1.name)
+    |> MapSet.new()
+  end
+
+  defp wildcard_cfg_names(dir) do
+    dir
+    |> Path.join("*.cfg")
+    |> Path.wildcard()
+    |> Enum.filter(&File.regular?/1)
+    |> Enum.map(&Path.rootname(Path.basename(&1)))
+  end
+
+  defp contained_path(path, base) do
+    base_path = Path.expand(base)
+    safe_path = Path.expand(path)
+
+    with {:ok, %File.Stat{type: type}} when type != :symlink <- File.lstat(path) do
+      if safe_path == base_path or String.starts_with?(safe_path, base_path <> "/") do
+        {:ok, safe_path}
+      else
+        {:error, :not_found}
+      end
+    else
+      _ -> {:error, :not_found}
     end
   end
 

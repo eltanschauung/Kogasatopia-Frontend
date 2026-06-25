@@ -48,6 +48,7 @@ defmodule KogasaFrontendWeb.MapsDbApiController do
 
   defp mapsdb_reason(conn, :missing_map), do: json_error(conn, 400, "Missing map parameter")
   defp mapsdb_reason(conn, :invalid_map), do: json_error(conn, 400, "Invalid map name")
+  defp mapsdb_reason(conn, :invalid_source), do: json_error(conn, 400, "Invalid config source")
   defp mapsdb_reason(conn, :not_found), do: json_error(conn, 404, "Map config not found")
   defp mapsdb_reason(conn, {:io, _}), do: json_error(conn, 500, "Unable to process file")
   defp mapsdb_reason(conn, _), do: json_error(conn, 500, "Server error")
