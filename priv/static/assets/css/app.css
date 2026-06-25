@@ -265,8 +265,7 @@ a {
   border-color: rgba(243, 207, 103, 0.44) !important;
 }
 
-.tab-button:hover,
-.tab-button.tab-button-glow {
+.tab-button:hover {
   transform: none !important;
   box-shadow: none !important;
   text-shadow: none !important;

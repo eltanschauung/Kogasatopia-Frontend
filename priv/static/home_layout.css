@@ -4,10 +4,6 @@
   font-display: swap;
 }
 
-#centerColumn #blog_menu_history {
-  color: #11111;
-}
-
 .listItems {
   margin-top: 0.5em;
   margin-left: 0.5em;
@@ -121,11 +117,6 @@
   margin-bottom: 1%;
 }
 
-.row5 br {
-   display: block;
-   margin: 0.2em 0;
-}
-
 #contactMain .contactText {
   position: absolute;
   top: 30px;
@@ -144,11 +135,6 @@
   z-index: 3;
   left: 20%;
   margin-top: 10px;
-}
-
-#links .row5 {
-  position: absolute;
-  left: 0.7%;
 }
 
 #updateCard {
@@ -180,16 +166,6 @@
   top: 551px;
   z-index: 9;
   display: flex;
-}
-
-.tabLinks {
-  background: none;
-  background-repeat: no-repeat;
-  background-size: contain;
-  border: none;
-  cursor: pointer;
-  flex: 33.33%;
-  padding: 5px;
 }
 
 #panels {
@@ -238,16 +214,6 @@
   right: 40%;
 }
 
-#pageContainer {
-    height: 100vh;
-    position: relative;
-    left: 0;
-    top: 0;
-    display: block;
-    overflow: hidden;
-    max-width: 1920px;
-}
-
 #blogNavMenu {
   display: flex;
   flex-wrap: nowrap;
@@ -261,16 +227,6 @@
   text-decoration: none;
   font-family: 'TF2Secondary', Arial, sans-serif;
   color: #515151;
-  font-size: 20px;
-  line-height: 1;
-  padding: 6px 5px;
-  flex: 0 0 auto;
-}
-
-#blogNavMenu .aHoverVertShiftDead {
-  text-decoration: none;
-  font-family: 'TF2Secondary', Arial, sans-serif;
-  color: #d5d5d5;
   font-size: 20px;
   line-height: 1;
   padding: 6px 5px;
