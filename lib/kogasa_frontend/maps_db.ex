@@ -61,6 +61,7 @@ defmodule KogasaFrontend.MapsDb do
     rows =
       files
       |> Enum.filter(&File.regular?/1)
+      |> Enum.filter(&multi_line_config?/1)
       |> Enum.map(fn file ->
         stat = File.stat!(file)
         name = Path.rootname(Path.basename(file))
@@ -97,6 +98,7 @@ defmodule KogasaFrontend.MapsDb do
     map_names =
       Path.wildcard(Path.join(maps_dir, "*.cfg"))
       |> Enum.filter(&File.regular?/1)
+      |> Enum.filter(&multi_line_config?/1)
       |> Enum.map(&Path.rootname(Path.basename(&1)))
       |> Enum.sort_by(&String.downcase/1)
 
@@ -898,30 +900,38 @@ defmodule KogasaFrontend.MapsDb do
   end
 
   defp add_playercount_settings(sections) do
-    sections ++
+    entries =
       [
         %{
-          label: "Playercount settings",
-          slug: "playercount-settings",
-          open: false,
-          entries: [
-            %{
-              name: "d_highpop",
-              display: "High Population",
-              type: "playercount",
-              category: "playercount",
-              source: "mapsdb"
-            },
-            %{
-              name: "d_lowpop",
-              display: "Low Population",
-              type: "playercount",
-              category: "playercount",
-              source: "mapsdb"
-            }
-          ]
+          name: "d_highpop",
+          display: "High Population",
+          type: "playercount",
+          category: "playercount",
+          source: "mapsdb"
+        },
+        %{
+          name: "d_lowpop",
+          display: "Low Population",
+          type: "playercount",
+          category: "playercount",
+          source: "mapsdb"
         }
       ]
+      |> Enum.filter(&mapsdb_entry_has_multiple_lines?/1)
+
+    if entries == [] do
+      sections
+    else
+      sections ++
+        [
+          %{
+            label: "Playercount settings",
+            slug: "playercount-settings",
+            open: false,
+            entries: entries
+          }
+        ]
+    end
   end
 
   defp maybe_add_category_configs(sections, map_meta) do
@@ -940,8 +950,10 @@ defmodule KogasaFrontend.MapsDb do
             val == slug
           end)
 
-        if exists? do
-          [%{name: name, display: display, type: type, category: type, source: "mapsdb"}]
+        entry = %{name: name, display: display, type: type, category: type, source: "mapsdb"}
+
+        if exists? and mapsdb_entry_has_multiple_lines?(entry) do
+          [entry]
         else
           []
         end
@@ -961,7 +973,10 @@ defmodule KogasaFrontend.MapsDb do
       |> File.ls!()
       |> Enum.filter(fn file ->
         lower = String.downcase(file)
-        String.ends_with?(lower, ".cfg") and predicate.(Path.rootname(file), lower)
+        path = Path.join(tf_cfg_dir, file)
+
+        String.ends_with?(lower, ".cfg") and predicate.(Path.rootname(file), lower) and
+          multi_line_config?(path)
       end)
       |> Enum.map(fn file ->
         %{
@@ -1050,7 +1065,24 @@ defmodule KogasaFrontend.MapsDb do
     |> Path.join("*.cfg")
     |> Path.wildcard()
     |> Enum.filter(&File.regular?/1)
+    |> Enum.filter(&multi_line_config?/1)
     |> Enum.map(&Path.rootname(Path.basename(&1)))
+  end
+
+  defp mapsdb_entry_has_multiple_lines?(%{name: name}) do
+    config().maps_dir
+    |> Path.join(name <> ".cfg")
+    |> multi_line_config?()
+  end
+
+  defp multi_line_config?(path) do
+    path
+    |> File.stream!([], :line)
+    |> Enum.take(2)
+    |> length()
+    |> Kernel.>(1)
+  rescue
+    _ -> false
   end
 
   defp contained_path(path, base) do

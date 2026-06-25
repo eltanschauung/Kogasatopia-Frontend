@@ -26,17 +26,27 @@ defmodule KogasaFrontend.MapsDbSecurityTest do
   end
 
   test "loads mapsdb configs with strict map names", %{maps_dir: maps_dir} do
-    File.write!(Path.join(maps_dir, "koth_test.cfg"), "mp_timelimit 30\n")
+    File.write!(Path.join(maps_dir, "koth_test.cfg"), "mp_timelimit 30\nmp_winlimit 2\n")
 
-    assert {:ok, %{content: "mp_timelimit 30\n"}} = MapsDb.load_config_file("koth_test", "mapsdb")
+    assert {:ok, %{content: "mp_timelimit 30\nmp_winlimit 2\n"}} =
+             MapsDb.load_config_file("koth_test", "mapsdb")
+
     assert {:error, :invalid_map} = MapsDb.load_config_file("../server", "mapsdb")
   end
 
+  test "one-line mapsdb configs are hidden from the viewer allowlist", %{maps_dir: maps_dir} do
+    File.write!(Path.join(maps_dir, "koth_stub.cfg"), "// Auto-generated config for koth_stub\n")
+
+    assert {:error, :not_found} = MapsDb.load_config_file("koth_stub", "mapsdb")
+  end
+
   test "tfcfg source only loads configs exposed by the viewer", %{tf_cfg_dir: tf_cfg_dir} do
-    File.write!(Path.join(tf_cfg_dir, "server.cfg"), "hostname test\n")
+    File.write!(Path.join(tf_cfg_dir, "server.cfg"), "hostname test\nmp_timelimit 30\n")
     File.write!(Path.join(tf_cfg_dir, "secret.cfg"), "rcon_password hidden\n")
 
-    assert {:ok, %{content: "hostname test\n"}} = MapsDb.load_config_file("server", "tfcfg")
+    assert {:ok, %{content: "hostname test\nmp_timelimit 30\n"}} =
+             MapsDb.load_config_file("server", "tfcfg")
+
     assert {:error, :not_found} = MapsDb.load_config_file("secret", "tfcfg")
   end
 
