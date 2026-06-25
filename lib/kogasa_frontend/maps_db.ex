@@ -248,7 +248,7 @@ defmodule KogasaFrontend.MapsDb do
              SUM(joins) AS joins,
              SUM(leaves) AS leaves
       FROM #{@map_session_statistics_table}
-      WHERE peak_players > 0 AND duration >= 300
+      WHERE peak_players > 4 AND duration >= 300
       GROUP BY map_name
       ORDER BY player_hours DESC, avg_players DESC
       LIMIT #{lim}
@@ -278,7 +278,7 @@ defmodule KogasaFrontend.MapsDb do
              COUNT(*) AS sessions,
              ROUND(AVG(avg_players), 2) AS avg_players
       FROM #{@map_session_statistics_table}
-      WHERE peak_players > 0 AND duration >= 300
+      WHERE peak_players > 4 AND duration >= 300
       GROUP BY map_name, weekday, hour_of_day
       ORDER BY map_name ASC, avg_players DESC, sessions DESC
       """)
@@ -366,7 +366,7 @@ defmodule KogasaFrontend.MapsDb do
            leaves,
            end_reason
     FROM #{@map_session_statistics_table}
-    WHERE peak_players > 0 AND duration >= 600
+    WHERE peak_players > 4 AND duration >= 600
     ORDER BY avg_players DESC, peak_players DESC, duration DESC
     LIMIT #{lim}
     """)
@@ -406,7 +406,7 @@ defmodule KogasaFrontend.MapsDb do
            MAX(peak_players) AS peak_players,
            ROUND(SUM(player_seconds) / 3600, 1) AS player_hours
     FROM #{@map_session_statistics_table}
-    WHERE peak_players > 0 AND duration >= 600
+    WHERE peak_players > 4 AND duration >= 600
     GROUP BY weekday, hour_of_day
     ORDER BY avg_players DESC, sessions DESC
     LIMIT #{lim}
