@@ -7,7 +7,7 @@ defmodule KogasaFrontendWeb.MapsDbController do
     data = MapsDb.page_data()
 
     render(conn, :index,
-      page_title: "Maps dot kogasa.tf",
+      page_title: "Maps",
       mapsdb: data,
       chart_json: Jason.encode!(data.popularity_chart),
       analytics_chart_json:
