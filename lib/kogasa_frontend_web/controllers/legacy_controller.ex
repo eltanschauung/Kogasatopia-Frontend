@@ -33,6 +33,9 @@ defmodule KogasaFrontendWeb.LegacyController do
       leaderboard_path?(req_path) ->
         redirect(conn, to: "/online")
 
+      archived_legacy_path?(req_path) ->
+        redirect(conn, to: archived_path(req_path))
+
       true ->
         send_resp(conn, 404, "Not Found")
     end
@@ -43,6 +46,13 @@ defmodule KogasaFrontendWeb.LegacyController do
       (String.starts_with?(request_path, "/leaderboard/") and
          String.ends_with?(request_path, ".php"))
   end
+
+  defp archived_legacy_path?(request_path) do
+    root = request_path |> String.trim_leading("/") |> String.split("/", parts: 2) |> hd()
+    root in ~w(history info2 eruption testing thread steam upward newsite newinfo)
+  end
+
+  defp archived_path(request_path), do: "/archived" <> request_path
 
   defp mobile_request?(conn) do
     ua = List.first(get_req_header(conn, "user-agent")) || ""
