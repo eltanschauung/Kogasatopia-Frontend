@@ -19,32 +19,7 @@ defmodule KogasaFrontendWeb.MapsDbApiController do
     end
   end
 
-  defp dispatch(conn, "save", params) do
-    with {:ok, steamid} <- require_logged_in(conn),
-         :ok <- require_admin(steamid) do
-      content = to_string(params["content"] || "")
-
-      case MapsDb.save_config_file(params["map"], params["source"], content) do
-        {:ok, payload} -> json(conn, payload)
-        {:error, reason} -> mapsdb_reason(conn, reason)
-      end
-    else
-      {:error, {status, message}} -> json_error(conn, status, message)
-    end
-  end
-
   defp dispatch(conn, _action, _params), do: json_error(conn, 400, "Unsupported action")
-
-  defp require_logged_in(conn) do
-    case get_session(conn, "steamid") do
-      steamid when is_binary(steamid) and steamid != "" -> {:ok, steamid}
-      _ -> {:error, {401, "Authentication required"}}
-    end
-  end
-
-  defp require_admin(steamid) do
-    if MapsDb.admin?(steamid), do: :ok, else: {:error, {403, "Admin access required"}}
-  end
 
   defp mapsdb_reason(conn, :missing_map), do: json_error(conn, 400, "Missing map parameter")
   defp mapsdb_reason(conn, :invalid_map), do: json_error(conn, 400, "Invalid map name")

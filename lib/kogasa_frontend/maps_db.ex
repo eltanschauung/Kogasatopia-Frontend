@@ -3,7 +3,6 @@ defmodule KogasaFrontend.MapsDb do
 
   import Ecto.Query
 
-  alias KogasaFrontend.AdminStatus
   alias KogasaFrontend.MapsDb.MapMeta
   alias KogasaFrontend.MapsDb.Sections
   alias KogasaFrontend.MapsDb.Source
@@ -55,13 +54,6 @@ defmodule KogasaFrontend.MapsDb do
     }
   end
 
-  def admin?(nil), do: false
-  def admin?(""), do: false
-
-  def admin?(steamid) when is_binary(steamid) do
-    AdminStatus.admin?(steamid)
-  end
-
   def list_api_maps do
     cfg = config()
     files = Path.wildcard(Path.join(cfg.maps_dir, "*.cfg"))
@@ -92,18 +84,6 @@ defmodule KogasaFrontend.MapsDb do
          {:ok, content} <- File.read(path),
          {:ok, stat} <- File.stat(path) do
       {:ok, %{map: map_name, content: content, modified: mtime_unix(stat)}}
-    else
-      {:error, _} = err -> err
-      {:file_error, reason} -> {:error, {:io, reason}}
-    end
-  end
-
-  def save_config_file(map, source, content) when is_binary(content) do
-    with {:ok, src} <- sanitize_source(source),
-         {:ok, path, map_name} <- sanitize_map(map, src),
-         :ok <- write_file(path, content),
-         {:ok, stat} <- File.stat(path) do
-      {:ok, %{map: map_name, modified: mtime_unix(stat), bytes: stat.size || byte_size(content)}}
     else
       {:error, _} = err -> err
       {:file_error, reason} -> {:error, {:io, reason}}
@@ -1018,17 +998,6 @@ defmodule KogasaFrontend.MapsDb do
       end
     else
       {:error, :invalid_map}
-    end
-  end
-
-  defp write_file(path, content) do
-    case File.write(path, content) do
-      :ok ->
-        _ = File.chmod(path, 0o664)
-        :ok
-
-      {:error, reason} ->
-        {:file_error, reason}
     end
   end
 
