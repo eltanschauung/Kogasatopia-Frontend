@@ -327,7 +327,7 @@ defmodule KogasaFrontend.StatsFeed do
 
       sql = """
       SELECT steamid,
-             COALESCE(cached_personaname, steamid) AS personaname,
+             COALESCE((SELECT fs.last_name FROM filters_steam_names fs WHERE fs.steamid64 = #{@stats_table}.steamid LIMIT 1), cached_personaname, steamid) AS personaname,
              COALESCE(country, '') AS country,
              COALESCE(show_country, 0) AS show_country,
              kills, deaths, assists, healing, headshots, backstabs,
@@ -372,7 +372,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     sql = """
     SELECT w.steamid,
-           COALESCE(w.cached_personaname, pc.name, w.steamid) AS personaname,
+           COALESCE(fs.last_name, w.cached_personaname, w.steamid) AS personaname,
            COALESCE(w.country, '') AS country,
            COALESCE(w.show_country, 0) AS show_country,
            w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
@@ -422,7 +422,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     sql = """
     SELECT w.steamid,
-           COALESCE(w.cached_personaname, pc.name, w.steamid) AS personaname,
+           COALESCE(fs.last_name, w.cached_personaname, w.steamid) AS personaname,
            COALESCE(w.country, '') AS country,
            COALESCE(w.show_country, 0) AS show_country,
            w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
@@ -455,7 +455,7 @@ defmodule KogasaFrontend.StatsFeed do
 
   defp cumulative_search_where_clause(alias_prefix, like, steam_like, q, cached_profile_ids) do
     base =
-      "LOWER(COALESCE(#{alias_prefix}cached_personaname, pc.name, #{alias_prefix}steamid)) LIKE ? " <>
+      "LOWER(COALESCE(fs.last_name, #{alias_prefix}cached_personaname, #{alias_prefix}steamid)) LIKE ? " <>
         "OR #{alias_prefix}steamid LIKE ? " <>
         "OR #{alias_prefix}steamid = ?"
 
@@ -620,7 +620,7 @@ defmodule KogasaFrontend.StatsFeed do
   end
 
   defp ranked_stats_from do
-    "#{@stats_table} w INNER JOIN #{@points_cache_table} pc ON pc.steamid = w.steamid AND COALESCE(pc.rank, 0) > 0"
+    "#{@stats_table} w INNER JOIN #{@points_cache_table} pc ON pc.steamid = w.steamid AND COALESCE(pc.rank, 0) > 0 LEFT JOIN filters_steam_names fs ON fs.steamid64 = w.steamid"
   end
 
   defp summary_top_killstreak do
@@ -629,7 +629,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     sql = """
     SELECT steamid,
-           COALESCE(cached_personaname, steamid) AS personaname,
+           COALESCE((SELECT fs.last_name FROM filters_steam_names fs WHERE fs.steamid64 = #{@stats_table}.steamid LIMIT 1), cached_personaname, steamid) AS personaname,
            COALESCE(country, '') AS country,
            COALESCE(show_country, 0) AS show_country,
            kills, deaths, assists, healing, headshots, backstabs,
