@@ -115,8 +115,7 @@ defmodule KogasaFrontend.InfoPage do
 
   defp config_update_metadata do
     [
-      {"weaponreverts.cfg", WeaponRevertsConfig.config_path()},
-      {"weapons.txt", WeaponRevertsConfig.cwx_config_path()}
+      {"weapons.cfg", WeaponRevertsConfig.config_path()}
     ]
     |> Enum.flat_map(fn {filename, path} ->
       case File.stat(path, time: :local) do

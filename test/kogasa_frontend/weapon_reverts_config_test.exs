@@ -12,10 +12,9 @@ defmodule KogasaFrontend.WeaponRevertsConfigTest do
 
   test "merges weaponreverts and cwx display data by class" do
     tmp = System.tmp_dir!()
-    reverts_path = Path.join(tmp, "weaponreverts-test.cfg")
-    cwx_path = Path.join(tmp, "weapons-test.txt")
+    config_path = Path.join(tmp, "weapons-test.cfg")
 
-    File.write!(reverts_path, """
+    File.write!(config_path, """
     "WeaponReverts"
     {
       "WeaponRevertsItemClasses"
@@ -27,59 +26,56 @@ defmodule KogasaFrontend.WeaponRevertsConfigTest do
       }
       "100"
       {
-        "weapon_name" "Revert Gun"
+        "name" "Revert Gun"
         "image" "revert.png"
-        "change_description"
+        "description"
         {
           "positive" "Buffed"
           "neutral" "Neutral note"
           "negative" "Nerfed"
         }
       }
-    }
-    """)
-
-    File.write!(cwx_path, """
-    "Items"
-    {
-      "custom_heavy"
+      "CWX"
       {
-        "inherits" "TF_WEAPON_MINIGUN"
-        "name" "Custom Heavy Gun"
-        "image" "heavy.png"
-        "description"
+        "custom_heavy"
         {
-          "positive" "Heavy positive"
-          "neutral" ""
-          "negative" ""
+          "inherits" "TF_WEAPON_MINIGUN"
+          "name" "Custom Heavy Gun"
+          "image" "heavy.png"
+          "description"
+          {
+            "positive" "Heavy positive"
+            "neutral" ""
+            "negative" ""
+          }
         }
-      }
-      "custom_soldier"
-      {
-        "inherits" "The Buff Banner"
-        "name" "Custom Soldier Banner"
-        "description"
+        "custom_soldier"
         {
-          "positive" ""
-          "neutral" ""
-          "negative" ""
+          "inherits" "The Buff Banner"
+          "name" "Custom Soldier Banner"
+          "description"
+          {
+            "positive" ""
+            "neutral" ""
+            "negative" ""
+          }
         }
-      }
-      "custom_all_class"
-      {
-        "all_class" "true"
-        "name" "All Class Item"
-        "description"
+        "custom_all_class"
         {
-          "positive" "Everyone can equip it"
-          "neutral" ""
-          "negative" ""
+          "all_class" "true"
+          "name" "All Class Item"
+          "description"
+          {
+            "positive" "Everyone can equip it"
+            "neutral" ""
+            "negative" ""
+          }
         }
       }
     }
     """)
 
-    items = WeaponRevertsConfig.items_by_class(@classes, reverts_path, cwx_path)
+    items = WeaponRevertsConfig.items_by_class(@classes, config_path)
 
     assert [%{name: "Revert Gun"}] = items["scout"]
 

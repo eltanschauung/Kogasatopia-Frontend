@@ -3,11 +3,9 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
 
   @item_classes_section "WeaponRevertsItemClasses"
   @root_section "WeaponReverts"
-  @config_filename "weaponreverts.cfg"
-  @cwx_root_section "Items"
-  @cwx_config_filename "weapons.txt"
-  @repo_fallback "/home/kogasa/Kogasatopia/tf/addons/sourcemod/configs/weaponreverts.cfg"
-  @cwx_repo_fallback "/home/kogasa/Kogasatopia/tf/addons/sourcemod/configs/cwx/weapons.txt"
+  @cwx_section "CWX"
+  @config_filename "weapons.cfg"
+  @repo_fallback "/home/kogasa/Kogasatopia/tf/addons/sourcemod/configs/weapons.cfg"
   @default_cwx_image "100px-item_icon_wrangler.png"
   @tf2_class_keys ~w(scout soldier pyro demoman heavy engineer medic sniper spy)
   @all_class_key "all_class"
@@ -27,17 +25,17 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
     {~r/Prinny Machete/i, @tf2_class_keys}
   ]
 
-  def items_by_class(classes, path \\ config_path(), cwx_path \\ cwx_config_path()) do
-    revert_items = revert_items_by_class(classes, path)
-    cwx_items = cwx_items_by_class(classes, cwx_path)
+  def items_by_class(classes, path \\ config_path()) do
+    root = load_weapons_root(path)
+    revert_items = revert_items_by_class(classes, root)
+    cwx_items = cwx_items_by_class(classes, root)
 
     Enum.into(classes, %{}, fn %{key: class_key} ->
       {class_key, Map.get(revert_items, class_key, []) ++ Map.get(cwx_items, class_key, [])}
     end)
   end
 
-  defp revert_items_by_class(classes, path) do
-    root = load_reverts_root(path)
+  defp revert_items_by_class(classes, root) do
     class_map = section(root, @item_classes_section) || []
     weapon_sections = weapon_sections(root)
 
@@ -46,12 +44,12 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
     end)
   end
 
-  defp cwx_items_by_class(classes, path) do
+  defp cwx_items_by_class(classes, root) do
     class_keys = Enum.map(classes, & &1.key)
     blank_map = Map.new(class_keys, &{&1, []})
 
-    path
-    |> load_cwx_root()
+    root
+    |> cwx_root()
     |> Enum.reduce(blank_map, fn
       {item_key, children}, acc when is_list(children) ->
         item = normalize_cwx_item(item_key, children)
@@ -74,10 +72,6 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
     local_config_path(@config_filename, @repo_fallback)
   end
 
-  def cwx_config_path do
-    local_config_path(@cwx_config_filename, @cwx_repo_fallback)
-  end
-
   defp local_config_path(filename, fallback) do
     cwd_config = Path.expand(filename, File.cwd!())
 
@@ -88,14 +82,14 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
     end
   end
 
-  defp load_reverts_root(path) do
+  defp load_weapons_root(path) do
     path
     |> load_entries()
     |> root_entries()
   end
 
-  defp load_cwx_root(path) do
-    case path |> load_entries() |> section(@cwx_root_section) do
+  defp cwx_root(root) do
+    case section(root, @cwx_section) do
       entries when is_list(entries) -> entries
       _ -> []
     end
@@ -119,6 +113,7 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
       root
       |> Enum.filter(fn
         {@item_classes_section, _} -> false
+        {@cwx_section, _} -> false
         {_, children} -> is_list(children)
       end)
       |> Map.new()
@@ -168,11 +163,11 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
   end
 
   defp normalize_item(item_key, children) do
-    description = section(children, "change_description") || []
+    description = section(children, "description") || []
 
     %{
       key: item_key,
-      name: value(children, "weapon_name", item_key),
+      name: value(children, "name", item_key),
       image: value(children, "image", ""),
       type: value(description, "type", ""),
       positive: value(description, "positive", ""),
