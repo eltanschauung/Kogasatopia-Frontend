@@ -1131,8 +1131,8 @@ defmodule KogasaFrontend.StatsFeed do
       accuracy_overall = if shots > 0, do: Float.round(hits * 100.0 / shots, 1), else: 0.0
 
       personaname =
-        case str(profile["personaname"]) do
-          "" -> str(row["personaname"])
+        case str(row["personaname"]) do
+          "" -> str(profile["personaname"])
           name -> name
         end
 
