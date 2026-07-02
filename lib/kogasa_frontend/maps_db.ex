@@ -260,6 +260,7 @@ defmodule KogasaFrontend.MapsDb do
      AND p.map_session_id = s.map_session_id
      AND p.map_name = s.map_name
     WHERE #{valid_map_session_sql("s")}
+      AND s.start_players >= 10
       AND #{valid_population_sample_sql("p", "s")}
       AND p.player_count > 3
       AND FLOOR(MOD(p.sampled_at, 86400) / 3600) >= 2
