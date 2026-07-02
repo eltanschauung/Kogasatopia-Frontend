@@ -1256,6 +1256,7 @@ defmodule KogasaFrontend.StatsFeed do
     candidate
     |> Map.put("score", score)
     |> Map.put("shots", score)
+    |> Map.put("title_value", score)
     |> Map.put("hits", hits)
     |> Map.put("accuracy", if(score > 0.0, do: hits / score * 100.0, else: 0.0))
   end
@@ -1268,7 +1269,13 @@ defmodule KogasaFrontend.StatsFeed do
     if medic_score <= 0.0 do
       candidates
     else
-      [match_log_class_candidate("medic", medic_score, 0) | candidates]
+      [
+        "medic"
+        |> match_log_class_candidate(medic_score, 0)
+        |> Map.put("title_value", healing)
+        |> Map.put("title_metric", "healing")
+        | candidates
+      ]
     end
   end
 
@@ -1294,6 +1301,8 @@ defmodule KogasaFrontend.StatsFeed do
       "label" => match_log_class_label(slug),
       "score" => score,
       "shots" => score,
+      "title_value" => score,
+      "title_metric" => "shots",
       "hits" => hits,
       "accuracy" => if(score > 0.0, do: hits / score * 100.0, else: 0.0)
     }

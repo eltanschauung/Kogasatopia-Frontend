@@ -580,24 +580,37 @@ defmodule KogasaFrontendWeb.StatsFragments do
 
   defp log_accuracy_class_icons_html(active_classes) when is_list(active_classes) do
     active_classes
-    |> Enum.map(&accuracy_class_id_for_entry/1)
-    |> Enum.reject(&(&1 == 0))
-    |> Enum.uniq()
+    |> Enum.map(&with_class_id/1)
+    |> Enum.reject(fn {_entry, class_id} -> class_id == 0 end)
+    |> Enum.uniq_by(fn {_entry, class_id} -> class_id end)
     |> Enum.take(3)
-    |> Enum.map(&class_icon_html(&1, "Favorite class"))
+    |> Enum.map(fn {entry, class_id} ->
+      class_icon_html_with_title(class_id, class_icon_title(entry))
+    end)
     |> Enum.join("")
   end
 
   defp log_accuracy_class_icons_html(active_acc) when is_map(active_acc) do
     active_acc
-    |> accuracy_class_id_for_entry()
+    |> with_class_id()
     |> case do
-      0 -> ""
-      class_id -> class_icon_html(class_id, "Favorite class")
+      {_entry, 0} -> ""
+      {entry, class_id} -> class_icon_html_with_title(class_id, class_icon_title(entry))
     end
   end
 
   defp log_accuracy_class_icons_html(_), do: ""
+
+  defp with_class_id(active_acc), do: {active_acc, accuracy_class_id_for_entry(active_acc)}
+
+  defp class_icon_title(entry) when is_map(entry) do
+    metric = fallback(entry["title_metric"], "shots")
+    value = number(number_or_zero(entry["title_value"] || entry["shots"]))
+    label = fallback(entry["label"], "Class")
+    "#{label}: #{value} #{metric}"
+  end
+
+  defp class_icon_title(_), do: "Class"
 
   defp accuracy_class_id_for_entry(active_acc) when is_map(active_acc) do
     active_acc
@@ -630,6 +643,16 @@ defmodule KogasaFrontendWeb.StatsFragments do
     case Tf2Classes.leaderboard_icon_for_id(id) do
       {:ok, {label, path}} ->
         ~s(<img class="stat-accuracy-icon" src="#{e(path)}" alt="#{e(label)}" title="#{e(title_prefix)}: #{e(label)}">)
+
+      :error ->
+        ""
+    end
+  end
+
+  defp class_icon_html_with_title(id, title) do
+    case Tf2Classes.leaderboard_icon_for_id(id) do
+      {:ok, {label, path}} ->
+        ~s(<img class="stat-accuracy-icon" src="#{e(path)}" alt="#{e(label)}" title="#{e(title)}">)
 
       :error ->
         ""
