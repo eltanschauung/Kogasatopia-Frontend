@@ -938,6 +938,7 @@
       }
 
       async function loadCurrentLog() {
+        if (!els.currentLogContainer) return;
         try {
           const res = await fetch('/stats/current_log_fragment.php?t=' + Date.now(), { cache: 'no-store' });
           if (!res.ok) throw new Error('bad response');
@@ -1063,8 +1064,10 @@
       if (els.navOnlineCount && window.WTOnlineCountCache?.apply) window.WTOnlineCountCache.apply(els.navOnlineCount);
       updateNavCount();
       updateChatAgeLabel();
+      loadCurrentLog();
       setInterval(updateNavCount, 10000);
       setInterval(updateChatAgeLabel, 60000);
+      setInterval(loadCurrentLog, 10000);
     })();
   </script>
 </Layouts.app>
