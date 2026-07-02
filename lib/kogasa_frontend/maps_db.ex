@@ -133,16 +133,14 @@ defmodule KogasaFrontend.MapsDb do
 
   def map_detail_analytics do
     rows = fetch_map_detail_rows(40)
-    population_curve_rows = fetch_population_curve_candidate_rows(6)
-    first15_curve_rows = fetch_first15_curve_candidate_rows(6)
+    best_performing_rows = fetch_best_performing_map_rows(25)
 
     %{
       rows: rows,
       top_sessions: fetch_session_extremes(:top, 8),
       worst_sessions: fetch_session_extremes(:worst, 8),
       weekday_hours: fetch_weekday_hour_performance(12),
-      first15_chart: fetch_map_curve_chart(first15_curve_rows, 15, 60, 6),
-      population_curve_chart: fetch_map_curve_chart(population_curve_rows, 60, 300, 6),
+      best_performing_chart: fetch_map_lifecycle_chart(best_performing_rows, 10),
       vote_table_available: table_exists?(@vote_statistics_table)
     }
   end
@@ -344,76 +342,87 @@ defmodule KogasaFrontend.MapsDb do
     end)
   end
 
-  defp fetch_population_curve_candidate_rows(limit) do
-    lim = max(1, min(limit, 12))
+  defp fetch_best_performing_map_rows(limit) do
+    lim = max(1, min(limit, 25))
 
     query_rows("""
-    SELECT p.map_name,
-           COUNT(DISTINCT CONCAT(p.host_port, ':', p.map_session_id)) AS sessions,
-           ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN LEAST(p.player_count, 24) END), 2) AS start_avg,
-           ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 3000 AND 3599 THEN LEAST(p.player_count, 24) END), 2) AS finish_avg,
-           ROUND(
-             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 3000 AND 3599 THEN LEAST(p.player_count, 24) END), 0) -
-             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN LEAST(p.player_count, 24) END), 0),
-             2
-           ) AS finish_growth
-    FROM #{@population_statistics_table} p
-    JOIN #{@map_session_statistics_table} s
-      ON s.host_port = p.host_port
-     AND s.map_session_id = p.map_session_id
-     AND s.map_name = p.map_name
-    WHERE p.map_name <> ''
-      AND p.map_elapsed_seconds BETWEEN 0 AND 3599
-      AND #{valid_map_session_sql("s")}
-      AND #{valid_population_sample_sql("p", "s")}
-    GROUP BY p.map_name
-    HAVING sessions > 10
-       AND start_avg IS NOT NULL
-       AND finish_avg IS NOT NULL
-       AND finish_growth > 0
-    ORDER BY finish_growth DESC, finish_avg DESC, start_avg ASC, sessions DESC
+    SELECT ranked.map_name,
+           ranked.sessions,
+           ranked.start_avg,
+           ranked.finish_avg,
+           ranked.growth,
+           ranked.conversion_rate,
+           ranked.performance_score
+    FROM (
+      SELECT session_metrics.map_name,
+             session_metrics.sessions,
+             samples.start_avg,
+             samples.finish_avg,
+             ROUND(samples.finish_avg - samples.start_avg, 2) AS growth,
+             session_metrics.conversion_rate,
+             ROUND(
+               ((samples.finish_avg - samples.start_avg) * 2.5) +
+               (session_metrics.conversion_rate * 12) +
+               (CASE WHEN samples.start_avg < 12 THEN (12 - samples.start_avg) * 1.5 ELSE 0 END) +
+               (CASE WHEN samples.finish_avg > 22 THEN (samples.finish_avg - 22) * 3 ELSE 0 END),
+               2
+             ) AS performance_score
+      FROM (
+        SELECT s.map_name,
+               COUNT(*) AS sessions,
+               ROUND(
+                 AVG(CASE WHEN s.start_players < 12 AND GREATEST(s.end_players, s.peak_players) > 22 THEN 1 ELSE 0 END),
+                 4
+               ) AS conversion_rate
+        FROM #{@map_session_statistics_table} s
+        WHERE #{valid_map_session_sql("s")}
+          AND s.map_name <> ''
+        GROUP BY s.map_name
+        HAVING sessions > 10
+      ) session_metrics
+      JOIN (
+        SELECT p.map_name,
+               ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN LEAST(p.player_count, 24) END), 2) AS start_avg,
+               ROUND(AVG(CASE WHEN p.map_elapsed_seconds >= GREATEST(s.duration - 600, 0) THEN LEAST(p.player_count, 24) END), 2) AS finish_avg
+        FROM #{@population_statistics_table} p
+        JOIN #{@map_session_statistics_table} s
+          ON s.host_port = p.host_port
+         AND s.map_session_id = p.map_session_id
+         AND s.map_name = p.map_name
+        WHERE #{valid_map_session_sql("s")}
+          AND #{valid_population_sample_sql("p", "s")}
+          AND p.map_name <> ''
+        GROUP BY p.map_name
+      ) samples
+        ON samples.map_name = session_metrics.map_name
+      WHERE samples.start_avg IS NOT NULL
+        AND samples.finish_avg IS NOT NULL
+    ) ranked
+    ORDER BY ranked.performance_score DESC,
+             ranked.growth DESC,
+             ranked.finish_avg DESC,
+             ranked.sessions DESC
     LIMIT #{lim}
     """)
   end
 
-  defp fetch_first15_curve_candidate_rows(limit) do
-    lim = max(1, min(limit, 12))
-
-    query_rows("""
-    SELECT p.map_name,
-           COUNT(DISTINCT CONCAT(p.host_port, ':', p.map_session_id)) AS sessions,
-           ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 899 THEN LEAST(p.player_count, 24) END), 2) AS first15_avg,
-           ROUND(
-             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 600 AND 899 THEN LEAST(p.player_count, 24) END), 0) -
-             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN LEAST(p.player_count, 24) END), 0),
-             2
-           ) AS first15_growth
-    FROM #{@population_statistics_table} p
-    JOIN #{@map_session_statistics_table} s
-      ON s.host_port = p.host_port
-     AND s.map_session_id = p.map_session_id
-     AND s.map_name = p.map_name
-    WHERE p.map_name <> ''
-      AND p.map_elapsed_seconds BETWEEN 0 AND 899
-      AND #{valid_map_session_sql("s")}
-      AND #{valid_population_sample_sql("p", "s")}
-    GROUP BY p.map_name
-    HAVING sessions > 10
-       AND first15_avg IS NOT NULL
-    ORDER BY first15_avg DESC, first15_growth DESC, sessions DESC
-    LIMIT #{lim}
-    """)
-  end
-
-  defp fetch_map_curve_chart(rows, minutes, bucket_seconds, limit) do
+  defp fetch_map_lifecycle_chart(rows, bucket_count) do
     map_names =
       rows
       |> Enum.map(& &1.map_name)
       |> Enum.reject(&(&1 == ""))
-      |> Enum.take(limit)
+      |> Enum.take(25)
 
-    bucket_count = max(1, div(minutes * 60, bucket_seconds))
-    labels = for bucket <- 0..(bucket_count - 1), do: "#{div(bucket * bucket_seconds, 60)}m"
+    bucket_count = max(1, min(bucket_count, 20))
+
+    labels =
+      for bucket <- 0..bucket_count do
+        cond do
+          bucket == 0 -> "Start"
+          bucket == bucket_count -> "End"
+          true -> "#{div(bucket * 100, bucket_count)}%"
+        end
+      end
 
     if map_names == [] do
       %{"labels" => labels, "series" => []}
@@ -421,7 +430,7 @@ defmodule KogasaFrontend.MapsDb do
       rows =
         query_rows("""
         SELECT p.map_name,
-               FLOOR(p.map_elapsed_seconds / #{bucket_seconds}) AS bucket,
+               LEAST(#{bucket_count}, FLOOR((p.map_elapsed_seconds * #{bucket_count}) / GREATEST(s.duration, 1))) AS bucket,
                ROUND(AVG(LEAST(p.player_count, 24)), 2) AS avg_players
         FROM #{@population_statistics_table} p
         JOIN #{@map_session_statistics_table} s
@@ -430,7 +439,7 @@ defmodule KogasaFrontend.MapsDb do
          AND s.map_name = p.map_name
         WHERE p.map_name IN (#{sql_string_list(map_names)})
           AND p.map_elapsed_seconds >= 0
-          AND p.map_elapsed_seconds < #{minutes * 60}
+          AND p.map_elapsed_seconds <= s.duration
           AND #{valid_map_session_sql("s")}
           AND #{valid_population_sample_sql("p", "s")}
         GROUP BY p.map_name, bucket
@@ -453,7 +462,7 @@ defmodule KogasaFrontend.MapsDb do
             "label" => map_name,
             "data" =>
               for(
-                bucket <- 0..(bucket_count - 1),
+                bucket <- 0..bucket_count,
                 do: Map.get(Map.get(values, map_name, %{}), bucket)
               )
           }

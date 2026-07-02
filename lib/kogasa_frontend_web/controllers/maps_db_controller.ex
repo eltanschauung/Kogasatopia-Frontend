@@ -12,8 +12,7 @@ defmodule KogasaFrontendWeb.MapsDbController do
       chart_json: Jason.encode!(data.popularity_chart),
       analytics_chart_json:
         Jason.encode!(%{
-          population: data.map_analytics.population_curve_chart,
-          first15: data.map_analytics.first15_chart
+          bestPerforming: data.map_analytics.best_performing_chart
         }),
       map_sections: data.map_sections,
       popular_maps: data.popular_maps,

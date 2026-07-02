@@ -81,7 +81,9 @@
       .map-analytics-name { font-weight:650; color:#f5f6fa; }
       .map-analytics-meta { color:var(--text-muted, #95a5b7); font-size:.82rem; }
       .map-analytics-chart-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:.75rem; }
+      .map-analytics-chart-grid-single { grid-template-columns:1fr; }
       .map-analytics-chart-frame { position:relative; width:100%; height:235px; max-height:235px; overflow:hidden; }
+      .map-analytics-chart-frame-large { height:430px; max-height:430px; }
       .map-analytics-chart-frame canvas { display:block; width:100% !important; height:100% !important; }
       @media (max-width: 960px) {
         .mapsdb-layout { grid-template-columns:1fr; gap: .7rem; }
@@ -95,6 +97,7 @@
         .popularity-card, .map-preview-wall { padding: .7rem; }
         .map-analytics-band { padding: .7rem; }
         .map-analytics-chart-frame { height:220px; max-height:220px; }
+        .map-analytics-chart-frame-large { height:360px; max-height:360px; }
       }
       @media (max-width: 700px) {
         .stats-header-shell .header {
@@ -237,21 +240,13 @@
                 <% end %>
               </div>
 
-              <div class="map-analytics-chart-grid">
+              <div class="map-analytics-chart-grid map-analytics-chart-grid-single">
                 <div class="map-analytics-band map-analytics-chart">
                   <div class="map-analytics-header">
-                    <h3 class="map-analytics-title">Population Curve</h3>
+                    <h3 class="map-analytics-title">Best Performing Maps in Action</h3>
                   </div>
-                  <div class="map-analytics-chart-frame">
-                    <canvas id="map-population-curve"></canvas>
-                  </div>
-                </div>
-                <div class="map-analytics-band map-analytics-chart">
-                  <div class="map-analytics-header">
-                    <h3 class="map-analytics-title">First 15 Minutes</h3>
-                  </div>
-                  <div class="map-analytics-chart-frame">
-                    <canvas id="map-first15-curve"></canvas>
+                  <div class="map-analytics-chart-frame map-analytics-chart-frame-large">
+                    <canvas id="map-best-performing-curve"></canvas>
                   </div>
                 </div>
               </div>
@@ -593,7 +588,7 @@
     <script>
       (function() {
         const charts = window.mapsdbAnalyticsCharts || {};
-        const palette = ['#7fc8ff', '#97e19c', '#f2a24a', '#caa6ff', '#ff8fa3', '#f6eb7a'];
+        const lineColor = (idx) => `hsl(${Math.round((idx * 137.508) % 360)} 72% 62%)`;
 
         const renderLineChart = (canvasId, chartData, yTitle) => {
           const canvas = document.getElementById(canvasId);
@@ -602,11 +597,11 @@
           const datasets = chartData.series.map((series, idx) => ({
             label: series.label,
             data: series.data,
-            borderColor: palette[idx % palette.length],
+            borderColor: lineColor(idx),
             backgroundColor: 'rgba(127, 200, 255, 0.08)',
             tension: 0.25,
             pointRadius: 0,
-            borderWidth: 1.8,
+            borderWidth: chartData.series.length > 12 ? 1.2 : 1.8,
             spanGaps: true
           }));
 
@@ -618,19 +613,18 @@
               maintainAspectRatio: false,
               interaction: { mode: 'index', intersect: false },
               scales: {
-                y: { beginAtZero: true, title: { display: true, text: yTitle }, ticks: { stepSize: 4 } },
+                y: { beginAtZero: true, suggestedMax: 24, title: { display: true, text: yTitle }, ticks: { stepSize: 4 } },
                 x: { ticks: { maxTicksLimit: 12 } }
               },
               plugins: {
-                legend: { display: true, position: 'bottom', labels: { boxWidth: 10 } }
+                legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
               }
             }
           });
         };
 
         const renderAnalyticsCharts = () => {
-          renderLineChart('map-population-curve', charts.population, 'Average players');
-          renderLineChart('map-first15-curve', charts.first15, 'Average players');
+          renderLineChart('map-best-performing-curve', charts.bestPerforming, 'Average players');
         };
 
         if (typeof Chart === 'undefined') {
