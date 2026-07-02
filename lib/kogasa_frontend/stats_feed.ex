@@ -38,7 +38,8 @@ defmodule KogasaFrontend.StatsFeed do
     {8, ~w(revolvers)},
     {9, ~w(shotguns pistols)}
   ]
-  @match_log_healing_per_shot_equivalent 6.6
+  @match_log_healing_per_shot_equivalent 10.0
+  @match_log_spy_backstab_shot_equivalent 5
   @match_log_class_threshold 0.33
   @match_log_max_class_icons 3
 
@@ -1225,6 +1226,7 @@ defmodule KogasaFrontend.StatsFeed do
   defp active_match_log_classes(row, weapon_summary) do
     weapon_summary
     |> Enum.reduce(%{}, &put_match_log_class_candidate/2)
+    |> maybe_add_spy_backstab_match_log_class(row)
     |> Map.values()
     |> maybe_add_medic_match_log_class(row)
     |> Enum.sort_by(fn item -> {-float(item["score"]), -float(item["accuracy"])} end)
@@ -1259,6 +1261,21 @@ defmodule KogasaFrontend.StatsFeed do
     |> Map.put("title_value", score)
     |> Map.put("hits", hits)
     |> Map.put("accuracy", if(score > 0.0, do: hits / score * 100.0, else: 0.0))
+  end
+
+  defp maybe_add_spy_backstab_match_log_class(candidates, row) do
+    backstab_score = int(row["backstabs"]) * @match_log_spy_backstab_shot_equivalent
+
+    if backstab_score <= 0 do
+      candidates
+    else
+      Map.update(
+        candidates,
+        "spy",
+        match_log_class_candidate("spy", backstab_score, 0),
+        &merge_match_log_class_candidate(&1, backstab_score, 0)
+      )
+    end
   end
 
   defp maybe_add_medic_match_log_class(candidates, row) do
