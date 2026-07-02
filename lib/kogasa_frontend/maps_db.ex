@@ -133,14 +133,13 @@ defmodule KogasaFrontend.MapsDb do
 
   def map_detail_analytics do
     rows = fetch_map_detail_rows(40)
-    best_performing_rows = fetch_best_performing_map_rows(15)
 
     %{
       rows: rows,
       top_sessions: fetch_session_extremes(:top, 8),
       worst_sessions: fetch_session_extremes(:worst, 8),
       weekday_hours: fetch_weekday_hour_performance(12),
-      best_performing_chart: fetch_map_lifecycle_chart(best_performing_rows, 10),
+      best_performing_chart: rows |> Enum.take(15) |> fetch_map_lifecycle_chart(10),
       vote_table_available: table_exists?(@vote_statistics_table)
     }
   end
@@ -342,101 +341,31 @@ defmodule KogasaFrontend.MapsDb do
     end)
   end
 
-  defp fetch_best_performing_map_rows(limit) do
-    lim = max(1, min(limit, 15))
-
-    query_rows("""
-    SELECT ranked.map_name,
-           ranked.host_port,
-           ranked.map_session_id,
-           ranked.duration,
-           ranked.sample_count,
-           ranked.start_avg,
-           ranked.finish_avg,
-           ranked.growth,
-           ranked.full_rate,
-           ranked.performance_score
-    FROM (
-      SELECT scored.*,
-             ROW_NUMBER() OVER (
-               PARTITION BY scored.map_name
-               ORDER BY scored.performance_score DESC,
-                        scored.full_rate DESC,
-                        scored.growth DESC,
-                        scored.finish_avg DESC
-             ) AS map_rank
-      FROM (
-        SELECT session_metrics.*,
-               ROUND(session_metrics.finish_avg - session_metrics.start_avg, 2) AS growth,
-               ROUND(
-                 ((session_metrics.finish_avg - session_metrics.start_avg) * 2.5) +
-                 (session_metrics.full_rate * 24) +
-                 (CASE WHEN session_metrics.start_avg < 12 THEN (12 - session_metrics.start_avg) * 1.5 ELSE 0 END) +
-                 (CASE WHEN session_metrics.finish_avg > 23 THEN (session_metrics.finish_avg - 23) * 4 ELSE 0 END),
-                 2
-               ) AS performance_score
-        FROM (
-          SELECT s.map_name,
-                 s.host_port,
-                 s.map_session_id,
-                 s.duration,
-                 COUNT(*) AS sample_count,
-                 ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN LEAST(p.player_count, 24) END), 2) AS start_avg,
-                 ROUND(AVG(CASE WHEN p.map_elapsed_seconds >= GREATEST(s.duration - 600, 0) THEN LEAST(p.player_count, 24) END), 2) AS finish_avg,
-                 ROUND(AVG(CASE WHEN LEAST(p.player_count, 24) > 23 THEN 1 ELSE 0 END), 4) AS full_rate
-          FROM #{@map_session_statistics_table} s
-          JOIN #{@population_statistics_table} p
-            ON p.host_port = s.host_port
-           AND p.map_session_id = s.map_session_id
-           AND p.map_name = s.map_name
-          WHERE #{valid_map_session_sql("s")}
-            AND #{valid_population_sample_sql("p", "s")}
-            AND s.map_name <> ''
-          GROUP BY s.host_port, s.map_session_id, s.map_name, s.duration
-          HAVING sample_count >= 5
-             AND start_avg IS NOT NULL
-             AND finish_avg IS NOT NULL
-             AND full_rate >= 0.8
-        ) session_metrics
-      ) scored
-    ) ranked
-    WHERE ranked.map_rank = 1
-    ORDER BY ranked.performance_score DESC,
-             ranked.full_rate DESC,
-             ranked.growth DESC,
-             ranked.finish_avg DESC,
-             ranked.duration DESC
-    LIMIT #{lim}
-    """)
-  end
-
   defp fetch_map_lifecycle_chart(rows, bucket_count) do
-    sessions =
+    map_names =
       rows
-      |> Enum.map(&chart_session/1)
-      |> Enum.reject(&(&1.map_name == "" or &1.map_session_id == ""))
+      |> Enum.map(& &1.map_name)
+      |> Enum.reject(&(&1 == ""))
       |> Enum.take(15)
 
     bucket_count = max(1, min(bucket_count, 20))
-    common_seconds = fetch_common_lifecycle_seconds(sessions)
+    common_seconds = fetch_common_lifecycle_seconds(map_names)
     labels = lifecycle_chart_labels(bucket_count, common_seconds)
 
-    if sessions == [] or common_seconds <= 0 do
+    if map_names == [] or common_seconds <= 0 do
       %{"labels" => labels, "series" => []}
     else
       rows =
         query_rows("""
         SELECT p.map_name,
-               s.host_port,
-               s.map_session_id,
                LEAST(#{bucket_count - 1}, FLOOR((p.map_elapsed_seconds * #{bucket_count}) / #{common_seconds})) AS bucket,
-               ROUND(AVG(LEAST(p.player_count, 24)), 2) AS avg_players
+               ROUND(AVG(CASE WHEN p.player_count > 23 THEN 24 ELSE p.player_count END), 2) AS avg_players
         FROM #{@population_statistics_table} p
         JOIN #{@map_session_statistics_table} s
           ON s.host_port = p.host_port
          AND s.map_session_id = p.map_session_id
          AND s.map_name = p.map_name
-        WHERE (#{sql_session_conditions("s", sessions)})
+        WHERE p.map_name IN (#{sql_string_list(map_names)})
           AND p.map_elapsed_seconds >= 0
           AND p.map_elapsed_seconds <= #{common_seconds}
           AND #{valid_map_session_sql("s")}
@@ -447,21 +376,21 @@ defmodule KogasaFrontend.MapsDb do
 
       values =
         rows
-        |> Enum.group_by(&chart_session_key/1)
-        |> Map.new(fn {session_key, points} ->
+        |> Enum.group_by(& &1.map_name)
+        |> Map.new(fn {map_name, points} ->
           point_map =
             Map.new(points, fn point -> {to_int(point.bucket), to_float(point.avg_players)} end)
 
-          {session_key, point_map}
+          {map_name, point_map}
         end)
 
       series =
-        Enum.map(sessions, fn session ->
+        Enum.map(map_names, fn map_name ->
           %{
-            "label" => session.map_name,
+            "label" => map_name,
             "data" =>
               values
-              |> Map.get(chart_session_key(session), %{})
+              |> Map.get(map_name, %{})
               |> lifecycle_chart_data(bucket_count)
           }
         end)
@@ -472,7 +401,7 @@ defmodule KogasaFrontend.MapsDb do
 
   defp fetch_common_lifecycle_seconds([]), do: 0
 
-  defp fetch_common_lifecycle_seconds(sessions) do
+  defp fetch_common_lifecycle_seconds(map_names) do
     query_rows("""
     SELECT MIN(map_max_elapsed) AS common_seconds
     FROM (
@@ -483,11 +412,11 @@ defmodule KogasaFrontend.MapsDb do
         ON s.host_port = p.host_port
        AND s.map_session_id = p.map_session_id
        AND s.map_name = p.map_name
-      WHERE (#{sql_session_conditions("s", sessions)})
+      WHERE p.map_name IN (#{sql_string_list(map_names)})
         AND p.map_elapsed_seconds >= 0
         AND #{valid_map_session_sql("s")}
         AND #{valid_population_sample_sql("p", "s")}
-      GROUP BY s.host_port, s.map_session_id, s.map_name
+      GROUP BY p.map_name
     ) map_ends
     """)
     |> case do
@@ -506,27 +435,6 @@ defmodule KogasaFrontend.MapsDb do
       value, _last_value -> {value, value}
     end)
     |> elem(0)
-  end
-
-  defp chart_session(row) do
-    %{
-      host_port: to_int(Map.get(row, :host_port)),
-      map_session_id: to_string(Map.get(row, :map_session_id) || ""),
-      map_name: to_string(Map.get(row, :map_name) || "")
-    }
-  end
-
-  defp chart_session_key(%{
-         host_port: host_port,
-         map_session_id: map_session_id,
-         map_name: map_name
-       }) do
-    {host_port, map_session_id, map_name}
-  end
-
-  defp chart_session_key(row) when is_map(row) do
-    {to_int(Map.get(row, :host_port)), to_string(Map.get(row, :map_session_id) || ""),
-     to_string(Map.get(row, :map_name) || "")}
   end
 
   defp lifecycle_chart_labels(bucket_count, common_seconds) do
@@ -1307,16 +1215,10 @@ defmodule KogasaFrontend.MapsDb do
 
   defp sql_string(value), do: "'" <> String.replace(to_string(value), "'", "''") <> "'"
 
-  defp sql_session_conditions(alias_name, sessions) do
-    sessions
-    |> Enum.map(fn session ->
-      """
-      (#{alias_name}.host_port = #{to_int(session.host_port)}
-       AND #{alias_name}.map_session_id = #{sql_string(session.map_session_id)}
-       AND #{alias_name}.map_name = #{sql_string(session.map_name)})
-      """
-    end)
-    |> Enum.join(" OR ")
+  defp sql_string_list(values) do
+    values
+    |> Enum.map(&sql_string/1)
+    |> Enum.join(",")
   end
 
   defp format_slot(nil), do: "n/a"
