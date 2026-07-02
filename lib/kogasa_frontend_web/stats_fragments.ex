@@ -413,7 +413,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
     dpm = if minutes > 0, do: damage / minutes, else: damage * 1.0
     dtpm = if minutes > 0, do: damage_taken / minutes, else: damage_taken * 1.0
     active_acc = player[:active_weapon_accuracy]
-    accuracy_icon = log_accuracy_class_icon_html(active_acc)
+    accuracy_icon = log_accuracy_class_icons_html(player[:active_weapon_classes] || active_acc)
 
     {acc, acc_title} =
       cond do
@@ -578,17 +578,34 @@ defmodule KogasaFrontendWeb.StatsFragments do
   defp maybe_push(list, true, value), do: [value | list]
   defp maybe_push(list, _, _), do: list
 
-  defp log_accuracy_class_icon_html(active_acc) when is_map(active_acc) do
+  defp log_accuracy_class_icons_html(active_classes) when is_list(active_classes) do
+    active_classes
+    |> Enum.map(&accuracy_class_id_for_entry/1)
+    |> Enum.reject(&(&1 == 0))
+    |> Enum.uniq()
+    |> Enum.take(3)
+    |> Enum.map(&class_icon_html(&1, "Favorite class"))
+    |> Enum.join("")
+  end
+
+  defp log_accuracy_class_icons_html(active_acc) when is_map(active_acc) do
     active_acc
-    |> Map.get("slug")
-    |> accuracy_class_id_for_slug()
+    |> accuracy_class_id_for_entry()
     |> case do
       0 -> ""
       class_id -> class_icon_html(class_id, "Favorite class")
     end
   end
 
-  defp log_accuracy_class_icon_html(_), do: ""
+  defp log_accuracy_class_icons_html(_), do: ""
+
+  defp accuracy_class_id_for_entry(active_acc) when is_map(active_acc) do
+    active_acc
+    |> Map.get("slug")
+    |> accuracy_class_id_for_slug()
+  end
+
+  defp accuracy_class_id_for_entry(_), do: 0
 
   defp accuracy_class_id_for_slug("scatterguns"), do: 1
   defp accuracy_class_id_for_slug("snipers"), do: 2

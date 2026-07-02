@@ -1142,7 +1142,7 @@ defmodule KogasaFrontend.StatsFeed do
     Enum.map(rows, fn row ->
       steamid = str(row["steamid"])
       profile = Map.get(profiles, steamid, %{})
-      {weapon_summary, active_acc} = weapon_summary_for_log_row(row)
+      {weapon_summary, active_acc, active_classes} = weapon_summary_for_log_row(row)
       {total_shots, total_hits} = total_weapon_accuracy_counts(row)
       shots = if total_shots > 0, do: total_shots, else: int(row["shots"])
       hits = if total_shots > 0, do: total_hits, else: int(row["hits"])
@@ -1183,7 +1183,8 @@ defmodule KogasaFrontend.StatsFeed do
         accuracy_overall: accuracy_overall,
         airshots: int(row["airshots"]),
         weapon_category_summary: weapon_summary,
-        active_weapon_accuracy: active_acc
+        active_weapon_accuracy: active_acc,
+        active_weapon_classes: active_classes
       }
     end)
   end
@@ -1213,7 +1214,22 @@ defmodule KogasaFrontend.StatsFeed do
       |> Enum.sort_by(fn item -> {-int(item["shots"]), -float(item["accuracy"])} end)
       |> fallback_overall_weapon_summary(row)
 
-    {summary, List.first(summary)}
+    {summary, List.first(summary), active_weapon_classes(summary)}
+  end
+
+  defp active_weapon_classes([]), do: []
+
+  defp active_weapon_classes([top | _] = summary) do
+    top_shots = int(top["shots"])
+
+    if top_shots <= 0 do
+      []
+    else
+      minimum_shots = top_shots * 0.33
+
+      summary
+      |> Enum.filter(&(int(&1["shots"]) >= minimum_shots))
+    end
   end
 
   defp fallback_overall_weapon_summary([], row) do
