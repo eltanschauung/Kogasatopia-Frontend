@@ -607,6 +607,15 @@ defmodule KogasaFrontendWeb.StatsFragments do
 
   defp accuracy_class_id_for_entry(_), do: 0
 
+  defp accuracy_class_id_for_slug("scout"), do: 1
+  defp accuracy_class_id_for_slug("sniper"), do: 2
+  defp accuracy_class_id_for_slug("soldier"), do: 3
+  defp accuracy_class_id_for_slug("demoman"), do: 4
+  defp accuracy_class_id_for_slug("medic"), do: 5
+  defp accuracy_class_id_for_slug("heavy"), do: 6
+  defp accuracy_class_id_for_slug("pyro"), do: 7
+  defp accuracy_class_id_for_slug("spy"), do: 8
+  defp accuracy_class_id_for_slug("engineer"), do: 9
   defp accuracy_class_id_for_slug("scatterguns"), do: 1
   defp accuracy_class_id_for_slug("snipers"), do: 2
   defp accuracy_class_id_for_slug("rocketlaunchers"), do: 3

@@ -38,6 +38,9 @@ defmodule KogasaFrontend.StatsFeed do
     {8, ~w(revolvers)},
     {9, ~w(shotguns pistols)}
   ]
+  @match_log_healing_per_shot_equivalent 6.6
+  @match_log_class_threshold 0.33
+  @match_log_max_class_icons 3
 
   def page_payload(opts \\ %{}) do
     search = str(Map.get(opts, :q, Map.get(opts, "q", "")))
@@ -1080,7 +1083,7 @@ defmodule KogasaFrontend.StatsFeed do
            END AS personaname,
            lp.kills, lp.deaths, lp.assists, lp.damage, lp.damage_taken, lp.healing,
            lp.headshots, lp.backstabs, lp.total_ubers, lp.playtime, lp.shots, lp.hits#{category_select_clause},
-           COALESCE(lp.airshots, 0) AS airshots
+           COALESCE(lp.shots_medic, 0) AS shots_medic, COALESCE(lp.airshots, 0) AS airshots
     FROM #{@log_players_table} lp
     LEFT JOIN prename_rules pr ON pr.pattern COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
     LEFT JOIN filters_steam_names fs ON fs.steamid64 COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
@@ -1104,7 +1107,8 @@ defmodule KogasaFrontend.StatsFeed do
                  ELSE lp.personaname
                END AS personaname,
                lp.kills, lp.deaths, lp.assists, lp.damage, lp.damage_taken, lp.healing,
-               lp.headshots, lp.backstabs, lp.total_ubers, lp.playtime, lp.shots, lp.hits#{category_select_clause}
+               lp.headshots, lp.backstabs, lp.total_ubers, lp.playtime, lp.shots, lp.hits#{category_select_clause},
+               COALESCE(lp.shots_medic, 0) AS shots_medic
         FROM #{@log_players_table} lp
         LEFT JOIN prename_rules pr ON pr.pattern COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
         LEFT JOIN filters_steam_names fs ON fs.steamid64 COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
@@ -1142,7 +1146,8 @@ defmodule KogasaFrontend.StatsFeed do
     Enum.map(rows, fn row ->
       steamid = str(row["steamid"])
       profile = Map.get(profiles, steamid, %{})
-      {weapon_summary, active_acc, active_classes} = weapon_summary_for_log_row(row)
+      {weapon_summary, active_acc} = weapon_summary_for_log_row(row)
+      active_classes = active_match_log_classes(row, weapon_summary)
       {total_shots, total_hits} = total_weapon_accuracy_counts(row)
       shots = if total_shots > 0, do: total_shots, else: int(row["shots"])
       hits = if total_shots > 0, do: total_hits, else: int(row["hits"])
@@ -1214,23 +1219,106 @@ defmodule KogasaFrontend.StatsFeed do
       |> Enum.sort_by(fn item -> {-int(item["shots"]), -float(item["accuracy"])} end)
       |> fallback_overall_weapon_summary(row)
 
-    {summary, List.first(summary), active_weapon_classes(summary)}
+    {summary, List.first(summary)}
   end
 
-  defp active_weapon_classes([]), do: []
+  defp active_match_log_classes(row, weapon_summary) do
+    weapon_summary
+    |> Enum.reduce(%{}, &put_match_log_class_candidate/2)
+    |> Map.values()
+    |> maybe_add_medic_match_log_class(row)
+    |> Enum.sort_by(fn item -> {-float(item["score"]), -float(item["accuracy"])} end)
+    |> threshold_match_log_class_candidates()
+  end
 
-  defp active_weapon_classes([top | _] = summary) do
-    top_shots = int(top["shots"])
+  defp put_match_log_class_candidate(item, acc) do
+    class_slug = match_log_class_slug_for_weapon_slug(str(item["slug"]))
+    shots = float(item["shots"])
 
-    if top_shots <= 0 do
-      []
+    if class_slug == "" or shots <= 0.0 do
+      acc
     else
-      minimum_shots = top_shots * 0.33
+      hits = int(item["hits"])
 
-      summary
-      |> Enum.filter(&(int(&1["shots"]) >= minimum_shots))
+      Map.update(
+        acc,
+        class_slug,
+        match_log_class_candidate(class_slug, shots, hits),
+        &merge_match_log_class_candidate(&1, shots, hits)
+      )
     end
   end
+
+  defp merge_match_log_class_candidate(candidate, extra_score, extra_hits) do
+    score = float(candidate["score"]) + extra_score
+    hits = int(candidate["hits"]) + extra_hits
+
+    candidate
+    |> Map.put("score", score)
+    |> Map.put("shots", score)
+    |> Map.put("hits", hits)
+    |> Map.put("accuracy", if(score > 0.0, do: hits / score * 100.0, else: 0.0))
+  end
+
+  defp maybe_add_medic_match_log_class(candidates, row) do
+    medic_shots = int(row["shots_medic"])
+    healing = int(row["healing"])
+    medic_score = medic_shots + healing / @match_log_healing_per_shot_equivalent
+
+    if medic_score <= 0.0 do
+      candidates
+    else
+      [match_log_class_candidate("medic", medic_score, 0) | candidates]
+    end
+  end
+
+  defp threshold_match_log_class_candidates([]), do: []
+
+  defp threshold_match_log_class_candidates([top | _] = candidates) do
+    top_score = float(top["score"])
+
+    if top_score <= 0.0 do
+      []
+    else
+      minimum_score = top_score * @match_log_class_threshold
+
+      candidates
+      |> Enum.filter(&(float(&1["score"]) >= minimum_score))
+      |> Enum.take(@match_log_max_class_icons)
+    end
+  end
+
+  defp match_log_class_candidate(slug, score, hits) do
+    %{
+      "slug" => slug,
+      "label" => match_log_class_label(slug),
+      "score" => score,
+      "shots" => score,
+      "hits" => hits,
+      "accuracy" => if(score > 0.0, do: hits / score * 100.0, else: 0.0)
+    }
+  end
+
+  defp match_log_class_slug_for_weapon_slug("scatterguns"), do: "scout"
+  defp match_log_class_slug_for_weapon_slug("snipers"), do: "sniper"
+  defp match_log_class_slug_for_weapon_slug("rocketlaunchers"), do: "soldier"
+  defp match_log_class_slug_for_weapon_slug("grenadelaunchers"), do: "demoman"
+  defp match_log_class_slug_for_weapon_slug("stickylaunchers"), do: "demoman"
+  defp match_log_class_slug_for_weapon_slug("revolvers"), do: "spy"
+  defp match_log_class_slug_for_weapon_slug("shotguns"), do: "engineer"
+  defp match_log_class_slug_for_weapon_slug("pistols"), do: "engineer"
+  defp match_log_class_slug_for_weapon_slug(_), do: ""
+
+  defp match_log_class_label("scout"), do: "Scout"
+  defp match_log_class_label("sniper"), do: "Sniper"
+  defp match_log_class_label("soldier"), do: "Soldier"
+  defp match_log_class_label("demoman"), do: "Demoman"
+  defp match_log_class_label("medic"), do: "Medic"
+  defp match_log_class_label("heavy"), do: "Heavy"
+  defp match_log_class_label("pyro"), do: "Pyro"
+  defp match_log_class_label("spy"), do: "Spy"
+  defp match_log_class_label("engineer"), do: "Engineer"
+  defp match_log_class_label(_), do: "Class"
 
   defp fallback_overall_weapon_summary([], row) do
     {total_shots, total_hits} = total_weapon_accuracy_counts(row)
