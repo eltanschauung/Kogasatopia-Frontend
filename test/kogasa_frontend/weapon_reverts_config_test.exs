@@ -95,5 +95,11 @@ defmodule KogasaFrontend.WeaponRevertsConfigTest do
     assert [%{name: "All Class Item", positive: "Everyone can equip it"}] = items["all_class"]
 
     refute Enum.any?(items["scout"], &(&1.name == "All Class Item"))
+
+    assert WeaponRevertsConfig.cwx_item_names(config_path) == %{
+             "custom_heavy" => "Custom Heavy Gun",
+             "custom_soldier" => "Custom Soldier Banner",
+             "custom_all_class" => "All Class Item"
+           }
   end
 end

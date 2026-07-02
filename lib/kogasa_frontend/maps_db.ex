@@ -9,10 +9,12 @@ defmodule KogasaFrontend.MapsDb do
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.Repo
   alias KogasaFrontend.TimeDisplay
+  alias KogasaFrontend.WeaponRevertsConfig
 
   @population_statistics_table "server_population_statistics_samples"
   @map_session_statistics_table "map_statistics_sessions"
   @vote_statistics_table "nativevotes_statistics_events"
+  @cwx_weapon_popularity_table "cwx_weapon_popularity"
 
   def config do
     %{
@@ -139,6 +141,7 @@ defmodule KogasaFrontend.MapsDb do
       top_sessions: fetch_session_extremes(:top, 8),
       worst_sessions: fetch_session_extremes(:worst, 8),
       weekday_hours: fetch_weekday_hour_performance(12),
+      popular_custom_weapons: fetch_popular_custom_weapons(15),
       best_performing_chart: rows |> Enum.take(15) |> fetch_map_lifecycle_chart(10),
       vote_table_available: table_exists?(@vote_statistics_table)
     }
@@ -339,6 +342,35 @@ defmodule KogasaFrontend.MapsDb do
         player_hours_display: format_float(row.player_hours, 1)
       }
     end)
+  end
+
+  defp fetch_popular_custom_weapons(limit) do
+    if table_exists?(@cwx_weapon_popularity_table) do
+      lim = max(1, min(limit, 50))
+      cwx_names = WeaponRevertsConfig.cwx_item_names()
+
+      query_rows("""
+      SELECT weapon_uid,
+             COUNT(DISTINCT steamid64) AS equipped_clients
+      FROM #{@cwx_weapon_popularity_table}
+      WHERE equipped != 0
+        AND weapon_uid <> ''
+      GROUP BY weapon_uid
+      ORDER BY equipped_clients DESC, weapon_uid ASC
+      LIMIT #{lim}
+      """)
+      |> Enum.map(fn row ->
+        weapon_uid = to_string(row.weapon_uid || "")
+
+        %{
+          weapon_uid: weapon_uid,
+          name: Map.get(cwx_names, weapon_uid, weapon_uid),
+          equipped_clients: to_int(row.equipped_clients)
+        }
+      end)
+    else
+      []
+    end
   end
 
   defp fetch_map_lifecycle_chart(rows, bucket_count) do

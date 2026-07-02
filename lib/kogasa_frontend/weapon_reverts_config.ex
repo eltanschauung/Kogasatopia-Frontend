@@ -35,6 +35,19 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
     end)
   end
 
+  def cwx_item_names(path \\ config_path()) do
+    path
+    |> load_weapons_root()
+    |> cwx_root()
+    |> Enum.reduce(%{}, fn
+      {item_key, children}, acc when is_list(children) ->
+        Map.put(acc, item_key, value(children, "name", item_key))
+
+      _, acc ->
+        acc
+    end)
+  end
+
   defp revert_items_by_class(classes, root) do
     class_map = section(root, @item_classes_section) || []
     weapon_sections = weapon_sections(root)
