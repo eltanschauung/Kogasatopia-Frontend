@@ -1066,16 +1066,26 @@ defmodule KogasaFrontend.StatsFeed do
 
     category_select_clause =
       @weapon_category_slugs
-      |> Enum.flat_map(fn slug -> [", shots_#{slug}", ", hits_#{slug}"] end)
+      |> Enum.flat_map(fn slug ->
+        [", lp.shots_#{slug} AS shots_#{slug}", ", lp.hits_#{slug} AS hits_#{slug}"]
+      end)
       |> Enum.join("")
 
     sql = """
-    SELECT log_id, steamid, personaname, kills, deaths, assists, damage, damage_taken, healing,
-           headshots, backstabs, total_ubers, playtime, shots, hits#{category_select_clause},
-           COALESCE(airshots, 0) AS airshots
-    FROM #{@log_players_table}
-    WHERE log_id IN (#{placeholders})
-    ORDER BY log_id ASC, kills DESC, assists DESC
+    SELECT lp.log_id, lp.steamid,
+           CASE
+             WHEN lp.personaname = '' OR lp.personaname LIKE '%??%'
+               THEN COALESCE(NULLIF(pr.newname, ''), NULLIF(fs.last_name, ''), lp.personaname)
+             ELSE lp.personaname
+           END AS personaname,
+           lp.kills, lp.deaths, lp.assists, lp.damage, lp.damage_taken, lp.healing,
+           lp.headshots, lp.backstabs, lp.total_ubers, lp.playtime, lp.shots, lp.hits#{category_select_clause},
+           COALESCE(lp.airshots, 0) AS airshots
+    FROM #{@log_players_table} lp
+    LEFT JOIN prename_rules pr ON pr.pattern COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
+    LEFT JOIN filters_steam_names fs ON fs.steamid64 COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
+    WHERE lp.log_id IN (#{placeholders})
+    ORDER BY lp.log_id ASC, lp.kills DESC, lp.assists DESC
     """
 
     case SQL.query(Repo, sql, log_ids) do
@@ -1087,11 +1097,19 @@ defmodule KogasaFrontend.StatsFeed do
 
       {:error, _} ->
         fallback_sql = """
-        SELECT log_id, steamid, personaname, kills, deaths, assists, damage, damage_taken, healing,
-               headshots, backstabs, total_ubers, playtime, shots, hits#{category_select_clause}
-        FROM #{@log_players_table}
-        WHERE log_id IN (#{placeholders})
-        ORDER BY log_id ASC, kills DESC, assists DESC
+        SELECT lp.log_id, lp.steamid,
+               CASE
+                 WHEN lp.personaname = '' OR lp.personaname LIKE '%??%'
+                   THEN COALESCE(NULLIF(pr.newname, ''), NULLIF(fs.last_name, ''), lp.personaname)
+                 ELSE lp.personaname
+               END AS personaname,
+               lp.kills, lp.deaths, lp.assists, lp.damage, lp.damage_taken, lp.healing,
+               lp.headshots, lp.backstabs, lp.total_ubers, lp.playtime, lp.shots, lp.hits#{category_select_clause}
+        FROM #{@log_players_table} lp
+        LEFT JOIN prename_rules pr ON pr.pattern COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
+        LEFT JOIN filters_steam_names fs ON fs.steamid64 COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
+        WHERE lp.log_id IN (#{placeholders})
+        ORDER BY lp.log_id ASC, lp.kills DESC, lp.assists DESC
         """
 
         case SQL.query(Repo, fallback_sql, log_ids) do
