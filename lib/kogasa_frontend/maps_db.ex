@@ -133,7 +133,7 @@ defmodule KogasaFrontend.MapsDb do
 
   def map_detail_analytics do
     rows = fetch_map_detail_rows(40)
-    best_performing_rows = fetch_best_performing_map_rows(25)
+    best_performing_rows = fetch_best_performing_map_rows(15)
 
     %{
       rows: rows,
@@ -343,7 +343,7 @@ defmodule KogasaFrontend.MapsDb do
   end
 
   defp fetch_best_performing_map_rows(limit) do
-    lim = max(1, min(limit, 25))
+    lim = max(1, min(limit, 15))
 
     query_rows("""
     SELECT ranked.map_name,
@@ -411,26 +411,19 @@ defmodule KogasaFrontend.MapsDb do
       rows
       |> Enum.map(& &1.map_name)
       |> Enum.reject(&(&1 == ""))
-      |> Enum.take(25)
+      |> Enum.take(15)
 
     bucket_count = max(1, min(bucket_count, 20))
+    common_seconds = fetch_common_lifecycle_seconds(map_names)
+    labels = lifecycle_chart_labels(bucket_count, common_seconds)
 
-    labels =
-      for bucket <- 0..bucket_count do
-        cond do
-          bucket == 0 -> "Start"
-          bucket == bucket_count -> "End"
-          true -> "#{div(bucket * 100, bucket_count)}%"
-        end
-      end
-
-    if map_names == [] do
+    if map_names == [] or common_seconds <= 0 do
       %{"labels" => labels, "series" => []}
     else
       rows =
         query_rows("""
         SELECT p.map_name,
-               LEAST(#{bucket_count}, FLOOR((p.map_elapsed_seconds * #{bucket_count}) / GREATEST(s.duration, 1))) AS bucket,
+               LEAST(#{bucket_count - 1}, FLOOR((p.map_elapsed_seconds * #{bucket_count}) / #{common_seconds})) AS bucket,
                ROUND(AVG(LEAST(p.player_count, 24)), 2) AS avg_players
         FROM #{@population_statistics_table} p
         JOIN #{@map_session_statistics_table} s
@@ -439,7 +432,7 @@ defmodule KogasaFrontend.MapsDb do
          AND s.map_name = p.map_name
         WHERE p.map_name IN (#{sql_string_list(map_names)})
           AND p.map_elapsed_seconds >= 0
-          AND p.map_elapsed_seconds <= s.duration
+          AND p.map_elapsed_seconds <= #{common_seconds}
           AND #{valid_map_session_sql("s")}
           AND #{valid_population_sample_sql("p", "s")}
         GROUP BY p.map_name, bucket
@@ -462,13 +455,58 @@ defmodule KogasaFrontend.MapsDb do
             "label" => map_name,
             "data" =>
               for(
-                bucket <- 0..bucket_count,
+                bucket <- 0..(bucket_count - 1),
                 do: Map.get(Map.get(values, map_name, %{}), bucket)
               )
           }
         end)
 
       %{"labels" => labels, "series" => series}
+    end
+  end
+
+  defp fetch_common_lifecycle_seconds([]), do: 0
+
+  defp fetch_common_lifecycle_seconds(map_names) do
+    query_rows("""
+    SELECT MIN(map_max_elapsed) AS common_seconds
+    FROM (
+      SELECT p.map_name,
+             MAX(LEAST(p.map_elapsed_seconds, s.duration)) AS map_max_elapsed
+      FROM #{@population_statistics_table} p
+      JOIN #{@map_session_statistics_table} s
+        ON s.host_port = p.host_port
+       AND s.map_session_id = p.map_session_id
+       AND s.map_name = p.map_name
+      WHERE p.map_name IN (#{sql_string_list(map_names)})
+        AND p.map_elapsed_seconds >= 0
+        AND #{valid_map_session_sql("s")}
+        AND #{valid_population_sample_sql("p", "s")}
+      GROUP BY p.map_name
+    ) map_ends
+    """)
+    |> case do
+      [%{common_seconds: seconds}] -> to_int(seconds)
+      _ -> 0
+    end
+  end
+
+  defp lifecycle_chart_labels(bucket_count, common_seconds) do
+    for bucket <- 0..(bucket_count - 1) do
+      cond do
+        bucket == 0 ->
+          "Start"
+
+        bucket == bucket_count - 1 ->
+          "End"
+
+        common_seconds > 0 ->
+          minutes = round(bucket * common_seconds / max(bucket_count - 1, 1) / 60)
+          "#{minutes}m"
+
+        true ->
+          "#{div(bucket * 100, bucket_count)}%"
+      end
     end
   end
 
