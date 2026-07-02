@@ -263,7 +263,7 @@ defmodule KogasaFrontend.MapsDb do
       AND #{valid_population_sample_sql("p", "s")}
       AND p.player_count > 3
       AND FLOOR(MOD(p.sampled_at, 86400) / 3600) >= 2
-      AND FLOOR(MOD(p.sampled_at, 86400) / 3600) < 6
+      AND FLOOR(MOD(p.sampled_at, 86400) / 3600) < 5
     GROUP BY s.host_port, s.map_session_id, s.map_name, s.started_at, s.duration, s.end_reason
     HAVING peak_players > 4
     ORDER BY avg_players ASC, peak_players ASC, duration DESC
