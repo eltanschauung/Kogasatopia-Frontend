@@ -141,7 +141,7 @@ defmodule KogasaFrontend.MapsDb do
       top_sessions: fetch_session_extremes(:top, 8),
       worst_sessions: fetch_session_extremes(:worst, 8),
       weekday_hours: fetch_weekday_hour_performance(12),
-      popular_custom_weapons: fetch_popular_custom_weapons(15),
+      popular_custom_weapons: fetch_popular_custom_weapons(),
       best_performing_chart: rows |> Enum.take(15) |> fetch_map_lifecycle_chart(10),
       vote_table_available: table_exists?(@vote_statistics_table)
     }
@@ -344,9 +344,8 @@ defmodule KogasaFrontend.MapsDb do
     end)
   end
 
-  defp fetch_popular_custom_weapons(limit) do
+  defp fetch_popular_custom_weapons do
     if table_exists?(@cwx_weapon_popularity_table) do
-      lim = max(1, min(limit, 50))
       cwx_names = WeaponRevertsConfig.cwx_item_names()
 
       query_rows("""
@@ -356,8 +355,8 @@ defmodule KogasaFrontend.MapsDb do
       WHERE equipped != 0
         AND weapon_uid <> ''
       GROUP BY weapon_uid
+      HAVING equipped_clients > 1
       ORDER BY equipped_clients DESC, weapon_uid ASC
-      LIMIT #{lim}
       """)
       |> Enum.map(fn row ->
         weapon_uid = to_string(row.weapon_uid || "")
