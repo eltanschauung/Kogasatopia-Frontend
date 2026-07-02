@@ -349,11 +349,11 @@ defmodule KogasaFrontend.MapsDb do
     query_rows("""
     SELECT p.map_name,
            COUNT(DISTINCT CONCAT(p.host_port, ':', p.map_session_id)) AS sessions,
-           ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN p.player_count END), 2) AS start_avg,
-           ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 3000 AND 3599 THEN p.player_count END), 2) AS finish_avg,
+           ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN LEAST(p.player_count, 24) END), 2) AS start_avg,
+           ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 3000 AND 3599 THEN LEAST(p.player_count, 24) END), 2) AS finish_avg,
            ROUND(
-             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 3000 AND 3599 THEN p.player_count END), 0) -
-             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN p.player_count END), 0),
+             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 3000 AND 3599 THEN LEAST(p.player_count, 24) END), 0) -
+             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN LEAST(p.player_count, 24) END), 0),
              2
            ) AS finish_growth
     FROM #{@population_statistics_table} p
@@ -381,10 +381,10 @@ defmodule KogasaFrontend.MapsDb do
     query_rows("""
     SELECT p.map_name,
            COUNT(DISTINCT CONCAT(p.host_port, ':', p.map_session_id)) AS sessions,
-           ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 899 THEN p.player_count END), 2) AS first15_avg,
+           ROUND(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 899 THEN LEAST(p.player_count, 24) END), 2) AS first15_avg,
            ROUND(
-             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 600 AND 899 THEN p.player_count END), 0) -
-             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN p.player_count END), 0),
+             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 600 AND 899 THEN LEAST(p.player_count, 24) END), 0) -
+             COALESCE(AVG(CASE WHEN p.map_elapsed_seconds BETWEEN 0 AND 299 THEN LEAST(p.player_count, 24) END), 0),
              2
            ) AS first15_growth
     FROM #{@population_statistics_table} p
@@ -421,7 +421,7 @@ defmodule KogasaFrontend.MapsDb do
         query_rows("""
         SELECT p.map_name,
                FLOOR(p.map_elapsed_seconds / #{bucket_seconds}) AS bucket,
-               ROUND(AVG(p.player_count), 2) AS avg_players
+               ROUND(AVG(LEAST(p.player_count, 24)), 2) AS avg_players
         FROM #{@population_statistics_table} p
         JOIN #{@map_session_statistics_table} s
           ON s.host_port = p.host_port
