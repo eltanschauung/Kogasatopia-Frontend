@@ -9,12 +9,26 @@ defmodule KogasaFrontend.MapsDb do
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.Repo
   alias KogasaFrontend.TimeDisplay
+  alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.WeaponRevertsConfig
 
   @population_statistics_table "server_population_statistics_samples"
   @map_session_statistics_table "map_statistics_sessions"
   @vote_statistics_table "nativevotes_statistics_events"
   @cwx_weapon_popularity_table "cwx_weapon_popularity"
+  @classlimits_statistics_table "classlimits_statistics_events"
+  @class_popularity_order [1, 3, 7, 4, 6, 9, 5, 2, 8]
+  @class_popularity_colors %{
+    1 => "#79cfff",
+    3 => "#f4d35e",
+    7 => "#ff8f66",
+    4 => "#c7a4ff",
+    6 => "#f78fb3",
+    9 => "#f6c177",
+    5 => "#8ce99a",
+    2 => "#a8d8ff",
+    8 => "#d0bfff"
+  }
 
   def config do
     %{
@@ -141,6 +155,7 @@ defmodule KogasaFrontend.MapsDb do
       top_sessions: fetch_session_extremes(:top, 8),
       worst_sessions: fetch_session_extremes(:worst, 8),
       weekday_hours: fetch_weekday_hour_performance(12),
+      class_popularity: fetch_class_popularity(),
       popular_custom_weapons: fetch_popular_custom_weapons(),
       best_performing_chart: rows |> Enum.take(15) |> fetch_map_lifecycle_chart(10),
       vote_table_available: table_exists?(@vote_statistics_table)
@@ -342,6 +357,45 @@ defmodule KogasaFrontend.MapsDb do
         player_hours_display: format_float(row.player_hours, 1)
       }
     end)
+  end
+
+  defp fetch_class_popularity do
+    if table_exists?(@classlimits_statistics_table) do
+      counts =
+        query_rows("""
+        SELECT CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(message, 'class=', -1), '|', 1) AS UNSIGNED) AS class_id,
+               COUNT(*) AS samples
+        FROM #{@classlimits_statistics_table}
+        WHERE event_name = 'class_snapshot'
+          AND message LIKE '%|class=%'
+        GROUP BY class_id
+        """)
+        |> Map.new(fn row -> {to_int(row.class_id), to_int(row.samples)} end)
+
+      total =
+        @class_popularity_order
+        |> Enum.map(&Map.get(counts, &1, 0))
+        |> Enum.sum()
+
+      Enum.map(@class_popularity_order, fn class_id ->
+        samples = Map.get(counts, class_id, 0)
+        percentage = if total > 0, do: samples / total * 100.0, else: 0.0
+        {:ok, {label, icon}} = Tf2Classes.leaderboard_icon_for_id(class_id)
+
+        %{
+          class_id: class_id,
+          label: label,
+          icon: icon,
+          samples: samples,
+          percentage: percentage,
+          percentage_display: format_float(percentage, 1) <> "%",
+          bar_width: format_float(percentage, 4) <> "%",
+          color: Map.fetch!(@class_popularity_colors, class_id)
+        }
+      end)
+    else
+      []
+    end
   end
 
   defp fetch_popular_custom_weapons do

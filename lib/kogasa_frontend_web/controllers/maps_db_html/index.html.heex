@@ -76,6 +76,10 @@
       .map-analytics-scroll { overflow-x:auto; }
       .map-analytics-scroll-custom-weapons { max-height: 31rem; overflow:auto; }
       .map-analytics-scroll-custom-weapons .map-analytics-table thead th { position:sticky; top:0; background:rgba(12,14,21,.98); z-index:1; }
+      .class-popularity-class { display:flex; align-items:center; gap:.45rem; font-weight:650; }
+      .class-popularity-icon { width:24px; height:24px; object-fit:contain; flex:0 0 auto; }
+      .class-popularity-bar-track { width:100%; min-width:150px; height:.72rem; background:rgba(255,255,255,.07); overflow:hidden; }
+      .class-popularity-bar { height:100%; }
       .map-analytics-sessions { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:.75rem; }
       .map-analytics-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.45rem; }
       .map-analytics-list li { display:flex; justify-content:space-between; gap:.75rem; padding:.45rem 0; border-bottom:1px solid rgba(255,255,255,.06); }
@@ -299,6 +303,54 @@
                       </li>
                     <% end %>
                   </ol>
+                </div>
+              </div>
+
+              <div class="map-analytics-band">
+                <div class="map-analytics-header">
+                  <h3 class="map-analytics-title">Class Popularity</h3>
+                  <span class="map-analytics-sub">Class snapshots from classlimits</span>
+                </div>
+                <div class="map-analytics-scroll">
+                  <table class="map-analytics-table">
+                    <thead>
+                      <tr>
+                        <th>Class</th>
+                        <th class="numeric">Percentage</th>
+                        <th>Popularity</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%= for class <- analytics[:class_popularity] || [] do %>
+                        <tr style={"color: #{class.color}"}>
+                          <td>
+                            <span class="class-popularity-class">
+                              <img
+                                class="class-popularity-icon"
+                                src={class.icon}
+                                alt={class.label}
+                                title={class.label}
+                              />
+                              <span>{class.label}</span>
+                            </span>
+                          </td>
+                          <td class="numeric">{class.percentage_display}</td>
+                          <td>
+                            <div
+                              class="class-popularity-bar-track"
+                              aria-label={class.percentage_display}
+                            >
+                              <div
+                                class="class-popularity-bar"
+                                style={"width: #{class.bar_width}; background: #{class.color}"}
+                              >
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
