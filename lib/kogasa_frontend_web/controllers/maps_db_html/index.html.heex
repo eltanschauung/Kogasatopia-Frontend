@@ -76,10 +76,13 @@
       .map-analytics-scroll { overflow-x:auto; }
       .map-analytics-scroll-custom-weapons { max-height: 31rem; overflow:auto; }
       .map-analytics-scroll-custom-weapons .map-analytics-table thead th { position:sticky; top:0; background:rgba(12,14,21,.98); z-index:1; }
+      .class-popularity-table { table-layout:fixed; }
+      .class-popularity-table th:nth-child(1), .class-popularity-table td:nth-child(1) { width:9rem; }
+      .class-popularity-table th:nth-child(2), .class-popularity-table td:nth-child(2) { width:6rem; }
       .class-popularity-class { display:flex; align-items:center; gap:.45rem; font-weight:650; }
       .class-popularity-icon { width:24px; height:24px; object-fit:contain; flex:0 0 auto; }
-      .class-popularity-bar-track { width:100%; min-width:150px; height:.72rem; background:rgba(255,255,255,.07); overflow:hidden; }
-      .class-popularity-bar { height:100%; }
+      .class-popularity-bar-track { width:100%; max-width:100%; height:.72rem; background:rgba(255,255,255,.07); overflow:hidden; }
+      .class-popularity-bar { height:100%; background:#fff; }
       .map-analytics-sessions { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:.75rem; }
       .map-analytics-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.45rem; }
       .map-analytics-list li { display:flex; justify-content:space-between; gap:.75rem; padding:.45rem 0; border-bottom:1px solid rgba(255,255,255,.06); }
@@ -309,10 +312,9 @@
               <div class="map-analytics-band">
                 <div class="map-analytics-header">
                   <h3 class="map-analytics-title">Class Popularity</h3>
-                  <span class="map-analytics-sub">Class snapshots from classlimits</span>
                 </div>
-                <div class="map-analytics-scroll">
-                  <table class="map-analytics-table">
+                <div>
+                  <table class="map-analytics-table class-popularity-table">
                     <thead>
                       <tr>
                         <th>Class</th>
@@ -322,7 +324,7 @@
                     </thead>
                     <tbody>
                       <%= for class <- analytics[:class_popularity] || [] do %>
-                        <tr style={"color: #{class.color}"}>
+                        <tr>
                           <td>
                             <span class="class-popularity-class">
                               <img
@@ -342,7 +344,7 @@
                             >
                               <div
                                 class="class-popularity-bar"
-                                style={"width: #{class.bar_width}; background: #{class.color}"}
+                                style={"width: #{class.bar_width}"}
                               >
                               </div>
                             </div>

@@ -18,17 +18,6 @@ defmodule KogasaFrontend.MapsDb do
   @cwx_weapon_popularity_table "cwx_weapon_popularity"
   @classlimits_statistics_table "classlimits_statistics_events"
   @class_popularity_order [1, 3, 7, 4, 6, 9, 5, 2, 8]
-  @class_popularity_colors %{
-    1 => "#79cfff",
-    3 => "#f4d35e",
-    7 => "#ff8f66",
-    4 => "#c7a4ff",
-    6 => "#f78fb3",
-    9 => "#f6c177",
-    5 => "#8ce99a",
-    2 => "#a8d8ff",
-    8 => "#d0bfff"
-  }
 
   def config do
     %{
@@ -389,8 +378,7 @@ defmodule KogasaFrontend.MapsDb do
           samples: samples,
           percentage: percentage,
           percentage_display: format_float(percentage, 1) <> "%",
-          bar_width: format_float(percentage, 4) <> "%",
-          color: Map.fetch!(@class_popularity_colors, class_id)
+          bar_width: format_float(percentage, 4) <> "%"
         }
       end)
     else
