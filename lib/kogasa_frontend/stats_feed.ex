@@ -9,6 +9,7 @@ defmodule KogasaFrontend.StatsFeed do
   alias KogasaFrontend.Chat.SteamProfiles
   alias KogasaFrontend.CountryNames
   alias KogasaFrontend.LegacyPaths
+  alias KogasaFrontend.MapsDb
   alias KogasaFrontend.Repo
   alias KogasaFrontend.WeaponCategories
 
@@ -679,11 +680,7 @@ defmodule KogasaFrontend.StatsFeed do
   defp summary_insights do
     windows = summary_time_windows()
 
-    monthly_playtime_seconds =
-      scalar_query(
-        "SELECT COALESCE(SUM(duration), 0) FROM #{@logs_table} WHERE started_at >= ? AND started_at < ?",
-        [windows.month_start, windows.next_month_start]
-      )
+    active_hours_month = MapsDb.active_hours_between(windows.month_start, windows.now_ts)
 
     players_current_month =
       scalar_query(
@@ -736,7 +733,8 @@ defmodule KogasaFrontend.StatsFeed do
     {weekly_top_dpm, weekly_top_dpm_owner} = weekly_top_dpm(windows.current_week_start)
 
     %{
-      playtime_month_hours: Float.round(monthly_playtime_seconds / 3600.0, 1),
+      active_hours_month: active_hours_month,
+      playtime_month_hours: active_hours_month,
       playtime_month_label: windows.month_label,
       players_current_week: players_current_week,
       players_current_month: players_current_month,
@@ -756,7 +754,8 @@ defmodule KogasaFrontend.StatsFeed do
       )
 
       %{
-        playtime_month_hours: 0.0,
+        active_hours_month: 0,
+        playtime_month_hours: 0,
         playtime_month_label: "Month",
         players_current_week: 0,
         players_current_month: 0,

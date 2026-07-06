@@ -136,6 +136,47 @@ defmodule KogasaFrontend.MapsDb do
     )
   end
 
+  def active_hours_last_days(days \\ 30) do
+    days = days |> to_int() |> max(1) |> min(366)
+
+    case query_rows("""
+         SELECT UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL #{days} DAY)) AS start_ts,
+                UNIX_TIMESTAMP(NOW()) AS end_ts
+         """) do
+      [%{start_ts: start_ts, end_ts: end_ts}] -> active_hours_between(start_ts, end_ts)
+      _ -> 0
+    end
+  end
+
+  def active_hours_between(start_ts, end_ts) do
+    start_ts = to_int(start_ts)
+    end_ts = to_int(end_ts)
+
+    if start_ts <= 0 or end_ts <= start_ts do
+      0
+    else
+      sql = """
+      SELECT COUNT(*) AS active_hours
+      FROM (
+        SELECT FLOOR(sampled_at / 3600) AS hour_bucket
+        FROM mapsdb_popularity_log
+        WHERE sampled_at >= ?
+          AND sampled_at < ?
+          AND player_count > 1
+          AND map_name NOT LIKE 'mge\\\\_%' ESCAPE '\\\\'
+        GROUP BY hour_bucket
+      ) active_hour_buckets
+      """
+
+      case Repo.query(sql, [start_ts, end_ts]) do
+        {:ok, %{rows: [[active_hours]]}} -> to_int(active_hours)
+        _ -> 0
+      end
+    end
+  rescue
+    _ -> 0
+  end
+
   def map_detail_analytics do
     rows = fetch_map_detail_rows(40)
 
@@ -568,6 +609,7 @@ defmodule KogasaFrontend.MapsDb do
 
   defp popularity_chart_bundle do
     now = System.system_time(:second)
+    active_hours = active_hours_last_days(30)
 
     sql = """
     SELECT sampled_at, player_count
@@ -578,9 +620,11 @@ defmodule KogasaFrontend.MapsDb do
     """
 
     with {:ok, %{rows: rows}} <- Repo.query(sql) do
-      build_chart_from_rows(rows, now)
+      rows
+      |> build_chart_from_rows(now)
+      |> Map.put(:active_hours, active_hours)
     else
-      _ -> %{chart: empty_chart(), active_hours: 0}
+      _ -> %{chart: empty_chart(), active_hours: active_hours}
     end
   rescue
     _ -> %{chart: empty_chart(), active_hours: 0}
@@ -685,12 +729,8 @@ defmodule KogasaFrontend.MapsDb do
         {key, line}
       end
 
-    current_limited = limit_active_hours(series["current"], 150, 4.0)
-    active_hours = Enum.count(current_limited, &(&1 > 4.0))
-
     series =
       series
-      |> Map.put("current", current_limited)
       |> Map.update!("current", &smooth_line(&1, 0.35))
       |> Map.update!("previous", &smooth_line(&1, 0.35))
       |> Map.update!("earlier", &smooth_line(&1, 0.35))
@@ -706,7 +746,7 @@ defmodule KogasaFrontend.MapsDb do
         "earlier" => compressed.series["earlier"] || [],
         "restart_ts" => restart_ts
       },
-      active_hours: active_hours
+      active_hours: 0
     }
   end
 
@@ -774,29 +814,6 @@ defmodule KogasaFrontend.MapsDb do
 
       true ->
         values
-    end
-  end
-
-  defp limit_active_hours(values, target_hours, threshold) when is_list(values) do
-    above =
-      values
-      |> Enum.with_index()
-      |> Enum.filter(fn {v, _i} -> v > threshold end)
-
-    if length(above) <= target_hours do
-      values
-    else
-      keep =
-        above
-        |> Enum.sort(fn {va, ia}, {vb, ib} ->
-          if va == vb, do: ia <= ib, else: va >= vb
-        end)
-        |> Enum.take(target_hours)
-        |> Enum.map(fn {_v, i} -> i end)
-        |> MapSet.new()
-
-      Enum.with_index(values)
-      |> Enum.map(fn {v, i} -> if MapSet.member?(keep, i), do: v, else: min(v, threshold) end)
     end
   end
 

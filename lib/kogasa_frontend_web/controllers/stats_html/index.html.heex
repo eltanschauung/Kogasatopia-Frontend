@@ -378,11 +378,11 @@
           <p>{number_format(map_get(s, :total_kills, 0))}</p>
         </div>
 
-        <div class="stat-card stat-card--month" title={"Playtime logged in #{month_label}"}>
+        <div class="stat-card stat-card--month" title={"Active server hours in #{month_label}"}>
           <div class="stat-card-heading">
-            <h3>Playtime / {month_label}</h3>
+            <h3>Active Hours / {month_label}</h3>
           </div>
-          <p>{format_decimal(map_get(s, :playtime_month_hours, 0.0), 1)} hrs</p>
+          <p>{number_format(map_get(s, :active_hours_month, 0))} hrs</p>
         </div>
 
         <div class="stat-card">
