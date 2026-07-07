@@ -162,7 +162,7 @@ defmodule KogasaFrontend.MapsDb do
         FROM mapsdb_popularity_log
         WHERE sampled_at >= ?
           AND sampled_at < ?
-          AND player_count > 1
+          AND player_count > 2
           AND map_name NOT LIKE 'mge\\\\_%' ESCAPE '\\\\'
         GROUP BY hour_bucket
       ) active_hour_buckets
