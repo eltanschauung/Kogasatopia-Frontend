@@ -1,7 +1,7 @@
 defmodule KogasaFrontendWeb.OnlineSummaryControllerTest do
   use KogasaFrontendWeb.ConnCase, async: false
 
-  test "public playercount endpoint returns the navigation count", %{conn: conn} do
+  test "public playercount endpoint returns the current player count", %{conn: conn} do
     conn = get(conn, "/api/playercount")
 
     assert %{
@@ -15,7 +15,7 @@ defmodule KogasaFrontendWeb.OnlineSummaryControllerTest do
     assert is_integer(player_count) and player_count >= 0
     assert is_integer(visible_max) and visible_max > 0
     assert is_integer(updated) and updated > 0
-    assert display == "#{player_count} / #{visible_max}"
+    assert display == Integer.to_string(player_count)
     assert get_resp_header(conn, "access-control-allow-origin") == ["*"]
 
     assert get_resp_header(conn, "cache-control") == [

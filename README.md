@@ -18,7 +18,7 @@ Features include:
 `GET https://kogasa.tf/api/playercount` returns the current aggregate server population:
 
 ```json
-{"success":true,"player_count":0,"visible_max":42,"display":"0 / 42","updated":1783915200}
+{"success":true,"player_count":0,"visible_max":42,"display":"0","updated":1783915200}
 ```
 
 Responses permit cross-origin browser requests and are publicly cached for five seconds.

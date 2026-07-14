@@ -5,7 +5,7 @@ defmodule KogasaFrontendWeb.OnlineSummaryController do
 
   def index(conn, _params) do
     summary = Online.summary()
-    payload = Map.put(summary, :display, "#{summary.player_count} / #{summary.visible_max}")
+    payload = Map.put(summary, :display, Integer.to_string(summary.player_count))
 
     conn
     |> put_resp_header("access-control-allow-origin", "*")
