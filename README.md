@@ -13,4 +13,14 @@ Features include:
 - live chat, which communicates with both servers (inspired by Minecraft Dynmap concept)
 - weapons page which allows clients to check stats easily (to be completed)
 
+## Player Count API
+
+`GET https://kogasa.tf/api/playercount` returns the current aggregate server population:
+
+```json
+{"success":true,"player_count":0,"visible_max":42,"display":"0 / 42","updated":1783915200}
+```
+
+Responses permit cross-origin browser requests and are publicly cached for five seconds.
+
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/fc0963c3-633f-41d2-977c-eb73c30e6e14" />

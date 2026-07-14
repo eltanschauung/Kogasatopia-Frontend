@@ -85,6 +85,12 @@ defmodule KogasaFrontendWeb.Router do
     post "/api.php", MapsDbApiController, :handle
   end
 
+  scope "/api", KogasaFrontendWeb do
+    pipe_through :api
+
+    get "/playercount", OnlineSummaryController, :index
+  end
+
   scope "/playercount_widget", KogasaFrontendWeb do
     pipe_through :browser
 
