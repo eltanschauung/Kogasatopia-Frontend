@@ -15,7 +15,7 @@ defmodule KogasaFrontendWeb.LegacyControllerTest do
   test "playercount widget renders natively", %{conn: conn} do
     conn = get(conn, "/playercount_widget/index.php")
 
-    assert html_response(conn, 200) =~ ~s(<div class="server-name">Gensokyo | New Jersey</div>)
+    assert html_response(conn, 200) =~ ~s(<div class="server-name">kogasa.tf | New Jersey</div>)
     assert response(conn, 200) =~ "https://bantculture.com/static/flags/us.png"
     assert get_resp_header(conn, "location") == []
   end
