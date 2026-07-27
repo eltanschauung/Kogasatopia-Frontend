@@ -123,6 +123,11 @@ if config_env() == :prod do
          [
            certfile: tls_charlist.("fastdl.gyate.net", "fullchain.pem"),
            keyfile: tls_charlist.("fastdl.gyate.net", "privkey.pem")
+         ]},
+        {~c"tf2.gyate.net",
+         [
+           certfile: tls_charlist.("tf2.gyate.net", "fullchain.pem"),
+           keyfile: tls_charlist.("tf2.gyate.net", "privkey.pem")
          ]}
       ]
     else

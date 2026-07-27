@@ -17,6 +17,11 @@ defmodule KogasaFrontendWeb.Endpoint do
 
   plug KogasaFrontendWeb.Plugs.AccessLog
 
+  plug Plug.Static,
+    at: "/.well-known/acme-challenge",
+    from: "/var/lib/letsencrypt/.well-known/acme-challenge",
+    gzip: false
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # When code reloading is disabled (e.g., in production),
