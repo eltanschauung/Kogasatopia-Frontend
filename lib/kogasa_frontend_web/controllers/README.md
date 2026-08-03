@@ -18,5 +18,5 @@ Only route-facing controller actions are listed here.
 ## stats_api_controller.ex
 - `fetch_page` - Returns cumulative stats rows, rendered HTML, and pagination metadata.
 - `cumulative_fragment` - Returns the same cumulative stats payload as `fetch_page`.
-- `logs_fragment` - Returns rendered match-log HTML for a page and scope.
+- `logs_fragment` - Returns rendered match-log HTML for a page.
 - `current_log_fragment` - Returns rendered HTML for the current match log.

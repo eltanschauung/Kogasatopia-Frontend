@@ -359,14 +359,7 @@
 
       <section class="stats-panel" id="stats-panel-logs" data-panel="logs">
         <div class="stats-toolbar">
-          <div>
-            <button type="button" class="stats-mini-btn is-active" data-logs-scope="regular">
-              Regular
-            </button>
-            <button type="button" class="stats-mini-btn" data-logs-scope="short">
-              Short (2-12p)
-            </button>
-          </div>
+          <div class="stats-muted">Recent Logs</div>
           <button type="button" class="stats-mini-btn" id="stats-logs-refresh">Refresh</button>
         </div>
         <div class="stats-current-log-wrap">
@@ -383,6 +376,7 @@
     (() => {
       const state = {
         cumulative: { q: <%= Phoenix.HTML.raw(Jason.encode!(@search || "")) %>, page: <%= @cumulative[:page] || 1 %>, perPage: 100, focusedPlayer: <%= Phoenix.HTML.raw(Jason.encode!(@focused_player || "")) %> },
+        logs: { page: 1, perPage: 25 },
       };
       const UI = window.KogasaUI;
 
@@ -405,8 +399,7 @@
         logsList: document.getElementById('stats-logs-list'),
         logsPagination: document.getElementById('stats-logs-pagination'),
         currentLogContainer: document.getElementById('stats-current-log-container'),
-        logsRefresh: document.getElementById('stats-logs-refresh'),
-        logsScopeButtons: Array.from(document.querySelectorAll('[data-logs-scope]'))
+        logsRefresh: document.getElementById('stats-logs-refresh')
       };
 
       function plainChatFormatting(str) {
@@ -647,7 +640,6 @@
       async function loadLogs() {
         const url = new URL('/stats/logs_fragment.php', window.location.origin);
         url.searchParams.set('identity', 'stats');
-        url.searchParams.set('scope', state.logs.scope);
         url.searchParams.set('page', String(state.logs.page));
         url.searchParams.set('perPage', String(state.logs.perPage));
         try {

@@ -6,13 +6,7 @@ defmodule KogasaFrontendWeb.LogsController do
 
   @per_page 25
 
-  def index(conn, params) do
-    render_logs_page(conn, params, "regular")
-  end
-
-  def short(conn, params) do
-    render_logs_page(conn, params, "short")
-  end
+  def index(conn, params), do: render_logs_page(conn, params)
 
   def current(conn, _params) do
     default_avatar = StatsFeed.default_avatar_url()
@@ -25,29 +19,23 @@ defmodule KogasaFrontendWeb.LogsController do
     )
   end
 
-  defp render_logs_page(conn, params, scope) do
+  defp render_logs_page(conn, params) do
     page = parse_page(params["page"])
 
     logs =
       StatsFeed.logs(%{
         page: page,
         per_page: @per_page,
-        scope: scope,
         include_players: true
       })
 
     render(conn, :index,
-      page_title:
-        if(scope == "short",
-          do: "Matches (Short)",
-          else: "Matches"
-        ),
+      page_title: "Matches",
       logs_html: StatsFragments.logs_fragment_html(logs),
       page: logs[:page] || page,
       total_pages: logs[:total_pages] || 1,
       total_logs: logs[:total] || 0,
-      per_page: @per_page,
-      scope: scope
+      per_page: @per_page
     )
   end
 

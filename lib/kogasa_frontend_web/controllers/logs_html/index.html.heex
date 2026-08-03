@@ -7,7 +7,7 @@
 
     <div class="wt-topbar">
       <div>
-        <h1>{if @scope == "short", do: "Match Logs (Short)", else: "Match Logs"}</h1>
+        <h1>Match Logs</h1>
       </div>
       <div class="wt-topbar-badge">
         {@total_logs} logs · Page {@page}/{@total_pages}
@@ -19,15 +19,9 @@
         <div class="logs-mode-row">
           <a
             href="/logs"
-            class={["logs-mode-pill wt-pill-link", @scope == "regular" && "is-active"]}
+            class="logs-mode-pill wt-pill-link is-active"
           >
             Recent Logs
-          </a>
-          <a
-            href="/logs/short"
-            class={["logs-mode-pill wt-pill-link", @scope == "short" && "is-active"]}
-          >
-            Short Logs
           </a>
           <a href="/logs/current" class="logs-mode-pill wt-pill-link">Current Match</a>
         </div>
@@ -40,7 +34,6 @@
         <div
           class="logs-container wt-content-box"
           id="logs-container"
-          data-scope={@scope}
           data-current-page={@page}
           data-total-pages={@total_pages}
           data-total-logs={@total_logs}
@@ -63,7 +56,6 @@
       const logsEmpty = document.getElementById("logs-empty");
       const logsRefreshButton = document.getElementById("logs-refresh");
       const paginationContainer = document.getElementById("logs-pagination");
-      const scope = logsContainer?.dataset.scope || "regular";
       const perPage = Number(logsContainer?.dataset.perPage || <%= @per_page %>);
       let currentPage = Number(logsContainer?.dataset.currentPage || <%= @page %>);
       let totalPages = Number(logsContainer?.dataset.totalPages || <%= @total_pages %>);
@@ -109,7 +101,6 @@
           const params = new URLSearchParams({
             page: String(targetPage),
             per_page: String(perPage),
-            scope,
             include_players: "1",
             t: String(Date.now())
           });
@@ -123,7 +114,7 @@
           logsContainer.dataset.totalPages = String(totalPages);
           updateEmptyStateFromContent();
           buildPagination();
-          history.replaceState(null, "", (scope === "short" ? "/logs/short" : "/logs") + `?page=${currentPage}`);
+          history.replaceState(null, "", `/logs?page=${currentPage}`);
         } catch (err) {
           console.error("[WhaleTracker] Failed to fetch logs:", err);
           setEmptyState(true, "Failed to load logs.");

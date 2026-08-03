@@ -181,8 +181,6 @@ defmodule KogasaFrontend.StatsFeed do
     per_page =
       positive_int(Map.get(opts, :per_page, Map.get(opts, "per_page", 25)), 25) |> min(100)
 
-    scope = logs_scope(Map.get(opts, :scope, Map.get(opts, "scope", "regular")))
-
     include_players =
       truthy?(Map.get(opts, :include_players, Map.get(opts, "include_players", false)))
 
@@ -191,21 +189,19 @@ defmodule KogasaFrontend.StatsFeed do
 
     offset = (page - 1) * per_page
 
-    {where_sql, params} = logs_scope_sql(scope)
-
-    total_sql = "SELECT COUNT(*) AS c FROM #{@logs_table} WHERE player_count > 0#{where_sql}"
-    total = scalar_query(total_sql, params)
+    total_sql = "SELECT COUNT(*) AS c FROM #{@logs_table} WHERE player_count > 0"
+    total = scalar_query(total_sql, [])
 
     sql = """
     SELECT log_id, map, gamemode, started_at, ended_at, duration, player_count, created_at, updated_at
     FROM #{@logs_table}
-    WHERE player_count > 0#{where_sql}
+    WHERE player_count > 0
     ORDER BY started_at DESC
     LIMIT ? OFFSET ?
     """
 
     rows =
-      case SQL.query(Repo, sql, params ++ [per_page, offset]) do
+      case SQL.query(Repo, sql, [per_page, offset]) do
         {:ok, %{rows: rs, columns: cols}} ->
           Enum.map(rs, fn row ->
             m = row_map(row, cols)
@@ -240,11 +236,10 @@ defmodule KogasaFrontend.StatsFeed do
       per_page: per_page,
       total: total,
       total_pages: max(1, ceil_div(total, per_page)),
-      scope: scope,
       rows: rows
     }
   rescue
-    _ -> %{ok: false, rows: [], total: 0, page: 1, total_pages: 1, per_page: 25, scope: "regular"}
+    _ -> %{ok: false, rows: [], total: 0, page: 1, total_pages: 1, per_page: 25}
   end
 
   def current_log(opts \\ %{}) do
@@ -253,7 +248,6 @@ defmodule KogasaFrontend.StatsFeed do
     case logs(%{
            page: 1,
            per_page: 1,
-           scope: "all",
            include_players: true,
            identity_mode: identity_mode
          }) do
@@ -1117,18 +1111,6 @@ defmodule KogasaFrontend.StatsFeed do
       "CASE WHEN COALESCE(pc.rank, 0) > 0 THEN pc.rank ELSE 2147483647 END ASC, " <>
       "w.steamid ASC"
   end
-
-  defp logs_scope(value) do
-    case value |> str() |> String.downcase() |> String.trim() do
-      "short" -> "short"
-      "all" -> "all"
-      _ -> "regular"
-    end
-  end
-
-  defp logs_scope_sql("short"), do: {" AND player_count >= ? AND player_count <= ?", [2, 12]}
-  defp logs_scope_sql("all"), do: {"", []}
-  defp logs_scope_sql(_), do: {"", []}
 
   defp attach_log_players([], _identity_mode), do: []
 

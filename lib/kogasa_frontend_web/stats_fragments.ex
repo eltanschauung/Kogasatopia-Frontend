@@ -172,7 +172,6 @@ defmodule KogasaFrontendWeb.StatsFragments do
     page = Map.get(payload, :page, 1)
     total_pages = Map.get(payload, :total_pages, 1)
     total = Map.get(payload, :total, 0)
-    scope = Map.get(payload, :scope, "regular")
 
     body =
       if rows == [] do
@@ -182,7 +181,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
       end
 
     """
-    <div class="logs-fragment-root" data-page="#{page}" data-total-pages="#{total_pages}" data-total-logs="#{total}" data-scope="#{e(scope)}">
+    <div class="logs-fragment-root" data-page="#{page}" data-total-pages="#{total_pages}" data-total-logs="#{total}">
       #{body}
     </div>
     """

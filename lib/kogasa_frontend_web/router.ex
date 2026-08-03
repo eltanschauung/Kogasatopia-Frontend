@@ -47,8 +47,6 @@ defmodule KogasaFrontendWeb.Router do
     get "/online", OnlineController, :index
     get "/logs", LogsController, :index
     get "/logs/index.php", LogsController, :index
-    get "/logs/short", LogsController, :short
-    get "/logs/short/index.php", LogsController, :short
     get "/logs/current", LogsController, :current
     get "/logs/current/index.php", LogsController, :current
     get "/stats/login.php", StatsLoginController, :show
