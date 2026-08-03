@@ -15,6 +15,9 @@ defmodule KogasaFrontend.Chat.NameStyle do
       "america" ->
         %{kind: :america}
 
+      "map" ->
+        %{kind: :map}
+
       "trans" ->
         %{kind: :trans}
 
@@ -28,12 +31,12 @@ defmodule KogasaFrontend.Chat.NameStyle do
 
   def from_preference(_), do: nil
 
-  def custom?(%{kind: kind}) when kind in [:gradient, :america, :trans, :rainbow, :solid],
+  def custom?(%{kind: kind}) when kind in [:gradient, :america, :map, :trans, :rainbow, :solid],
     do: true
 
   def custom?(_), do: false
 
-  def css_class(%{kind: kind}) when kind in [:gradient, :america, :trans, :rainbow],
+  def css_class(%{kind: kind}) when kind in [:gradient, :america, :map, :trans, :rainbow],
     do: "chat-name-gradient"
 
   def css_class(_), do: nil
@@ -44,6 +47,10 @@ defmodule KogasaFrontend.Chat.NameStyle do
   def css_style(%{kind: :america}),
     do:
       "color: transparent; --chat-name-gradient: linear-gradient(90deg, #FF4040 0%, #FF4040 33.333%, #FFFFFF 33.333%, #FFFFFF 66.666%, #1E90FF 66.666%, #1E90FF 100%)"
+
+  def css_style(%{kind: :map}),
+    do:
+      "color: transparent; --chat-name-gradient: linear-gradient(90deg, #99CCFF 0%, #99CCFF 12.5%, #6495ED 12.5%, #6495ED 25%, #FFFFE0 25%, #FFFFE0 37.5%, #FFFFFF 37.5%, #FFFFFF 62.5%, #FFFFE0 62.5%, #FFFFE0 75%, #FFC0CB 75%, #FFC0CB 87.5%, #FF69B4 87.5%, #FF69B4 100%)"
 
   def css_style(%{kind: :trans}),
     do:

@@ -22,6 +22,20 @@ defmodule KogasaFrontend.Chat.NameStyleTest do
     assert NameStyle.from_preference(%{pattern: "rainbow", color: ""}) == %{kind: :rainbow}
   end
 
+  test "renders the MAP flag preset with the SourceMod palette" do
+    style = NameStyle.from_preference(%{pattern: "map", color: ""})
+
+    assert style == %{kind: :map}
+    assert NameStyle.custom?(style)
+    assert NameStyle.css_class(style) == "chat-name-gradient"
+
+    assert NameStyle.css_style(style) =~
+             "#99CCFF 0%, #99CCFF 12.5%, #6495ED 12.5%, #6495ED 25%"
+
+    assert NameStyle.css_style(style) =~ "#FFFFFF 37.5%, #FFFFFF 62.5%"
+    assert NameStyle.css_style(style) =~ "#FFC0CB 75%, #FFC0CB 87.5%, #FF69B4 87.5%"
+  end
+
   test "falls back to the solid color for an invalid pattern" do
     assert NameStyle.from_preference(%{pattern: "gradient:unknown:red", color: "green"}) == %{
              kind: :solid,
