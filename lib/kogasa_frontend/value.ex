@@ -39,6 +39,14 @@ defmodule KogasaFrontend.Value do
 
   def float(_), do: 0.0
 
-  def truthy?(value) when value in [true, 1, "1", "true", "yes", "on"], do: true
+  def truthy?(value) when value in [true, 1], do: true
+
+  def truthy?(value) when is_binary(value) do
+    value
+    |> String.trim()
+    |> String.downcase()
+    |> then(&(&1 in ["1", "true", "yes", "on"]))
+  end
+
   def truthy?(_), do: false
 end

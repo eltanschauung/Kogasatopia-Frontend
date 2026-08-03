@@ -2,6 +2,7 @@ defmodule KogasaFrontend.Chat do
   @moduledoc false
 
   import Ecto.Query
+  import KogasaFrontend.Value, only: [truthy?: 1]
   alias Ecto.Multi
 
   alias KogasaFrontend.Chat.{
@@ -283,7 +284,4 @@ defmodule KogasaFrontend.Chat do
 
   defp normalize_id(value) when is_integer(value) and value > 0, do: value
   defp normalize_id(_), do: nil
-
-  defp truthy?(value) when value in [true, 1, "1", "true", "TRUE", "yes", "on"], do: true
-  defp truthy?(_), do: false
 end

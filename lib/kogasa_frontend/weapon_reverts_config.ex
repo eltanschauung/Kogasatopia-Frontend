@@ -1,6 +1,8 @@
 defmodule KogasaFrontend.WeaponRevertsConfig do
   @moduledoc false
 
+  import KogasaFrontend.Value, only: [truthy?: 1]
+
   @item_classes_section "WeaponRevertsItemClasses"
   @root_section "WeaponReverts"
   @cwx_section "CWX"
@@ -257,13 +259,7 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
     end)
   end
 
-  defp truthy_value?(value) do
-    value
-    |> to_string()
-    |> String.trim()
-    |> String.downcase()
-    |> then(&(&1 in ["1", "true", "yes", "on"]))
-  end
+  defp truthy_value?(value), do: truthy?(value)
 
   defp blank_effects?(%{positive: positive, neutral: neutral, negative: negative}) do
     [positive, neutral, negative]
