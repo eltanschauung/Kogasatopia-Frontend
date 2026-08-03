@@ -6,6 +6,14 @@
     <title>Maps ? kogasa.tf</title>
     <link rel="stylesheet" href="/assets/css/app.css" />
     <link rel="stylesheet" href="/stats/css/whaletracker.css" />
+    <script src="/assets/js/app/online_count_cache.js">
+    </script>
+    <script src="/assets/js/app/chat_age_label.js">
+    </script>
+    <script src="/assets/js/app/nav_status.js">
+    </script>
+    <script defer src="/assets/js/app/time.js">
+    </script>
     <style>
       body { margin: 0; }
       .stats-header-shell {
@@ -812,35 +820,7 @@
 
           if (filterInput) filterInput.addEventListener('input', () => filterMaps(filterInput.value));
 
-          const navOnlineCount = document.getElementById('nav-online-count');
-          const navChatLabel = document.getElementById('nav-chat-label');
-          if (navOnlineCount && window.WTOnlineCountCache?.apply) {
-            window.WTOnlineCountCache.apply(navOnlineCount);
-          }
-          const updateNavOnlineCount = async () => {
-            if (!navOnlineCount) return;
-            try {
-              const res = await fetch('/stats/online_summary.php', { cache: 'no-store' });
-              if (!res.ok) return;
-              const payload = await res.json();
-              const count = Number(payload.player_count || 0);
-              const max = Number(payload.visible_max || payload.visible_max_players || 32) || 32;
-              const safeCount = Math.max(0, count);
-              const safeMax = max > 0 ? max : 32;
-              navOnlineCount.textContent = `${safeCount} / ${safeMax}`;
-              window.WTOnlineCountCache?.write?.({ player_count: safeCount, visible_max: safeMax, updated: payload.updated });
-            } catch (_) {
-              // ignore
-            }
-          };
-          const updateNavChatLabel = async () => {
-            if (!navChatLabel) return;
-            return window.WTChatAgeLabel?.update?.(navChatLabel);
-          };
-          updateNavOnlineCount();
-          setInterval(updateNavOnlineCount, 10000);
-          updateNavChatLabel();
-          setInterval(updateNavChatLabel, 60000);
+          window.WTNavStatus?.start?.({ online: 'nav-online-count', chat: 'nav-chat-label' });
         })();
       </script>
     <% end %>

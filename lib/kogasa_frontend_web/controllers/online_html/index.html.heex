@@ -147,7 +147,6 @@
     const onlineTbody = onlineTable ? onlineTable.querySelector('tbody') : null;
     const onlineEmpty = document.getElementById('online-empty');
     const onlineCountLabel = document.getElementById('nav-online-count');
-    const navChatLabel = document.getElementById('nav-chat-label');
     const onlineTopbarCount = document.getElementById('online-topbar-count');
     const classIconBase = <%= Phoenix.HTML.raw(Jason.encode!(String.trim_trailing(@class_icon_base || "/leaderboard/", "/"))) %> + '/';
     const mapCardsContainer = document.getElementById('online-map-cards');
@@ -181,19 +180,14 @@
         if (wrapper.children.length > 0) target.appendChild(wrapper);
     }
     function updateOnlineButtonInfo(count, max) {
-        const label = `${count} / ${max}`;
-        if (onlineCountLabel) onlineCountLabel.textContent = label;
-        if (onlineTopbarCount) onlineTopbarCount.textContent = label;
+        window.WTNavStatus?.applyOnline?.(
+            { player_count: count, visible_max: max },
+            onlineCountLabel,
+            onlineTopbarCount
+        );
     }
     function applyCachedOnlineButtonInfo() {
-        if (!window.WTOnlineCountCache) return;
-        const cached = window.WTOnlineCountCache.read?.();
-        if (!cached) return;
-        updateOnlineButtonInfo(cached.player_count, cached.visible_max);
-    }
-    async function updateNavChatLabel() {
-        if (!navChatLabel) return;
-        return window.WTChatAgeLabel?.update?.(navChatLabel);
+        window.WTNavStatus?.applyCachedOnline?.(onlineCountLabel, onlineTopbarCount);
     }
 
     function sortOnlineTableByState() {
@@ -429,8 +423,7 @@
             attachSortingToOnlineTable();
             fetchOnline();
             setInterval(fetchOnline, onlineRefreshMs);
-            updateNavChatLabel();
-            setInterval(updateNavChatLabel, 60000);
+            window.WTNavStatus?.start?.({ chat: 'nav-chat-label' });
         }
     });
   </script>

@@ -735,30 +735,10 @@
       }
 
       function applyOnlineSummary(count, max, updated) {
-        if (!els.navOnlineCount) return;
-        count = Number(count || 0);
-        max = Number(max || 0);
-        if (!Number.isFinite(count) || count < 0) count = 0;
-        if (!Number.isFinite(max) || max <= 0) max = 32;
-        els.navOnlineCount.textContent = `${count} / ${max}`;
-        window.WTOnlineCountCache?.write?.({ player_count: count, visible_max: max, updated });
-      }
-
-      async function updateNavCount() {
-        if (!els.navOnlineCount) return;
-        try {
-          const res = await fetch('/stats/online_summary.php', { cache: 'no-store' });
-          if (!res.ok) throw new Error('Request failed');
-          const payload = await res.json();
-          applyOnlineSummary(payload.player_count, payload.visible_max || payload.visible_max_players, payload.updated);
-        } catch (_) {
-          // ignore
-        }
-      }
-
-      async function updateChatAgeLabel() {
-        if (!els.navChatLabel) return;
-        return window.WTChatAgeLabel?.update?.(els.navChatLabel);
+        window.WTNavStatus?.applyOnline?.(
+          { player_count: count, visible_max: max, updated },
+          els.navOnlineCount
+        );
       }
 
       function renderCumulative(payload) {
@@ -1102,12 +1082,8 @@
         }
       });
       initCumulativeSorting(document);
-      if (els.navOnlineCount && window.WTOnlineCountCache?.apply) window.WTOnlineCountCache.apply(els.navOnlineCount);
-      updateNavCount();
-      updateChatAgeLabel();
+      window.WTNavStatus?.start?.({ online: 'nav-online-count', chat: 'nav-chat-label' });
       loadCurrentLog();
-      setInterval(updateNavCount, 10000);
-      setInterval(updateChatAgeLabel, 60000);
       setInterval(loadCurrentLog, 10000);
     })();
   </script>

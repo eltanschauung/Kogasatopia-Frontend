@@ -80,9 +80,6 @@
   <script>
     (() => {
       const logsFragmentEndpoint = "/stats/logs_fragment.php";
-      const onlineSummaryEndpoint = "/stats/online_summary.php";
-      const onlineCountEl = document.getElementById("nav-online-count");
-      const navChatLabel = document.getElementById("nav-chat-label");
       const logsContainer = document.getElementById("logs-container");
       const logsEmpty = document.getElementById("logs-empty");
       const logsRefreshButton = document.getElementById("logs-refresh");
@@ -92,24 +89,6 @@
       let currentPage = Number(logsContainer?.dataset.currentPage || <%= @page %>);
       let totalPages = Number(logsContainer?.dataset.totalPages || <%= @total_pages %>);
       let loading = false;
-
-      function updateOnlineCountLabel() {
-        if (!onlineCountEl) return;
-        fetch(onlineSummaryEndpoint + "?t=" + Date.now(), { cache: "no-store" })
-          .then((r) => r.ok ? r.json() : Promise.reject(new Error("summary request failed")))
-          .then((data) => {
-            const online = Number(data?.player_count || data?.online_players || data?.players || 0);
-            const max = Number(data?.visible_max || data?.visible_max_players || data?.max_players || data?.max || 32) || 32;
-            onlineCountEl.textContent = `${online} / ${max}`;
-            window.WTOnlineCountCache?.write?.({ player_count: online, visible_max: max, updated: data?.updated });
-          })
-          .catch(() => {});
-      }
-
-      async function updateNavChatLabel() {
-        if (!navChatLabel) return;
-        return window.WTChatAgeLabel?.update?.(navChatLabel);
-      }
 
       function setEmptyState(visible, message) {
         if (!logsEmpty) return;
@@ -180,11 +159,7 @@
         updateEmptyStateFromContent();
         buildPagination();
         if (logsRefreshButton) logsRefreshButton.addEventListener("click", () => fetchLogs(currentPage));
-        window.WTOnlineCountCache?.apply?.(onlineCountEl);
-        updateOnlineCountLabel();
-        updateNavChatLabel();
-        window.setInterval(updateOnlineCountLabel, 10000);
-        window.setInterval(updateNavChatLabel, 60000);
+        window.WTNavStatus?.start?.({ online: "nav-online-count", chat: "nav-chat-label" });
       }
 
       if (document.readyState === "loading") {
