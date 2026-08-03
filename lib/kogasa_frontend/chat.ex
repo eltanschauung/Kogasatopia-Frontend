@@ -7,6 +7,7 @@ defmodule KogasaFrontend.Chat do
   alias KogasaFrontend.Chat.{
     AvatarService,
     Message,
+    MessageParts,
     NamePreference,
     NameStyle,
     OutboxMessage,
@@ -35,6 +36,7 @@ defmodule KogasaFrontend.Chat do
           steamid: m.steamid,
           personaname: m.personaname,
           iphash: m.iphash,
+          server_ip: m.server_ip,
           message: m.message,
           alert: m.alert
         }
@@ -200,6 +202,8 @@ defmodule KogasaFrontend.Chat do
     iphash = row[:iphash] || row["iphash"]
     personaname = row[:personaname] || row["personaname"]
     steamid = row[:steamid] || row["steamid"]
+    raw_message = row[:message] || row["message"] || ""
+    {clan_tag, message} = MessageParts.split(raw_message, row)
 
     profile =
       if is_binary(steamid) and steamid != "", do: Map.get(steam_profiles, steamid), else: nil
@@ -219,7 +223,8 @@ defmodule KogasaFrontend.Chat do
       name: resolved_name(personaname, steamid, iphash, profile),
       name_style: name_preferences |> Map.get(steamid) |> NameStyle.from_preference(),
       avatar: avatar,
-      message: row[:message] || row["message"] || "",
+      clan_tag: clan_tag,
+      message: message,
       alert: truthy?(row[:alert] || row["alert"] || false)
     }
   end
@@ -253,6 +258,7 @@ defmodule KogasaFrontend.Chat do
       name: msg.name,
       name_style: msg.name_style,
       avatar: msg.avatar,
+      clan_tag: msg.clan_tag,
       message: msg.message,
       alert: msg.alert
     }

@@ -670,6 +670,14 @@
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#39;');
       }
+      function plainChatFormatting(str) {
+        return String(str ?? '')
+          .replace(/\x08[0-9a-f]{8}/gi, '')
+          .replace(/\x07[0-9a-f]{6}/gi, '')
+          .replace(/[\x01-\x06]/g, '')
+          .replace(/\{[a-z]+\}/gi, '')
+          .trim();
+      }
       function normalizeFlagCode(code) {
         return String(code || '').trim().toLowerCase();
       }
@@ -847,6 +855,8 @@
         arr.forEach(msg => {
           if (!msg || !msg.id) return;
           if (els.chatMessages.querySelector(`[data-chat-id="${CSS.escape(String(msg.id))}"]`)) return;
+          const clanTag = plainChatFormatting(msg.clan_tag);
+          const displayName = `${clanTag ? clanTag + ' ' : ''}${msg.name || 'Unknown'}`;
           const row = document.createElement('div');
           row.className = 'stats-chat-row';
           row.dataset.chatId = String(msg.id);
@@ -854,7 +864,7 @@
             <img src="${escapeHtml(msg.avatar || '')}" alt="">
             <div>
               <div class="stats-chat-header">
-                <span class="stats-chat-name">${escapeHtml(msg.name || 'Unknown')}</span>
+                <span class="stats-chat-name">${escapeHtml(displayName)}</span>
                 <span class="stats-chat-time">${escapeHtml(hhmm(msg.created_at))}</span>
               </div>
               <div class="stats-chat-text">${escapeHtml(msg.message || '')}</div>

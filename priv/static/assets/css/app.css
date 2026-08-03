@@ -620,6 +620,20 @@ a {
   line-height: 1.1;
 }
 
+.chat-identity {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.chat-clan-tag {
+  flex: 0 0 auto;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
 .chat-name-gradient {
   color: transparent;
   background-image: var(--chat-name-gradient);

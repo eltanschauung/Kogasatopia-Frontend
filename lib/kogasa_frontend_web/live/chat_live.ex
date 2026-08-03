@@ -174,11 +174,18 @@ defmodule KogasaFrontendWeb.ChatLive do
                   <img src={msg.avatar} alt="" class="chat-avatar" />
                   <div class="chat-content">
                     <div class="chat-header">
-                      <.chat_name
-                        text={msg.name}
-                        name_style={msg.name_style}
-                        class="chat-name"
-                      />
+                      <div class="chat-identity">
+                        <.colored
+                          :if={is_binary(msg.clan_tag) and msg.clan_tag != ""}
+                          text={msg.clan_tag}
+                          class="chat-clan-tag"
+                        />
+                        <.chat_name
+                          text={msg.name}
+                          name_style={msg.name_style}
+                          class="chat-name"
+                        />
+                      </div>
                       <span
                         class="chat-timestamp"
                         data-local-time={msg.created_at}
