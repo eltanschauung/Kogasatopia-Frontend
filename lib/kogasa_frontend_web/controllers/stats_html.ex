@@ -1,8 +1,8 @@
 defmodule KogasaFrontendWeb.StatsHTML do
   use KogasaFrontendWeb, :html
 
-  alias KogasaFrontend.Chat.NameStyle
   alias KogasaFrontend.DisplayFormat
+  alias KogasaFrontend.PlayerPresentation
 
   embed_templates "stats_html/*"
 
@@ -43,25 +43,7 @@ defmodule KogasaFrontendWeb.StatsHTML do
 
   def avatar_or_default(_, default), do: default
 
-  def steam_profile_url(nil), do: nil
-
-  def steam_profile_url(%{profileurl: url}) when is_binary(url) and url != "", do: url
-  def steam_profile_url(%{"profileurl" => url}) when is_binary(url) and url != "", do: url
-
-  def steam_profile_url(map) when is_map(map) do
-    steamid = map[:steamid] || map["steamid"] || map[:steamid64] || map["steamid64"]
-    steam_profile_url(steamid)
-  end
-
-  def steam_profile_url(steamid) when is_binary(steamid) do
-    trimmed = String.trim(steamid)
-
-    if Regex.match?(~r/^7656\d+$/, trimmed),
-      do: "https://steamcommunity.com/profiles/" <> trimmed,
-      else: nil
-  end
-
-  def steam_profile_url(_), do: nil
+  def steam_profile_url(value), do: PlayerPresentation.steam_profile_url(value)
 
   def display_name(nil), do: "Unknown"
 
@@ -73,16 +55,12 @@ defmodule KogasaFrontendWeb.StatsHTML do
   def player_name_style(player), do: get_key(player, :name_style, nil)
 
   def player_name_class(player, base_class) do
-    style = player_name_style(player)
-    is_admin = get_key(player, :is_admin, false)
-
-    [base_class, if(is_admin && !NameStyle.custom?(style), do: "admin-name")]
-    |> Enum.reject(&is_nil/1)
-    |> Enum.join(" ")
+    player
+    |> player_name_attributes(base_class)
+    |> Map.fetch!(:classes)
   end
 
-  def player_name_title(player),
-    do: if(get_key(player, :is_admin, false), do: "Admin", else: "Player")
+  def player_name_title(player), do: player_name_attributes(player, nil).title
 
   def map_get(summary, key, default \\ nil), do: get_key(summary, key, default)
 
@@ -91,6 +69,14 @@ defmodule KogasaFrontendWeb.StatsHTML do
   end
 
   defp get_key(_, _key, default), do: default
+
+  defp player_name_attributes(player, base_class) do
+    PlayerPresentation.name_attributes(
+      player_name_style(player),
+      get_key(player, :is_admin, false),
+      [base_class]
+    )
+  end
 
   # Match PHP wt_build_summary_context() behavior: clamp negative weekly change to 0.0 and mark as "up".
   defp normalized_week_change(summary) do

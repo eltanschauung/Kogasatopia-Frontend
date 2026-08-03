@@ -23,6 +23,7 @@ defmodule KogasaFrontend.CountryNames do
     |> to_string_or_empty()
     |> String.trim()
     |> String.downcase()
+    |> String.replace(~r/[^a-z0-9_-]/, "")
   end
 
   defp country_names do

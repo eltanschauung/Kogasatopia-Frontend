@@ -1,12 +1,10 @@
 defmodule KogasaFrontendWeb.StatsFragments do
   @moduledoc false
 
-  alias KogasaFrontend.Chat.NameStyle
   alias KogasaFrontend.DisplayFormat
+  alias KogasaFrontend.PlayerPresentation
   alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.TimeDisplay
-
-  @flag_base_url "https://bantculture.com/static/flags/"
 
   def cumulative_fragment_html(payload, opts \\ %{}) do
     q = Map.get(payload, :q, "")
@@ -57,11 +55,12 @@ defmodule KogasaFrontendWeb.StatsFragments do
     name = fallback(row[:personaname], fallback(row[:steamid], "Unknown"))
     name_html = e(name)
 
-    {name_classes, _name_style_attr} =
-      name_presentation(row[:name_style], row[:is_admin], ["stats-player-name"])
+    name_attributes =
+      PlayerPresentation.name_attributes(row[:name_style], row[:is_admin], ["stats-player-name"])
 
-    name_title = if row[:is_admin], do: "Admin", else: "Player"
-    name_style = "font-size:1.35rem;font-weight:600;" <> name_style_value(row[:name_style])
+    name_classes = name_attributes.classes
+    name_title = name_attributes.title
+    name_style = "font-size:1.35rem;font-weight:600;" <> (name_attributes.style || "")
     perf = get_opt(opts, :performance_averages, %{})
 
     comparison_enabled =
@@ -634,46 +633,26 @@ defmodule KogasaFrontendWeb.StatsFragments do
   end
 
   defp name_presentation(name_style, is_admin, base_classes) do
-    custom_style? = NameStyle.custom?(name_style)
-    style_class = NameStyle.css_class(name_style)
-
-    classes =
-      base_classes
-      |> Enum.reject(&is_nil/1)
-      |> maybe_push(is_binary(style_class), style_class)
-      |> maybe_push(is_admin && !custom_style?, "admin-name")
-      |> Enum.join(" ")
+    attributes = PlayerPresentation.name_attributes(name_style, is_admin, base_classes)
 
     style_attr =
-      case name_style_value(name_style) do
+      case attributes.style do
+        nil -> ""
         "" -> ""
         value -> ~s( style="#{e(value)}")
       end
 
-    {classes, style_attr}
+    {attributes.classes, style_attr}
   end
-
-  defp name_style_value(name_style), do: NameStyle.css_style(name_style) || ""
 
   defp country_flag_html(country_code, country_name) do
-    case normalize_country_code(country_code) do
-      "" ->
+    case PlayerPresentation.country_flag(country_code, country_name) do
+      nil ->
         ""
 
-      code ->
-        title = fallback(country_name, String.upcase(code))
-
-        ~s( <img class="stats-country-flag" src="#{@flag_base_url}#{e(code)}.png" alt="#{e(title)}" title="#{e(title)}">)
+      flag ->
+        ~s( <img class="stats-country-flag" src="#{e(flag.url)}" alt="#{e(flag.name)}" title="#{e(flag.name)}">)
     end
-  end
-
-  defp normalize_country_code(code) do
-    code
-    |> fallback("")
-    |> to_string()
-    |> String.trim()
-    |> String.downcase()
-    |> String.replace(~r/[^a-z0-9_-]/, "")
   end
 
   defp stat_compare_attr(false, _value, _average, _hib, title), do: title_attr(title)
