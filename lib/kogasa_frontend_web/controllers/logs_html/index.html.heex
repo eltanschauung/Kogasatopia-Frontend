@@ -1,27 +1,6 @@
 <Layouts.app flash={@flash} wide={true}>
   <link rel="stylesheet" href="/stats/css/whaletracker.css" />
-  <style>
-    .logs-container {
-      min-height: 240px;
-    }
-    .logs-empty { margin-top: .65rem; color: #b7c0d2; }
-    .logs-pagination {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .45rem;
-      justify-content: center;
-      margin-top: .8rem;
-    }
-    .logs-container .log-title { color: #eff3fb; }
-    .logs-container .log-meta { color: #b9c4d7; }
-    @media (max-width: 700px) {
-      .logs-page { padding-left: 0; padding-right: 0; }
-      .logs-shell.wt-shell { padding: .5rem; }
-      .logs-content-shell.wt-content-shell { padding: .45rem; }
-      .logs-container.wt-content-box { padding: .25rem; }
-      .logs-pagination { gap: .3rem; margin-top: .55rem; }
-    }
-  </style>
+  <link rel="stylesheet" href="/stats/css/logs_page.css" />
 
   <div class="logs-page wt-page-pad">
     <.section_nav active={:logs} chat_label_id="nav-chat-label" />
