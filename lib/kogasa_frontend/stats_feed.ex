@@ -12,6 +12,7 @@ defmodule KogasaFrontend.StatsFeed do
   alias KogasaFrontend.MapsDb
   alias KogasaFrontend.PlayerIdentity
   alias KogasaFrontend.Repo
+  alias KogasaFrontend.Stats.MatchLogClasses
   alias KogasaFrontend.WeaponCategories
   alias KogasaFrontend.WeaponStats
 
@@ -40,10 +41,6 @@ defmodule KogasaFrontend.StatsFeed do
     {8, ~w(revolvers)},
     {9, ~w(shotguns pistols)}
   ]
-  @match_log_healing_per_shot_equivalent 10.0
-  @match_log_spy_backstab_shot_equivalent 5
-  @match_log_class_threshold 0.33
-  @match_log_max_class_icons 3
 
   def page_payload(opts \\ %{}) do
     search = str(Map.get(opts, :q, Map.get(opts, "q", "")))
@@ -1218,7 +1215,7 @@ defmodule KogasaFrontend.StatsFeed do
       profile = Map.get(profiles, steamid, %{})
       identity = PlayerIdentity.get(identities, steamid)
       {weapon_summary, active_acc} = WeaponStats.summary_with_active(row)
-      active_classes = active_match_log_classes(row, weapon_summary)
+      active_classes = MatchLogClasses.build(row, weapon_summary)
       {total_shots, total_hits} = WeaponStats.total_accuracy_counts(row)
       shots = if total_shots > 0, do: total_shots, else: int(row["shots"])
       hits = if total_shots > 0, do: total_hits, else: int(row["hits"])
@@ -1268,129 +1265,6 @@ defmodule KogasaFrontend.StatsFeed do
       }
     end)
   end
-
-  defp active_match_log_classes(row, weapon_summary) do
-    weapon_summary
-    |> Enum.reduce(%{}, &put_match_log_class_candidate/2)
-    |> maybe_add_spy_backstab_match_log_class(row)
-    |> Map.values()
-    |> maybe_add_medic_match_log_class(row)
-    |> Enum.sort_by(fn item -> {-float(item["score"]), -float(item["accuracy"])} end)
-    |> threshold_match_log_class_candidates()
-  end
-
-  defp put_match_log_class_candidate(item, acc) do
-    class_slug = match_log_class_slug_for_weapon_slug(str(item["slug"]))
-    shots = float(item["shots"])
-
-    if class_slug == "" or shots <= 0.0 do
-      acc
-    else
-      hits = int(item["hits"])
-
-      Map.update(
-        acc,
-        class_slug,
-        match_log_class_candidate(class_slug, shots, hits),
-        &merge_match_log_class_candidate(&1, shots, hits)
-      )
-    end
-  end
-
-  defp merge_match_log_class_candidate(candidate, extra_score, extra_hits) do
-    score = float(candidate["score"]) + extra_score
-    hits = int(candidate["hits"]) + extra_hits
-
-    candidate
-    |> Map.put("score", score)
-    |> Map.put("shots", score)
-    |> Map.put("title_value", score)
-    |> Map.put("hits", hits)
-    |> Map.put("accuracy", if(score > 0.0, do: hits / score * 100.0, else: 0.0))
-  end
-
-  defp maybe_add_spy_backstab_match_log_class(candidates, row) do
-    backstab_score = int(row["backstabs"]) * @match_log_spy_backstab_shot_equivalent
-
-    if backstab_score <= 0 do
-      candidates
-    else
-      Map.update(
-        candidates,
-        "spy",
-        match_log_class_candidate("spy", backstab_score, 0),
-        &merge_match_log_class_candidate(&1, backstab_score, 0)
-      )
-    end
-  end
-
-  defp maybe_add_medic_match_log_class(candidates, row) do
-    medic_shots = int(row["shots_medic"])
-    healing = int(row["healing"])
-    medic_score = medic_shots + healing / @match_log_healing_per_shot_equivalent
-
-    if medic_score <= 0.0 do
-      candidates
-    else
-      [
-        "medic"
-        |> match_log_class_candidate(medic_score, 0)
-        |> Map.put("title_value", healing)
-        |> Map.put("title_metric", "healing")
-        | candidates
-      ]
-    end
-  end
-
-  defp threshold_match_log_class_candidates([]), do: []
-
-  defp threshold_match_log_class_candidates([top | _] = candidates) do
-    top_score = float(top["score"])
-
-    if top_score <= 0.0 do
-      []
-    else
-      minimum_score = top_score * @match_log_class_threshold
-
-      candidates
-      |> Enum.filter(&(float(&1["score"]) >= minimum_score))
-      |> Enum.take(@match_log_max_class_icons)
-    end
-  end
-
-  defp match_log_class_candidate(slug, score, hits) do
-    %{
-      "slug" => slug,
-      "label" => match_log_class_label(slug),
-      "score" => score,
-      "shots" => score,
-      "title_value" => score,
-      "title_metric" => "shots",
-      "hits" => hits,
-      "accuracy" => if(score > 0.0, do: hits / score * 100.0, else: 0.0)
-    }
-  end
-
-  defp match_log_class_slug_for_weapon_slug("scatterguns"), do: "scout"
-  defp match_log_class_slug_for_weapon_slug("snipers"), do: "sniper"
-  defp match_log_class_slug_for_weapon_slug("rocketlaunchers"), do: "soldier"
-  defp match_log_class_slug_for_weapon_slug("grenadelaunchers"), do: "demoman"
-  defp match_log_class_slug_for_weapon_slug("stickylaunchers"), do: "demoman"
-  defp match_log_class_slug_for_weapon_slug("revolvers"), do: "spy"
-  defp match_log_class_slug_for_weapon_slug("shotguns"), do: "engineer"
-  defp match_log_class_slug_for_weapon_slug("pistols"), do: "engineer"
-  defp match_log_class_slug_for_weapon_slug(_), do: ""
-
-  defp match_log_class_label("scout"), do: "Scout"
-  defp match_log_class_label("sniper"), do: "Sniper"
-  defp match_log_class_label("soldier"), do: "Soldier"
-  defp match_log_class_label("demoman"), do: "Demoman"
-  defp match_log_class_label("medic"), do: "Medic"
-  defp match_log_class_label("heavy"), do: "Heavy"
-  defp match_log_class_label("pyro"), do: "Pyro"
-  defp match_log_class_label("spy"), do: "Spy"
-  defp match_log_class_label("engineer"), do: "Engineer"
-  defp match_log_class_label(_), do: "Class"
 
   defp country_code_for_row(row) do
     if truthy?(row["show_country"]) do
