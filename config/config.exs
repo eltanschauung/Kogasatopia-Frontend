@@ -21,6 +21,8 @@ config :kogasa_frontend,
   chat_assets_dir:
     System.get_env("WT_CHAT_ASSETS_DIR") || Path.expand("../priv/static/stats/assets", __DIR__),
   display_time_zone: System.get_env("WT_DISPLAY_TIME_ZONE") || "America/New_York",
+  # Toggle filters prenames and custom name styles on /stats without affecting /online or /logs.
+  stats_use_filter_identity: false,
   session_signing_salt: System.get_env("PHX_SESSION_SIGNING_SALT") || "public-session-salt",
   access_log_path: Path.expand("access.log")
 

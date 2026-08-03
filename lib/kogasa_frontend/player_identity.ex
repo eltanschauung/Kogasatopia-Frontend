@@ -8,6 +8,12 @@ defmodule KogasaFrontend.PlayerIdentity do
 
   require Logger
 
+  def stats_mode do
+    if Application.get_env(:kogasa_frontend, :stats_use_filter_identity, false),
+      do: :filters,
+      else: :steam
+  end
+
   def for_ids(ids) do
     ids = normalize_ids(ids)
     prenames = query_names("prename_rules", "pattern", "newname", ids)
@@ -43,14 +49,23 @@ defmodule KogasaFrontend.PlayerIdentity do
 
   def get(_identities, _steamid), do: empty()
 
-  def resolve_name(identity, api_name, fallback_name, steamid) do
-    [
-      value(identity, :prename),
-      value(identity, :cached_name),
-      api_name,
-      fallback_name,
-      steamid
-    ]
+  def resolve_name(identity, api_name, fallback_name, steamid, mode \\ :filters) do
+    candidates =
+      case mode do
+        :steam ->
+          [value(identity, :cached_name), api_name, fallback_name, steamid]
+
+        _ ->
+          [
+            value(identity, :prename),
+            value(identity, :cached_name),
+            api_name,
+            fallback_name,
+            steamid
+          ]
+      end
+
+    candidates
     |> Enum.find_value("", fn candidate ->
       case normalize(candidate) do
         "" -> nil
@@ -58,6 +73,9 @@ defmodule KogasaFrontend.PlayerIdentity do
       end
     end)
   end
+
+  def name_style(_identity, :steam), do: nil
+  def name_style(identity, _mode), do: value(identity, :name_style)
 
   def empty do
     %{prename: "", cached_name: "", name_style: nil, is_admin: false}

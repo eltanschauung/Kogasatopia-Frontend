@@ -60,12 +60,14 @@ defmodule KogasaFrontend.StatsFeed do
       summary: summary(),
       performance_averages: performance_averages(),
       cumulative: cumulative(%{q: search, page: page, per_page: per_page, player: player}),
-      current_log: current_log(),
+      current_log: current_log(%{identity_mode: PlayerIdentity.stats_mode()}),
       default_avatar_url: default_avatar_url()
     }
   end
 
   def summary do
+    identity_mode = PlayerIdentity.stats_mode()
+
     sql = """
     SELECT COUNT(*) AS total_players,
            COALESCE(SUM(kills), 0) AS total_kills,
@@ -104,8 +106,8 @@ defmodule KogasaFrontend.StatsFeed do
       }
 
       base
-      |> Map.merge(summary_top_killstreak())
-      |> Map.merge(summary_insights())
+      |> Map.merge(summary_top_killstreak(identity_mode))
+      |> Map.merge(summary_insights(identity_mode))
     else
       _ -> %{}
     end
@@ -114,6 +116,7 @@ defmodule KogasaFrontend.StatsFeed do
   end
 
   def cumulative(opts \\ %{}) do
+    identity_mode = PlayerIdentity.stats_mode()
     q = str(Map.get(opts, :q, Map.get(opts, "q", ""))) |> String.trim()
     page = positive_int(Map.get(opts, :page, Map.get(opts, "page", 1)), 1)
 
@@ -131,10 +134,10 @@ defmodule KogasaFrontend.StatsFeed do
         if q == "" do
           {fetch_cumulative_rows(per_page, offset), count_ranked_cumulative_rows()}
         else
-          fetch_cumulative_search(q, per_page, offset)
+          fetch_cumulative_search(q, per_page, offset, identity_mode)
         end
 
-      rows = enrich_cumulative_rows(rows)
+      rows = enrich_cumulative_rows(rows, identity_mode)
       total_pages = max(1, ceil_div(total, per_page))
 
       focused_player =
@@ -184,6 +187,9 @@ defmodule KogasaFrontend.StatsFeed do
     include_players =
       truthy?(Map.get(opts, :include_players, Map.get(opts, "include_players", false)))
 
+    identity_mode =
+      Map.get(opts, :identity_mode, Map.get(opts, "identity_mode", :filters))
+
     offset = (page - 1) * per_page
 
     {where_sql, params} = logs_scope_sql(scope)
@@ -224,7 +230,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     rows =
       if include_players do
-        attach_log_players(rows)
+        attach_log_players(rows, identity_mode)
       else
         rows
       end
@@ -242,8 +248,16 @@ defmodule KogasaFrontend.StatsFeed do
     _ -> %{ok: false, rows: [], total: 0, page: 1, total_pages: 1, per_page: 25, scope: "regular"}
   end
 
-  def current_log do
-    case logs(%{page: 1, per_page: 1, scope: "all", include_players: true}) do
+  def current_log(opts \\ %{}) do
+    identity_mode = Map.get(opts, :identity_mode, Map.get(opts, "identity_mode", :filters))
+
+    case logs(%{
+           page: 1,
+           per_page: 1,
+           scope: "all",
+           include_players: true,
+           identity_mode: identity_mode
+         }) do
       %{ok: true, rows: [log | _]} -> %{ok: true, log: log}
       _ -> %{ok: false, log: nil}
     end
@@ -357,7 +371,7 @@ defmodule KogasaFrontend.StatsFeed do
         {:ok, %{rows: [row], columns: cols}} ->
           row
           |> row_map(cols)
-          |> then(&enrich_cumulative_rows([&1]))
+          |> then(&enrich_cumulative_rows([&1], PlayerIdentity.stats_mode()))
           |> List.first()
 
         _ ->
@@ -404,7 +418,7 @@ defmodule KogasaFrontend.StatsFeed do
     end
   end
 
-  defp fetch_cumulative_search(q, limit, offset) do
+  defp fetch_cumulative_search(q, limit, offset, identity_mode) do
     favorite_class_expr = favorite_class_select_expr()
     category_select_clause = weapon_category_select_clause("w.")
     like = "%" <> String.downcase(q) <> "%"
@@ -412,22 +426,36 @@ defmodule KogasaFrontend.StatsFeed do
     cached_profile_ids = SteamProfiles.search_cached_ids(q)
 
     {count_where_sql, count_params} =
-      cumulative_search_where_clause("w.", like, steam_like, q, cached_profile_ids)
+      cumulative_search_where_clause(
+        "w.",
+        like,
+        steam_like,
+        q,
+        cached_profile_ids,
+        identity_mode
+      )
 
     count_sql = """
     SELECT COUNT(*)
-    FROM #{ranked_stats_search_from()}
+    FROM #{ranked_stats_search_from(identity_mode)}
     WHERE #{count_where_sql}
     """
 
     total = scalar_query(count_sql, count_params)
 
     {where_sql, params} =
-      cumulative_search_where_clause("w.", like, steam_like, q, cached_profile_ids)
+      cumulative_search_where_clause(
+        "w.",
+        like,
+        steam_like,
+        q,
+        cached_profile_ids,
+        identity_mode
+      )
 
     sql = """
     SELECT w.steamid,
-           COALESCE(pr.newname, fs.last_name, w.cached_personaname, w.steamid) AS personaname,
+           #{search_personaname_expr(identity_mode)} AS personaname,
            COALESCE(w.country, '') AS country,
            COALESCE(w.show_country, 0) AS show_country,
            w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
@@ -443,7 +471,7 @@ defmodule KogasaFrontend.StatsFeed do
            COALESCE(w.airshots, 0) AS airshots,
            #{favorite_class_expr} AS favorite_class,
            COALESCE(w.last_seen, 0) AS last_seen
-    FROM #{ranked_stats_search_from()}
+    FROM #{ranked_stats_search_from(identity_mode)}
     WHERE #{where_sql}
     ORDER BY #{stats_cache_order_clause()}
     LIMIT ? OFFSET ?
@@ -458,9 +486,16 @@ defmodule KogasaFrontend.StatsFeed do
     {rows, total}
   end
 
-  defp cumulative_search_where_clause(alias_prefix, like, steam_like, q, cached_profile_ids) do
+  defp cumulative_search_where_clause(
+         alias_prefix,
+         like,
+         steam_like,
+         q,
+         cached_profile_ids,
+         identity_mode
+       ) do
     base =
-      "LOWER(COALESCE(pr.newname, fs.last_name, #{alias_prefix}cached_personaname, #{alias_prefix}steamid)) " <>
+      "LOWER(#{search_personaname_expr(identity_mode, alias_prefix)}) " <>
         "COLLATE utf8mb4_general_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_general_ci " <>
         "OR #{alias_prefix}steamid LIKE ? " <>
         "OR #{alias_prefix}steamid = ?"
@@ -477,7 +512,7 @@ defmodule KogasaFrontend.StatsFeed do
     end
   end
 
-  defp enrich_cumulative_rows(rows) do
+  defp enrich_cumulative_rows(rows, identity_mode) do
     steam_ids =
       rows
       |> Enum.map(&str(&1["steamid"]))
@@ -507,7 +542,8 @@ defmodule KogasaFrontend.StatsFeed do
           identity,
           profile["personaname"],
           row["personaname"],
-          steamid
+          steamid,
+          identity_mode
         )
 
       avatar =
@@ -555,7 +591,7 @@ defmodule KogasaFrontend.StatsFeed do
         kd: kd,
         score: kills + assists,
         is_admin: identity.is_admin,
-        name_style: identity.name_style,
+        name_style: PlayerIdentity.name_style(identity, identity_mode),
         is_online: false,
         last_seen: int(row["last_seen"])
       }
@@ -634,14 +670,30 @@ defmodule KogasaFrontend.StatsFeed do
       "INNER JOIN #{@points_cache_table} pc ON pc.steamid = w.steamid AND COALESCE(pc.rank, 0) > 0"
   end
 
-  defp ranked_stats_search_from do
-    ranked_stats_from() <>
-      " " <>
-      "LEFT JOIN filters_steam_names fs ON fs.steamid64 = w.steamid " <>
-      "LEFT JOIN prename_rules pr ON pr.pattern COLLATE utf8mb4_general_ci = w.steamid COLLATE utf8mb4_general_ci"
+  defp ranked_stats_search_from(identity_mode) do
+    base =
+      ranked_stats_from() <>
+        " LEFT JOIN filters_steam_names fs ON fs.steamid64 = w.steamid"
+
+    if identity_mode == :steam do
+      base
+    else
+      base <>
+        " LEFT JOIN prename_rules pr ON pr.pattern COLLATE utf8mb4_general_ci = w.steamid COLLATE utf8mb4_general_ci"
+    end
   end
 
-  defp summary_top_killstreak do
+  defp search_personaname_expr(identity_mode),
+    do: search_personaname_expr(identity_mode, "w.")
+
+  defp search_personaname_expr(:steam, alias_prefix),
+    do: "COALESCE(fs.last_name, #{alias_prefix}cached_personaname, #{alias_prefix}steamid)"
+
+  defp search_personaname_expr(_identity_mode, alias_prefix),
+    do:
+      "COALESCE(pr.newname, fs.last_name, #{alias_prefix}cached_personaname, #{alias_prefix}steamid)"
+
+  defp summary_top_killstreak(identity_mode) do
     favorite_class_expr = favorite_class_select_expr()
     category_select_clause = weapon_category_select_clause("")
 
@@ -673,7 +725,7 @@ defmodule KogasaFrontend.StatsFeed do
         enriched =
           row
           |> row_map(cols)
-          |> then(&enrich_cumulative_rows([&1]))
+          |> then(&enrich_cumulative_rows([&1], identity_mode))
           |> List.first()
 
         top_killstreak = if is_map(enriched), do: int(enriched[:best_killstreak]), else: 0
@@ -690,7 +742,7 @@ defmodule KogasaFrontend.StatsFeed do
     _ -> %{top_killstreak: 0, top_killstreak_owner: nil}
   end
 
-  defp summary_insights do
+  defp summary_insights(identity_mode) do
     windows = summary_time_windows()
 
     active_hours_month = MapsDb.active_hours_between(windows.month_start, windows.now_ts)
@@ -741,9 +793,10 @@ defmodule KogasaFrontend.StatsFeed do
       end
 
     {best_killstreak_week, best_killstreak_week_leaders} =
-      weekly_killstreak_podium(windows.current_week_start)
+      weekly_killstreak_podium(windows.current_week_start, identity_mode)
 
-    {weekly_top_dpm, weekly_top_dpm_owner} = weekly_top_dpm(windows.current_week_start)
+    {weekly_top_dpm, weekly_top_dpm_owner} =
+      weekly_top_dpm(windows.current_week_start, identity_mode)
 
     %{
       active_hours_month: active_hours_month,
@@ -783,7 +836,7 @@ defmodule KogasaFrontend.StatsFeed do
       }
   end
 
-  defp weekly_killstreak_podium(week_start_ts) do
+  defp weekly_killstreak_podium(week_start_ts, identity_mode) do
     sql = """
     SELECT lp.log_id,
            lp.steamid,
@@ -841,12 +894,13 @@ defmodule KogasaFrontend.StatsFeed do
                 identity,
                 profile["personaname"],
                 row["personaname"],
-                steamid
+                steamid,
+                identity_mode
               ),
             avatar: str(profile["avatarfull"]) |> fallback_blank(default_avatar),
             profileurl: "https://steamcommunity.com/profiles/" <> steamid,
             is_admin: identity.is_admin,
-            name_style: identity.name_style,
+            name_style: PlayerIdentity.name_style(identity, identity_mode),
             best_streak: int(row["best_streak"]),
             kills: int(row["kills"])
           }
@@ -858,7 +912,7 @@ defmodule KogasaFrontend.StatsFeed do
     _ -> {0, []}
   end
 
-  defp weekly_top_dpm(week_start_ts) do
+  defp weekly_top_dpm(week_start_ts, identity_mode) do
     sql = """
     SELECT lp.steamid, lp.personaname, COALESCE(lp.damage, 0) AS damage, COALESCE(lp.playtime, 0) AS playtime
     FROM #{@log_players_table} lp
@@ -893,12 +947,13 @@ defmodule KogasaFrontend.StatsFeed do
                 identity,
                 profile["personaname"],
                 m["personaname"],
-                steamid
+                steamid,
+                identity_mode
               ),
             avatar: str(profile["avatarfull"]) |> fallback_blank(default_avatar),
             profileurl: "https://steamcommunity.com/profiles/" <> steamid,
             is_admin: identity.is_admin,
-            name_style: identity.name_style
+            name_style: PlayerIdentity.name_style(identity, identity_mode)
           }
 
           {dpm, owner}
@@ -1076,13 +1131,13 @@ defmodule KogasaFrontend.StatsFeed do
   defp logs_scope_sql("all"), do: {"", []}
   defp logs_scope_sql(_), do: {"", []}
 
-  defp attach_log_players([]), do: []
+  defp attach_log_players([], _identity_mode), do: []
 
-  defp attach_log_players(logs) do
+  defp attach_log_players(logs, identity_mode) do
     log_ids = logs |> Enum.map(& &1.log_id) |> Enum.filter(&(&1 && &1 != ""))
 
     players_by_log =
-      case fetch_log_players(log_ids) do
+      case fetch_log_players(log_ids, identity_mode) do
         {:ok, players} -> players
         _ -> %{}
       end
@@ -1090,9 +1145,9 @@ defmodule KogasaFrontend.StatsFeed do
     Enum.map(logs, fn log -> Map.put(log, :players, Map.get(players_by_log, log.log_id, [])) end)
   end
 
-  defp fetch_log_players([]), do: {:ok, %{}}
+  defp fetch_log_players([], _identity_mode), do: {:ok, %{}}
 
-  defp fetch_log_players(log_ids) do
+  defp fetch_log_players(log_ids, identity_mode) do
     placeholders = Enum.map_join(log_ids, ",", fn _ -> "?" end)
 
     category_select_clause =
@@ -1115,7 +1170,7 @@ defmodule KogasaFrontend.StatsFeed do
     case SQL.query(Repo, sql, log_ids) do
       {:ok, %{rows: rows, columns: cols}} ->
         mapped = Enum.map(rows, &row_map(&1, cols))
-        enriched = enrich_log_players(mapped)
+        enriched = enrich_log_players(mapped, identity_mode)
         grouped = Enum.group_by(enriched, &str(&1.log_id))
         {:ok, grouped}
 
@@ -1135,7 +1190,7 @@ defmodule KogasaFrontend.StatsFeed do
             mapped =
               Enum.map(rows, &row_map(&1, cols)) |> Enum.map(&Map.put_new(&1, "airshots", 0))
 
-            enriched = enrich_log_players(mapped)
+            enriched = enrich_log_players(mapped, identity_mode)
             {:ok, Enum.group_by(enriched, &str(&1.log_id))}
 
           err ->
@@ -1146,7 +1201,7 @@ defmodule KogasaFrontend.StatsFeed do
     _ -> {:error, :failed}
   end
 
-  defp enrich_log_players(rows) do
+  defp enrich_log_players(rows, identity_mode) do
     steam_ids =
       rows
       |> Enum.map(&str(&1["steamid"]))
@@ -1173,7 +1228,8 @@ defmodule KogasaFrontend.StatsFeed do
           identity,
           profile["personaname"],
           row["personaname"],
-          steamid
+          steamid,
+          identity_mode
         )
 
       avatar =
@@ -1190,7 +1246,7 @@ defmodule KogasaFrontend.StatsFeed do
         profileurl:
           if(steamid != "", do: "https://steamcommunity.com/profiles/" <> steamid, else: nil),
         is_admin: identity.is_admin,
-        name_style: identity.name_style,
+        name_style: PlayerIdentity.name_style(identity, identity_mode),
         kills: int(row["kills"]),
         deaths: int(row["deaths"]),
         assists: int(row["assists"]),

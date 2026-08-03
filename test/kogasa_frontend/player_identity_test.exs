@@ -22,4 +22,20 @@ defmodule KogasaFrontend.PlayerIdentityTest do
     assert PlayerIdentity.resolve_name(identity, "", "Recorded", "7656") == "Recorded"
     assert PlayerIdentity.resolve_name(identity, "", "", "7656") == "7656"
   end
+
+  test "stats Steam mode ignores prenames and custom styles" do
+    identity = %{
+      prename: "Preferred",
+      cached_name: "Cached",
+      name_style: %{kind: :rainbow}
+    }
+
+    assert PlayerIdentity.stats_mode() == :steam
+
+    assert PlayerIdentity.resolve_name(identity, "Steam API", "Recorded", "7656", :steam) ==
+             "Cached"
+
+    assert PlayerIdentity.name_style(identity, :steam) == nil
+    assert PlayerIdentity.name_style(identity, :filters) == %{kind: :rainbow}
+  end
 end

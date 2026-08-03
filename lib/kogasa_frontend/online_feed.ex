@@ -90,8 +90,9 @@ defmodule KogasaFrontend.OnlineFeed do
     {"game_url", "'#{@default_game_url}'"}
   ]
 
-  def payload do
+  def payload(opts \\ %{}) do
     now = System.system_time(:second)
+    identity_mode = Map.get(opts, :identity_mode, Map.get(opts, "identity_mode", :filters))
 
     with {:ok, players} <- fetch_online_players() do
       servers =
@@ -105,7 +106,7 @@ defmodule KogasaFrontend.OnlineFeed do
         end
 
       players
-      |> enrich_players()
+      |> enrich_players(identity_mode)
       |> build_response(servers, now)
     else
       {:error, reason} ->
@@ -262,7 +263,7 @@ defmodule KogasaFrontend.OnlineFeed do
     end)
   end
 
-  defp enrich_players(players) do
+  defp enrich_players(players, identity_mode) do
     steam_ids =
       players
       |> Enum.map(&str(&1["steamid"]))
@@ -286,7 +287,8 @@ defmodule KogasaFrontend.OnlineFeed do
           identity,
           profile["personaname"],
           row["personaname"],
-          steamid
+          steamid,
+          identity_mode
         )
 
       avatar =
@@ -307,7 +309,7 @@ defmodule KogasaFrontend.OnlineFeed do
           "is_admin",
           if(identity.is_admin, do: 1, else: 0)
         )
-        |> Map.put("name_style", identity.name_style)
+        |> Map.put("name_style", PlayerIdentity.name_style(identity, identity_mode))
 
       {weapon_summary, active_acc} = weapon_summary_for_row(row)
 

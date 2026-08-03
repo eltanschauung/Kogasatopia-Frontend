@@ -1,7 +1,7 @@
 defmodule KogasaFrontendWeb.StatsApiController do
   use KogasaFrontendWeb, :controller
 
-  alias KogasaFrontend.StatsFeed
+  alias KogasaFrontend.{PlayerIdentity, StatsFeed}
   alias KogasaFrontendWeb.StatsFragments
 
   def fetch_page(conn, params) do
@@ -63,7 +63,8 @@ defmodule KogasaFrontendWeb.StatsApiController do
         page: Map.get(params, "page", "1"),
         per_page: Map.get(params, "perPage", Map.get(params, "per_page", "25")),
         scope: Map.get(params, "scope", "regular"),
-        include_players: Map.get(params, "include_players", "0")
+        include_players: Map.get(params, "include_players", "0"),
+        identity_mode: identity_mode(params)
       })
 
     html = StatsFragments.logs_fragment_html(payload)
@@ -76,9 +77,9 @@ defmodule KogasaFrontendWeb.StatsApiController do
     |> send_resp(200, html)
   end
 
-  def current_log_fragment(conn, _params) do
+  def current_log_fragment(conn, params) do
     html =
-      StatsFeed.current_log()
+      StatsFeed.current_log(%{identity_mode: identity_mode(params)})
       |> StatsFragments.current_log_fragment_html(
         default_avatar_url: StatsFeed.default_avatar_url()
       )
@@ -96,6 +97,9 @@ defmodule KogasaFrontendWeb.StatsApiController do
     |> put_resp_header("pragma", "no-cache")
     |> json(payload)
   end
+
+  defp identity_mode(%{"identity" => "stats"}), do: PlayerIdentity.stats_mode()
+  defp identity_mode(_params), do: :filters
 
   defp page_url(page, q) do
     params = [{"page", Integer.to_string(page)}]

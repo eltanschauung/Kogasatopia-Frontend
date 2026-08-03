@@ -866,7 +866,7 @@
 
       async function loadOnline() {
         try {
-          const res = await fetch('/stats/online.php', { cache: 'no-store' });
+          const res = await fetch('/stats/online.php?identity=stats', { cache: 'no-store' });
           if (!res.ok) throw new Error('Request failed');
           renderOnline(await res.json());
         } catch (_) {
@@ -966,6 +966,7 @@
 
       async function loadLogs() {
         const url = new URL('/stats/logs_fragment.php', window.location.origin);
+        url.searchParams.set('identity', 'stats');
         url.searchParams.set('scope', state.logs.scope);
         url.searchParams.set('page', String(state.logs.page));
         url.searchParams.set('perPage', String(state.logs.perPage));
@@ -980,7 +981,7 @@
       async function loadCurrentLog() {
         if (!els.currentLogContainer) return;
         try {
-          const res = await fetch('/stats/current_log_fragment.php?t=' + Date.now(), { cache: 'no-store' });
+          const res = await fetch('/stats/current_log_fragment.php?identity=stats&t=' + Date.now(), { cache: 'no-store' });
           if (!res.ok) throw new Error('bad response');
           els.currentLogContainer.innerHTML = await res.text();
         } catch (_) {
