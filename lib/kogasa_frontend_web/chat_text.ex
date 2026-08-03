@@ -2,6 +2,8 @@ defmodule KogasaFrontendWeb.ChatText do
   @moduledoc false
   use Phoenix.Component
 
+  alias KogasaFrontend.Chat.MoreColors
+
   @token_re ~r/(\{[a-zA-Z]+\})/
 
   attr :text, :string, required: true
@@ -16,6 +18,35 @@ defmodule KogasaFrontendWeb.ChatText do
         <span style={segment_style(segment.color)}>{segment.text}</span>
       <% end %>
     </span>
+    """
+  end
+
+  attr :text, :string, required: true
+  attr :name_style, :map, default: nil
+  attr :class, :string, default: nil
+
+  def chat_name(assigns) do
+    ~H"""
+    <%= case @name_style do %>
+      <% %{kind: :gradient, first: first, second: second} -> %>
+        <span
+          class={[@class, "chat-name-gradient"]}
+          style={"--chat-name-gradient: linear-gradient(90deg, #{first}, #{second})"}
+        >
+          {@text}
+        </span>
+      <% %{kind: :america} -> %>
+        <span
+          class={[@class, "chat-name-gradient"]}
+          style="--chat-name-gradient: linear-gradient(90deg, #FF4040 0%, #FF4040 33.333%, #FFFFFF 33.333%, #FFFFFF 66.666%, #1E90FF 66.666%, #1E90FF 100%)"
+        >
+          {@text}
+        </span>
+      <% %{kind: :solid, color: color} -> %>
+        <span class={@class} style={"color: #{color}"}>{@text}</span>
+      <% _ -> %>
+        <.colored text={@text} class={@class} />
+    <% end %>
     """
   end
 
@@ -44,24 +75,9 @@ defmodule KogasaFrontendWeb.ChatText do
   defp normalize_color_token(token) do
     token = String.downcase(token)
 
-    cond do
-      token == "default" -> nil
-      Regex.match?(~r/^[a-z]+$/, token) -> token
-      true -> nil
-    end
+    if token == "default", do: nil, else: MoreColors.css(token)
   end
 
   defp segment_style(nil), do: nil
-  defp segment_style(color), do: "color: #{css_color(color)}"
-
-  defp css_color("cornflowerblue"), do: "#6495ED"
-  defp css_color("blue"), do: "#80B5FF"
-  defp css_color("gold"), do: "#FFD700"
-  defp css_color("green"), do: "#00FF90"
-  defp css_color("red"), do: "#FF4040"
-  defp css_color("gray"), do: "#CCCCCC"
-  defp css_color("yellow"), do: "#FFEA00"
-  defp css_color("white"), do: "#FFFFFF"
-  defp css_color("black"), do: "#000000"
-  defp css_color(color), do: color
+  defp segment_style(color), do: "color: #{color}"
 end

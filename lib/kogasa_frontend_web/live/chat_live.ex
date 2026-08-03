@@ -174,7 +174,11 @@ defmodule KogasaFrontendWeb.ChatLive do
                   <img src={msg.avatar} alt="" class="chat-avatar" />
                   <div class="chat-content">
                     <div class="chat-header">
-                      <.colored text={msg.name} class="chat-name" />
+                      <.chat_name
+                        text={msg.name}
+                        name_style={msg.name_style}
+                        class="chat-name"
+                      />
                       <span
                         class="chat-timestamp"
                         data-local-time={msg.created_at}

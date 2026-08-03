@@ -620,6 +620,13 @@ a {
   line-height: 1.1;
 }
 
+.chat-name-gradient {
+  color: transparent;
+  background-image: var(--chat-name-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
 .chat-timestamp {
   color: var(--wc-text-faint);
   font-size: 0.75rem;
