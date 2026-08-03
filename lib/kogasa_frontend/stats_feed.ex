@@ -12,13 +12,13 @@ defmodule KogasaFrontend.StatsFeed do
   alias KogasaFrontend.PlayerIdentity
   alias KogasaFrontend.Repo
   alias KogasaFrontend.WeaponCategories
+  alias KogasaFrontend.WeaponStats
 
   @default_avatar "/stats/assets/whaley-avatar.jpg"
   @stats_table "whaletracker"
   @points_cache_table "whaletracker_points_cache"
   @logs_table "whaletracker_logs"
   @log_players_table "whaletracker_log_players"
-  @weapon_category_metadata WeaponCategories.metadata()
   @weapon_category_slugs WeaponCategories.slugs()
   @favorite_class_accuracy_groups %{
     1 => ~w(scatterguns),
@@ -1216,9 +1216,9 @@ defmodule KogasaFrontend.StatsFeed do
       steamid = str(row["steamid"])
       profile = Map.get(profiles, steamid, %{})
       identity = PlayerIdentity.get(identities, steamid)
-      {weapon_summary, active_acc} = weapon_summary_for_log_row(row)
+      {weapon_summary, active_acc} = WeaponStats.summary_with_active(row)
       active_classes = active_match_log_classes(row, weapon_summary)
-      {total_shots, total_hits} = total_weapon_accuracy_counts(row)
+      {total_shots, total_hits} = WeaponStats.total_accuracy_counts(row)
       shots = if total_shots > 0, do: total_shots, else: int(row["shots"])
       hits = if total_shots > 0, do: total_hits, else: int(row["hits"])
       accuracy_overall = if shots > 0, do: Float.round(hits * 100.0 / shots, 1), else: 0.0
@@ -1266,34 +1266,6 @@ defmodule KogasaFrontend.StatsFeed do
         active_weapon_classes: active_classes
       }
     end)
-  end
-
-  defp weapon_summary_for_log_row(row) do
-    summary =
-      @weapon_category_metadata
-      |> Enum.reduce([], fn {slug, meta}, acc ->
-        shots = int(row["shots_#{slug}"])
-        hits = int(row["hits_#{slug}"])
-
-        if shots <= 0 do
-          acc
-        else
-          acc ++
-            [
-              %{
-                "slug" => slug,
-                "label" => meta.label,
-                "shots" => shots,
-                "hits" => hits,
-                "accuracy" => hits / max(shots, 1) * 100.0
-              }
-            ]
-        end
-      end)
-      |> Enum.sort_by(fn item -> {-int(item["shots"]), -float(item["accuracy"])} end)
-      |> fallback_overall_weapon_summary(row)
-
-    {summary, List.first(summary)}
   end
 
   defp active_match_log_classes(row, weapon_summary) do
@@ -1418,41 +1390,6 @@ defmodule KogasaFrontend.StatsFeed do
   defp match_log_class_label("spy"), do: "Spy"
   defp match_log_class_label("engineer"), do: "Engineer"
   defp match_log_class_label(_), do: "Class"
-
-  defp fallback_overall_weapon_summary([], row) do
-    {total_shots, total_hits} = total_weapon_accuracy_counts(row)
-
-    if total_shots > 0 do
-      [
-        %{
-          "slug" => "overall",
-          "label" => "Overall",
-          "shots" => total_shots,
-          "hits" => total_hits,
-          "accuracy" => total_hits / max(total_shots, 1) * 100.0
-        }
-      ]
-    else
-      []
-    end
-  end
-
-  defp fallback_overall_weapon_summary(summary, _row), do: summary
-
-  defp total_weapon_accuracy_counts(row) do
-    pairs = Enum.map(@weapon_category_slugs, &{"shots_#{&1}", "hits_#{&1}"})
-
-    {total_shots, total_hits} =
-      Enum.reduce(pairs, {0, 0}, fn {shots_key, hits_key}, {s_acc, h_acc} ->
-        {s_acc + int(row[shots_key]), h_acc + int(row[hits_key])}
-      end)
-
-    if total_shots == 0 and Map.has_key?(row, "shots") and Map.has_key?(row, "hits") do
-      {int(row["shots"]), int(row["hits"])}
-    else
-      {total_shots, total_hits}
-    end
-  end
 
   defp format_playtime(seconds) when seconds <= 0, do: "0m"
 

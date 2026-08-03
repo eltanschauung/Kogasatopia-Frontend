@@ -1,7 +1,7 @@
 defmodule KogasaFrontend.OnlineFeed do
   @moduledoc false
 
-  import KogasaFrontend.Value, only: [float: 1, int: 1, str: 1]
+  import KogasaFrontend.Value, only: [int: 1, str: 1]
 
   alias Ecto.Adapters.SQL
   alias KogasaFrontend.Chat.SteamProfiles
@@ -11,6 +11,7 @@ defmodule KogasaFrontend.OnlineFeed do
   alias KogasaFrontend.Repo
   alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.WeaponCategories
+  alias KogasaFrontend.WeaponStats
 
   require Logger
 
@@ -311,10 +312,13 @@ defmodule KogasaFrontend.OnlineFeed do
         )
         |> Map.put("name_style", PlayerIdentity.name_style(identity, identity_mode))
 
-      {weapon_summary, active_acc} = weapon_summary_for_row(row)
+      {weapon_summary, active_acc} = WeaponStats.summary_with_active(row)
 
       row
-      |> Map.put("weapon_accuracy_summary", weapon_accuracy_summary_for_row(row))
+      |> Map.put(
+        "weapon_accuracy_summary",
+        WeaponStats.slot_accuracy_summary(row, @max_weapon_slots)
+      )
       |> Map.put("weapon_category_summary", weapon_summary)
       |> Map.put("active_weapon_accuracy", active_acc)
       |> drop_weapon_slot_fields()
@@ -390,94 +394,6 @@ defmodule KogasaFrontend.OnlineFeed do
 
   defp normalize_scalar(v) when is_integer(v) or is_float(v) or is_boolean(v) or is_nil(v), do: v
   defp normalize_scalar(v), do: v
-
-  defp weapon_accuracy_summary_for_row(row) do
-    Enum.reduce(1..@max_weapon_slots, [], fn slot, acc ->
-      name = row["weapon#{slot}_name"] |> str() |> String.trim()
-      accuracy = row["weapon#{slot}_accuracy"]
-      shots = int(row["weapon#{slot}_shots"])
-      hits = int(row["weapon#{slot}_hits"])
-
-      if name == "" or is_nil(accuracy) or shots <= 0 do
-        acc
-      else
-        acc ++
-          [%{"name" => name, "accuracy" => float(accuracy), "shots" => shots, "hits" => hits}]
-      end
-    end)
-  end
-
-  defp weapon_summary_for_row(row) do
-    summary =
-      @weapon_category_metadata
-      |> Enum.reduce([], fn {slug, meta}, acc ->
-        shots = int(row["shots_#{slug}"])
-        hits = int(row["hits_#{slug}"])
-
-        if shots <= 0 do
-          acc
-        else
-          acc ++
-            [
-              %{
-                "slug" => slug,
-                "label" => meta.label,
-                "shots" => shots,
-                "hits" => hits,
-                "accuracy" => hits / max(shots, 1) * 100.0
-              }
-            ]
-        end
-      end)
-      |> Enum.sort_by(fn item -> {-int(item["shots"]), -float(item["accuracy"])} end)
-      |> fallback_overall_weapon_summary(row)
-
-    {summary, List.first(summary)}
-  end
-
-  defp fallback_overall_weapon_summary([], row) do
-    {total_shots, total_hits} = total_weapon_accuracy_counts(row)
-
-    if total_shots > 0 do
-      [
-        %{
-          "slug" => "overall",
-          "label" => "Overall",
-          "shots" => total_shots,
-          "hits" => total_hits,
-          "accuracy" => total_hits / max(total_shots, 1) * 100.0
-        }
-      ]
-    else
-      []
-    end
-  end
-
-  defp fallback_overall_weapon_summary(summary, _row), do: summary
-
-  defp total_weapon_accuracy_counts(row) do
-    pairs = [
-      {"shots_shotguns", "hits_shotguns"},
-      {"shots_scatterguns", "hits_scatterguns"},
-      {"shots_pistols", "hits_pistols"},
-      {"shots_rocketlaunchers", "hits_rocketlaunchers"},
-      {"shots_grenadelaunchers", "hits_grenadelaunchers"},
-      {"shots_stickylaunchers", "hits_stickylaunchers"},
-      {"shots_snipers", "hits_snipers"},
-      {"shots_revolvers", "hits_revolvers"}
-    ]
-
-    {total_shots, total_hits} =
-      Enum.reduce(pairs, {0, 0}, fn {shots_key, hits_key}, {s_acc, h_acc} ->
-        {s_acc + int(row[shots_key]), h_acc + int(row[hits_key])}
-      end)
-
-    if total_shots == 0 and Map.has_key?(row, "shots") and Map.has_key?(row, "hits") do
-      {int(row["shots"]), int(row["hits"])}
-    else
-      {total_shots, total_hits}
-    end
-  end
 
   defp drop_weapon_slot_fields(row) do
     row =
