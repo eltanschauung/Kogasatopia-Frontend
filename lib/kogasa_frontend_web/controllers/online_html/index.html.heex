@@ -142,6 +142,7 @@
   <script>
     const onlineEndpoint = '/stats/online.php';
     const onlineRefreshMs = 10000;
+    const UI = window.KogasaUI;
     const defaultAvatar = <%= Phoenix.HTML.raw(Jason.encode!(@default_avatar_url)) %>;
     const onlineTable = document.getElementById('stats-table-online');
     const onlineTbody = onlineTable ? onlineTable.querySelector('tbody') : null;
@@ -155,15 +156,6 @@
 
     const classMetadata = <%= Phoenix.HTML.raw(Jason.encode!(@class_metadata)) %>;
 
-    function formatPlaytime(seconds) {
-        const totalSeconds = Math.max(0, Number(seconds) || 0);
-        const totalMinutes = Math.floor(totalSeconds / 60);
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        if (hours > 0) return `${hours}h ${minutes}m`;
-        return `${Math.max(minutes, 1)}m`;
-    }
-    function formatNumber(value, decimals) { return (Number(value) || 0).toFixed(decimals); }
     function createNumberCell(sortValue, displayValue, title) {
         const td = document.createElement('td'); td.textContent = displayValue;
         if (title) td.title = title; td.dataset.sortValue = sortValue; return td;
@@ -224,26 +216,6 @@
         onlineTable.dataset.sortBound = '1';
     }
 
-    function normalizeFlagCode(code) {
-        return String(code || '').trim().toLowerCase();
-    }
-
-    function flagImageUrl(code) {
-        const normalized = normalizeFlagCode(code);
-        return normalized ? `https://bantculture.com/static/flags/${encodeURIComponent(normalized)}.png` : '';
-    }
-
-    function createFlagImage(code, title) {
-        const normalized = normalizeFlagCode(code);
-        if (!normalized) return null;
-        const flag = document.createElement('img');
-        flag.className = 'server-flag';
-        flag.alt = normalized.toUpperCase();
-        flag.src = flagImageUrl(normalized);
-        flag.title = title || normalized;
-        return flag;
-    }
-
     function renderServerCards(servers) {
         if (!mapCardsContainer) return;
         mapCardsContainer.innerHTML = '';
@@ -267,17 +239,17 @@
             const label = document.createElement('div'); label.className = 'label';
             const ip = server.host_ip || '0.0.0.0'; const port = Number(server.host_port) || 0;
             const city = (server.city && server.city.trim()) ? server.city : 'Unknown';
-            const countryCode = normalizeFlagCode(server.country_code);
+            const countryCode = UI.normalizeFlagCode(server.country_code);
             const connectLink = document.createElement('a'); connectLink.classList.add('connect-url'); connectLink.href = `steam://connect/${ip}:${port}`; connectLink.textContent = `${ip}:${port}`; connectLink.title = 'Connect via Steam';
             label.textContent = '('; label.appendChild(connectLink); label.appendChild(document.createTextNode(`): ${city}`));
             if (countryCode) {
               label.appendChild(document.createTextNode(' '));
-              label.appendChild(createFlagImage(countryCode, server.country_name || countryCode.toUpperCase()));
+              label.appendChild(UI.createFlagImage(countryCode, server.country_name || countryCode.toUpperCase()));
             }
             const extraFlags = Array.isArray(server.extra_flags) ? server.extra_flags.slice() : [];
             extraFlags.forEach(flagName => {
-              const normalized = normalizeFlagCode(flagName); if (!normalized) return;
-              const extra = createFlagImage(normalized, `${flagName}`);
+              const normalized = UI.normalizeFlagCode(flagName); if (!normalized) return;
+              const extra = UI.createFlagImage(normalized, `${flagName}`);
               label.appendChild(document.createTextNode(' ')); label.appendChild(extra);
             });
             const hostname = document.createElement('div'); hostname.className = 'hostname'; hostname.textContent = server.server_name || 'Unknown';
@@ -329,11 +301,11 @@
             if (activeAcc && activeAcc.shots > 0) {
                 const shotsValue = Number(activeAcc.shots) || 0; const hitsValue = Number(activeAcc.hits) || 0;
                 accuracy = shotsValue > 0 ? (hitsValue / shotsValue) * 100 : null;
-                accuracyDisplay = accuracy !== null ? `${formatNumber(accuracy, 1)}%` : '—';
+                accuracyDisplay = accuracy !== null ? `${UI.fixed(accuracy, 1)}%` : '—';
                 const label = activeAcc.label || 'Weapon'; accuracyTitle = `${label} (${shotsValue.toLocaleString()} shots / ${hitsValue.toLocaleString()} hits)`;
             } else if (shots > 0) {
-                accuracy = (hits / shots) * 100; accuracyDisplay = `${formatNumber(accuracy, 1)}%`;
-                accuracyTitle = `${formatNumber(accuracy, 1)}% overall accuracy (${shots.toLocaleString()} shots / ${hits.toLocaleString()} hits)`;
+                accuracy = (hits / shots) * 100; accuracyDisplay = `${UI.fixed(accuracy, 1)}%`;
+                accuracyTitle = `${UI.fixed(accuracy, 1)}% overall accuracy (${shots.toLocaleString()} shots / ${hits.toLocaleString()} hits)`;
             }
             const accuracySortValue = accuracy !== null ? accuracy : 0;
             const classInfo = getClassInfo(Number(player.class) || 0);
@@ -374,17 +346,17 @@
 
             tr.appendChild(createNumberCell(kills, kills.toLocaleString(), 'Kills'));
             tr.appendChild(createNumberCell(deaths, deaths.toLocaleString(), 'Deaths'));
-            tr.appendChild(createNumberCell(kdValue.toFixed(4), formatNumber(kdValue, 2), 'Kill/Death Ratio'));
+            tr.appendChild(createNumberCell(kdValue.toFixed(4), UI.fixed(kdValue, 2), 'Kill/Death Ratio'));
             tr.appendChild(createNumberCell(accuracySortValue, accuracyDisplay, accuracyTitle));
             tr.appendChild(createNumberCell(assists, assists.toLocaleString(), 'Assists'));
             tr.appendChild(createNumberCell(damage, damage.toLocaleString(), 'Damage'));
-            tr.appendChild(createNumberCell(dtpm, formatNumber(dtpm, 1), 'Damage Taken Per Minute'));
-            tr.appendChild(createNumberCell(dpm, formatNumber(dpm, 1), 'Damage Per Minute'));
+            tr.appendChild(createNumberCell(dtpm, UI.fixed(dtpm, 1), 'Damage Taken Per Minute'));
+            tr.appendChild(createNumberCell(dpm, UI.fixed(dpm, 1), 'Damage Per Minute'));
             tr.appendChild(createNumberCell(headshots, headshots.toLocaleString(), 'Headshots'));
             tr.appendChild(createNumberCell(backstabs, backstabs.toLocaleString(), 'Backstabs'));
             tr.appendChild(createNumberCell(healing, healing.toLocaleString(), 'Healing Done'));
             tr.appendChild(createNumberCell(totalUbers, totalUbers.toLocaleString(), 'Total Ubers'));
-            tr.appendChild(createNumberCell(timeConnected, formatPlaytime(timeConnected), 'Time Connected'));
+            tr.appendChild(createNumberCell(timeConnected, UI.formatPlaytime(timeConnected), 'Time Connected'));
             onlineTbody.appendChild(tr);
         });
 

@@ -646,6 +646,7 @@
       const state = {
         cumulative: { q: <%= Phoenix.HTML.raw(Jason.encode!(@search || "")) %>, page: <%= @cumulative[:page] || 1 %>, perPage: 100, focusedPlayer: <%= Phoenix.HTML.raw(Jason.encode!(@focused_player || "")) %> },
       };
+      const UI = window.KogasaUI;
 
       const els = {
         navOnlineCount: document.getElementById('nav-online-count'),
@@ -670,21 +671,6 @@
         logsScopeButtons: Array.from(document.querySelectorAll('[data-logs-scope]'))
       };
 
-      function numberFormat(v) {
-        try { return new Intl.NumberFormat().format(Number(v || 0)); } catch (_) { return String(v || 0); }
-      }
-      function fmt(v, digits = 1) {
-        const n = Number(v || 0);
-        return Number.isFinite(n) ? n.toFixed(digits) : '0';
-      }
-      function escapeHtml(str) {
-        return String(str ?? '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
-      }
       function plainChatFormatting(str) {
         return String(str ?? '')
           .replace(/\x08[0-9a-f]{8}/gi, '')
@@ -692,30 +678,6 @@
           .replace(/[\x01-\x06]/g, '')
           .replace(/\{[a-z]+\}/gi, '')
           .trim();
-      }
-      function normalizeFlagCode(code) {
-        return String(code || '').trim().toLowerCase();
-      }
-      function flagImageUrl(code) {
-        const normalized = normalizeFlagCode(code);
-        return normalized ? `https://bantculture.com/static/flags/${encodeURIComponent(normalized)}.png` : '';
-      }
-      function flagImageHtml(code, title) {
-        const normalized = normalizeFlagCode(code);
-        if (!normalized) return '';
-        return `<img class="server-flag" src="${flagImageUrl(normalized)}" alt="${escapeHtml(normalized.toUpperCase())}" title="${escapeHtml(title || normalized)}">`;
-      }
-      function serverFlagsHtml(server) {
-        const flags = [];
-        const countryCode = normalizeFlagCode(server?.country_code);
-        if (countryCode) flags.push(flagImageHtml(countryCode, server?.country_name || countryCode.toUpperCase()));
-        if (Array.isArray(server?.extra_flags)) {
-          server.extra_flags.forEach(flag => {
-            const normalized = normalizeFlagCode(flag);
-            if (normalized) flags.push(flagImageHtml(normalized, String(flag || normalized)));
-          });
-        }
-        return flags.join('');
       }
       function relTime(ts) {
         if (!ts) return '--';
@@ -743,8 +705,8 @@
 
       function renderCumulative(payload) {
         const rankedTitle = '(kills + deaths) >= 200  and playtime >= 3 hours';
-        const rankedLabel = `<span class="admin-name" title="${escapeHtml(rankedTitle)}">ranked</span>`;
-        els.cumulativeMeta.innerHTML = `${numberFormat(payload.totalRows ?? payload.total ?? 0)} ${rankedLabel} players • page ${payload.page || 1} / ${payload.totalPages || payload.total_pages || 1}`;
+        const rankedLabel = `<span class="admin-name" title="${UI.escapeHtml(rankedTitle)}">ranked</span>`;
+        els.cumulativeMeta.innerHTML = `${UI.numberFormat(payload.totalRows ?? payload.total ?? 0)} ${rankedLabel} players • page ${payload.page || 1} / ${payload.totalPages || payload.total_pages || 1}`;
         if (typeof payload.html === 'string' && els.cumulativeFragment) {
           els.cumulativeFragment.innerHTML = payload.html;
           initCumulativeSorting(els.cumulativeFragment);
@@ -779,15 +741,15 @@
         const playerCount = totalPlayers || Number(payload.player_count || players.length || 0);
         const visibleMax = totalMax || Number(payload.visible_max || payload.visible_max_players || 32);
         applyOnlineSummary(playerCount, visibleMax, payload.updated);
-        els.onlineMeta.textContent = `${numberFormat(playerCount)} / ${numberFormat(visibleMax)} players • updated ${relTime(payload.updated)}`;
+        els.onlineMeta.textContent = `${UI.numberFormat(playerCount)} / ${UI.numberFormat(visibleMax)} players • updated ${relTime(payload.updated)}`;
         els.onlineCards.innerHTML = servers.map(server => `
           <article class="stats-online-card">
-            <img src="${escapeHtml(server.map_image || '')}" alt="">
+            <img src="${UI.escapeHtml(server.map_image || '')}" alt="">
             <div>
-              <h3>${escapeHtml(server.map_name || 'Unknown map')}</h3>
-              <p>${numberFormat(server.player_count)} / ${numberFormat(server.visible_max || 0)} players</p>
-              <p>${escapeHtml(server.city || '')}${serverFlagsHtml(server)}</p>
-              <p>${escapeHtml(server.host_ip || '')}${server.host_port ? ':' + escapeHtml(server.host_port) : ''}</p>
+              <h3>${UI.escapeHtml(server.map_name || 'Unknown map')}</h3>
+              <p>${UI.numberFormat(server.player_count)} / ${UI.numberFormat(server.visible_max || 0)} players</p>
+              <p>${UI.escapeHtml(server.city || '')}${UI.serverFlagsHtml(server)}</p>
+              <p>${UI.escapeHtml(server.host_ip || '')}${server.host_port ? ':' + UI.escapeHtml(server.host_port) : ''}</p>
             </div>
           </article>
         `).join('');
@@ -807,27 +769,27 @@
           const acc = shots > 0 ? (hits / shots) * 100 : 0;
           const team = Number(player.team || 0);
           const rowClass = team === 2 ? 'team-red' : (team === 3 ? 'team-blue' : '');
-          const playerName = escapeHtml(player.personaname || player.steamid || 'Unknown');
+          const playerName = UI.escapeHtml(player.personaname || player.steamid || 'Unknown');
           const nameElement = player.profileurl
-            ? `<a class="stats-online-player-name" href="${escapeHtml(player.profileurl)}" target="_blank" rel="noopener">${playerName}</a>`
+            ? `<a class="stats-online-player-name" href="${UI.escapeHtml(player.profileurl)}" target="_blank" rel="noopener">${playerName}</a>`
             : `<span class="stats-online-player-name">${playerName}</span>`;
           return `
             <tr class="${rowClass}">
               <td>
                 <div class="stats-player-cell">
-                  <img src="${escapeHtml(player.avatar || '')}" alt="">
+                  <img src="${UI.escapeHtml(player.avatar || '')}" alt="">
                   <div>
                     ${nameElement}
                   </div>
                 </div>
               </td>
-              <td>${numberFormat(player.kills)}</td>
-              <td>${numberFormat(player.deaths)}</td>
-              <td>${fmt(kd,2)}</td>
-              <td>${fmt(acc,1)}%</td>
-              <td>${numberFormat(player.assists)}</td>
-              <td>${numberFormat(player.damage)}</td>
-              <td>${fmt(dpm,1)}</td>
+              <td>${UI.numberFormat(player.kills)}</td>
+              <td>${UI.numberFormat(player.deaths)}</td>
+              <td>${UI.fixed(kd,2)}</td>
+              <td>${UI.fixed(acc,1)}%</td>
+              <td>${UI.numberFormat(player.assists)}</td>
+              <td>${UI.numberFormat(player.damage)}</td>
+              <td>${UI.fixed(dpm,1)}</td>
             </tr>
           `;
         }).join('');
@@ -871,13 +833,13 @@
           row.className = 'stats-chat-row';
           row.dataset.chatId = String(msg.id);
           row.innerHTML = `
-            <img src="${escapeHtml(msg.avatar || '')}" alt="">
+            <img src="${UI.escapeHtml(msg.avatar || '')}" alt="">
             <div>
               <div class="stats-chat-header">
-                <span class="stats-chat-name">${escapeHtml(displayName)}</span>
-                <span class="stats-chat-time">${escapeHtml(hhmm(msg.created_at))}</span>
+                <span class="stats-chat-name">${UI.escapeHtml(displayName)}</span>
+                <span class="stats-chat-time">${UI.escapeHtml(hhmm(msg.created_at))}</span>
               </div>
-              <div class="stats-chat-text">${escapeHtml(msg.message || '')}</div>
+              <div class="stats-chat-text">${UI.escapeHtml(msg.message || '')}</div>
             </div>
           `;
           frag.appendChild(row);
@@ -906,7 +868,7 @@
           } else if (messages.length) {
             renderChatRows(messages, false);
           }
-          els.chatMeta.textContent = `${numberFormat((payload.messages || []).length)} fetched • ${state.chat.afterId ? 'latest #' + state.chat.afterId : 'no messages'}`;
+          els.chatMeta.textContent = `${UI.numberFormat((payload.messages || []).length)} fetched • ${state.chat.afterId ? 'latest #' + state.chat.afterId : 'no messages'}`;
         } catch (_) {
           els.chatMeta.textContent = 'Chat unavailable';
         }
