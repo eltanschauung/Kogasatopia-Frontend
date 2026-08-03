@@ -2,6 +2,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
   @moduledoc false
 
   alias KogasaFrontend.Chat.NameStyle
+  alias KogasaFrontend.DisplayFormat
   alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.TimeDisplay
 
@@ -538,52 +539,11 @@ defmodule KogasaFrontendWeb.StatsFragments do
 
   defp format_log_datetime_html(_), do: e("Unknown")
 
-  defp format_playtime(seconds) when is_integer(seconds) and seconds > 0 do
-    h = div(seconds, 3600)
-    m = div(rem(seconds, 3600), 60)
-    if h > 0, do: "#{h}h #{m}m", else: "#{max(m, 1)}m"
-  end
+  defp format_playtime(seconds),
+    do: DisplayFormat.duration(seconds, minimum_minutes: 1, show_zero_minutes: true)
 
-  defp format_playtime(_), do: "0m"
-
-  defp number(nil), do: "0"
-  defp number(v) when is_integer(v), do: format_integer(v)
-  defp number(v) when is_float(v), do: format_integer(trunc(v))
-
-  defp number(v) when is_binary(v) do
-    case Integer.parse(v) do
-      {i, _} -> format_integer(i)
-      :error -> "0"
-    end
-  end
-
-  defp number(_), do: "0"
-
-  defp decimal(v, places) when is_integer(v), do: :erlang.float_to_binary(v / 1, decimals: places)
-  defp decimal(v, places) when is_float(v), do: :erlang.float_to_binary(v, decimals: places)
-
-  defp decimal(v, places) when is_binary(v) do
-    case Float.parse(v) do
-      {f, _} ->
-        decimal(f, places)
-
-      :error ->
-        case Integer.parse(v) do
-          {i, _} -> decimal(i, places)
-          :error -> decimal(0.0, places)
-        end
-    end
-  end
-
-  defp decimal(_, places), do: decimal(0.0, places)
-
-  defp format_integer(i) do
-    i
-    |> Integer.to_string()
-    |> String.reverse()
-    |> String.replace(~r/(.{3})(?=.)/, "\\1,")
-    |> String.reverse()
-  end
+  defp number(value), do: DisplayFormat.integer(value)
+  defp decimal(value, places), do: DisplayFormat.decimal(value, places)
 
   defp maybe_push(list, true, value), do: [value | list]
   defp maybe_push(list, _, _), do: list

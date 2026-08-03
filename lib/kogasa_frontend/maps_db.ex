@@ -2,7 +2,9 @@ defmodule KogasaFrontend.MapsDb do
   @moduledoc false
 
   import Ecto.Query
+  import KogasaFrontend.Value, only: [float: 1, int: 1]
 
+  alias KogasaFrontend.DisplayFormat
   alias KogasaFrontend.MapsDb.MapMeta
   alias KogasaFrontend.MapsDb.Sections
   alias KogasaFrontend.MapsDb.Source
@@ -137,7 +139,7 @@ defmodule KogasaFrontend.MapsDb do
   end
 
   def active_hours_last_days(days \\ 30) do
-    days = days |> to_int() |> max(1) |> min(366)
+    days = days |> int() |> max(1) |> min(366)
 
     case query_rows("""
          SELECT UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL #{days} DAY)) AS start_ts,
@@ -149,8 +151,8 @@ defmodule KogasaFrontend.MapsDb do
   end
 
   def active_hours_between(start_ts, end_ts) do
-    start_ts = to_int(start_ts)
-    end_ts = to_int(end_ts)
+    start_ts = int(start_ts)
+    end_ts = int(end_ts)
 
     if start_ts <= 0 or end_ts <= start_ts do
       0
@@ -169,7 +171,7 @@ defmodule KogasaFrontend.MapsDb do
       """
 
       case Repo.query(sql, [start_ts, end_ts]) do
-        {:ok, %{rows: [[active_hours]]}} -> to_int(active_hours)
+        {:ok, %{rows: [[active_hours]]}} -> int(active_hours)
         _ -> 0
       end
     end
@@ -255,32 +257,32 @@ defmodule KogasaFrontend.MapsDb do
       best = Map.get(best_slots, row.map_name)
       votes = Map.get(vote_pressure, row.map_name, %{})
 
-      avg_players = to_float(row.avg_players)
-      player_hours = to_float(row.player_hours)
-      first15_avg = to_float(Map.get(first, :first15_avg))
-      first15_growth = to_float(Map.get(first, :first15_growth))
+      avg_players = float(row.avg_players)
+      player_hours = float(row.player_hours)
+      first15_avg = float(Map.get(first, :first15_avg))
+      first15_growth = float(Map.get(first, :first15_growth))
 
       %{
         map_name: row.map_name || "",
         gamemode: row.gamemode || "",
-        sessions: to_int(row.sessions),
+        sessions: int(row.sessions),
         avg_players: avg_players,
-        avg_players_display: format_float(avg_players, 1),
-        peak_players: to_int(row.peak_players),
+        avg_players_display: DisplayFormat.decimal(avg_players, 1),
+        peak_players: int(row.peak_players),
         player_hours: player_hours,
-        player_hours_display: format_float(player_hours, 1),
-        joins: to_int(row.joins),
-        leaves: to_int(row.leaves),
+        player_hours_display: DisplayFormat.decimal(player_hours, 1),
+        joins: int(row.joins),
+        leaves: int(row.leaves),
         first15_avg: first15_avg,
-        first15_avg_display: format_float(first15_avg, 1),
+        first15_avg_display: DisplayFormat.decimal(first15_avg, 1),
         first15_growth: first15_growth,
-        first15_growth_display: signed_float(first15_growth, 1),
+        first15_growth_display: DisplayFormat.signed_decimal(first15_growth, 1),
         best_slot: format_slot(best),
-        best_slot_avg_display: format_float(Map.get(best || %{}, :avg_players), 1),
-        nominations: to_int(Map.get(votes, :nominations)),
-        rtvs: to_int(Map.get(votes, :rtvs)),
-        vote_options: to_int(Map.get(votes, :vote_options)),
-        vote_wins: to_int(Map.get(votes, :vote_wins))
+        best_slot_avg_display: DisplayFormat.decimal(Map.get(best || %{}, :avg_players), 1),
+        nominations: int(Map.get(votes, :nominations)),
+        rtvs: int(Map.get(votes, :rtvs)),
+        vote_options: int(Map.get(votes, :vote_options)),
+        vote_wins: int(Map.get(votes, :vote_wins))
       }
     end)
   end
@@ -343,20 +345,20 @@ defmodule KogasaFrontend.MapsDb do
   defp format_session_extreme_rows(rows) do
     rows
     |> Enum.map(fn row ->
-      avg_players = to_float(row.avg_players)
+      avg_players = float(row.avg_players)
 
       %{
         map_name: row.map_name || "",
         map_session_id: row.map_session_id || "",
-        started_at: to_int(row.started_at),
-        started_display: format_date(to_int(row.started_at)),
-        duration_display: format_duration(to_int(row.duration)),
-        peak_players: to_int(row.peak_players),
+        started_at: int(row.started_at),
+        started_display: format_date(int(row.started_at)),
+        duration_display: DisplayFormat.duration(int(row.duration)),
+        peak_players: int(row.peak_players),
         avg_players: avg_players,
-        avg_players_display: format_float(avg_players, 1),
-        player_hours_display: format_float(to_float(row.player_seconds) / 3600.0, 1),
-        joins: to_int(row.joins),
-        leaves: to_int(row.leaves),
+        avg_players_display: DisplayFormat.decimal(avg_players, 1),
+        player_hours_display: DisplayFormat.decimal(float(row.player_seconds) / 3600.0, 1),
+        joins: int(row.joins),
+        leaves: int(row.leaves),
         end_reason: row.end_reason || ""
       }
     end)
@@ -381,10 +383,10 @@ defmodule KogasaFrontend.MapsDb do
     |> Enum.map(fn row ->
       %{
         slot: format_slot(row),
-        sessions: to_int(row.sessions),
-        avg_players_display: format_float(row.avg_players, 1),
-        peak_players: to_int(row.peak_players),
-        player_hours_display: format_float(row.player_hours, 1)
+        sessions: int(row.sessions),
+        avg_players_display: DisplayFormat.decimal(row.avg_players, 1),
+        peak_players: int(row.peak_players),
+        player_hours_display: DisplayFormat.decimal(row.player_hours, 1)
       }
     end)
   end
@@ -400,7 +402,7 @@ defmodule KogasaFrontend.MapsDb do
           AND message LIKE '%|class=%'
         GROUP BY class_id
         """)
-        |> Map.new(fn row -> {to_int(row.class_id), to_int(row.samples)} end)
+        |> Map.new(fn row -> {int(row.class_id), int(row.samples)} end)
 
       total =
         @class_popularity_order
@@ -418,8 +420,8 @@ defmodule KogasaFrontend.MapsDb do
           icon: icon,
           samples: samples,
           percentage: percentage,
-          percentage_display: format_float(percentage, 1) <> "%",
-          bar_width: format_float(percentage, 4) <> "%"
+          percentage_display: DisplayFormat.decimal(percentage, 1) <> "%",
+          bar_width: DisplayFormat.decimal(percentage, 4) <> "%"
         }
       end)
     else
@@ -447,7 +449,7 @@ defmodule KogasaFrontend.MapsDb do
         %{
           weapon_uid: weapon_uid,
           name: Map.get(cwx_names, weapon_uid, weapon_uid),
-          equipped_clients: to_int(row.equipped_clients)
+          equipped_clients: int(row.equipped_clients)
         }
       end)
     else
@@ -493,7 +495,7 @@ defmodule KogasaFrontend.MapsDb do
         |> Enum.group_by(& &1.map_name)
         |> Map.new(fn {map_name, points} ->
           point_map =
-            Map.new(points, fn point -> {to_int(point.bucket), to_float(point.avg_players)} end)
+            Map.new(points, fn point -> {int(point.bucket), float(point.avg_players)} end)
 
           {map_name, point_map}
         end)
@@ -534,7 +536,7 @@ defmodule KogasaFrontend.MapsDb do
     ) map_ends
     """)
     |> case do
-      [%{common_seconds: seconds}] -> to_int(seconds)
+      [%{common_seconds: seconds}] -> int(seconds)
       _ -> 0
     end
   end
@@ -635,10 +637,10 @@ defmodule KogasaFrontend.MapsDb do
       rows
       |> Enum.map(fn
         [sampled_at, player_count] ->
-          %{sampled_at: to_int(sampled_at), player_count: to_int(player_count)}
+          %{sampled_at: int(sampled_at), player_count: int(player_count)}
 
         %{sampled_at: sampled_at, player_count: player_count} ->
-          %{sampled_at: to_int(sampled_at), player_count: to_int(player_count)}
+          %{sampled_at: int(sampled_at), player_count: int(player_count)}
 
         _ ->
           nil
@@ -1296,7 +1298,7 @@ defmodule KogasaFrontend.MapsDb do
     case Repo.query(
            "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '#{table}'"
          ) do
-      {:ok, %{rows: [[count]]}} -> to_int(count) > 0
+      {:ok, %{rows: [[count]]}} -> int(count) > 0
       _ -> false
     end
   rescue
@@ -1314,8 +1316,8 @@ defmodule KogasaFrontend.MapsDb do
   defp format_slot(nil), do: "n/a"
 
   defp format_slot(%{} = row) do
-    weekday = row |> Map.get(:weekday) |> to_int()
-    hour = row |> Map.get(:hour_of_day) |> to_int()
+    weekday = row |> Map.get(:weekday) |> int()
+    hour = row |> Map.get(:hour_of_day) |> int()
     "#{weekday_label(weekday)} #{pad2(hour)}:00 ET"
   end
 
@@ -1325,18 +1327,9 @@ defmodule KogasaFrontend.MapsDb do
 
   defp pad2(value) do
     value
-    |> to_int()
+    |> int()
     |> Integer.to_string()
     |> String.pad_leading(2, "0")
-  end
-
-  defp format_duration(seconds) do
-    minutes = max(0, div(seconds, 60))
-
-    cond do
-      minutes >= 60 -> "#{div(minutes, 60)}h #{rem(minutes, 60)}m"
-      true -> "#{minutes}m"
-    end
   end
 
   defp format_date(0), do: "n/a"
@@ -1345,48 +1338,10 @@ defmodule KogasaFrontend.MapsDb do
     TimeDisplay.format_server_datetime(unix_seconds)
   end
 
-  defp signed_float(value, decimals) do
-    value = to_float(value)
-    sign = if value > 0.0, do: "+", else: ""
-    sign <> format_float(value, decimals)
-  end
-
-  defp format_float(value, decimals) do
-    value
-    |> to_float()
-    |> :erlang.float_to_binary(decimals: decimals)
-  end
-
   defp mtime_unix(%File.Stat{mtime: {{y, mo, d}, {h, mi, s}}}) do
     {:ok, ndt} = NaiveDateTime.new(y, mo, d, h, mi, s)
     TimeDisplay.server_naive_to_unix(ndt)
   end
 
   defp mtime_unix(%File.Stat{}), do: System.system_time(:second)
-
-  defp to_int(v) when is_integer(v), do: v
-  defp to_int(v) when is_float(v), do: trunc(v)
-  defp to_int(%Decimal{} = v), do: v |> Decimal.to_integer()
-
-  defp to_int(v) when is_binary(v) do
-    case Integer.parse(v) do
-      {i, _} -> i
-      :error -> 0
-    end
-  end
-
-  defp to_int(_), do: 0
-
-  defp to_float(%Decimal{} = v), do: Decimal.to_float(v)
-  defp to_float(v) when is_integer(v), do: v * 1.0
-  defp to_float(v) when is_float(v), do: v
-
-  defp to_float(v) when is_binary(v) do
-    case Float.parse(v) do
-      {f, _} -> f
-      :error -> 0.0
-    end
-  end
-
-  defp to_float(_), do: 0.0
 end

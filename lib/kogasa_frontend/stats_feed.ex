@@ -7,6 +7,7 @@ defmodule KogasaFrontend.StatsFeed do
   alias Ecto.Adapters.SQL
   alias KogasaFrontend.Chat.SteamProfiles
   alias KogasaFrontend.CountryNames
+  alias KogasaFrontend.DisplayFormat
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.MapsDb
   alias KogasaFrontend.PlayerIdentity
@@ -578,7 +579,7 @@ defmodule KogasaFrontend.StatsFeed do
         airshots: int(row["airshots"]),
         favorite_class: favorite_class,
         playtime: playtime,
-        playtime_human: format_playtime(playtime),
+        playtime_human: DisplayFormat.duration(playtime),
         damage_dealt: damage,
         damage_taken: damage_taken,
         accuracy_overall: accuracy.value,
@@ -1390,19 +1391,6 @@ defmodule KogasaFrontend.StatsFeed do
   defp match_log_class_label("spy"), do: "Spy"
   defp match_log_class_label("engineer"), do: "Engineer"
   defp match_log_class_label(_), do: "Class"
-
-  defp format_playtime(seconds) when seconds <= 0, do: "0m"
-
-  defp format_playtime(seconds) do
-    hours = div(seconds, 3600)
-    minutes = div(rem(seconds, 3600), 60)
-
-    cond do
-      hours > 0 and minutes > 0 -> "#{hours}h #{minutes}m"
-      hours > 0 -> "#{hours}h"
-      true -> "#{minutes}m"
-    end
-  end
 
   defp country_code_for_row(row) do
     if truthy?(row["show_country"]) do

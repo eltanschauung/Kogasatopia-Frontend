@@ -2,24 +2,12 @@ defmodule KogasaFrontendWeb.StatsHTML do
   use KogasaFrontendWeb, :html
 
   alias KogasaFrontend.Chat.NameStyle
+  alias KogasaFrontend.DisplayFormat
 
   embed_templates "stats_html/*"
 
-  def number_format(v) do
-    v
-    |> to_number()
-    |> trunc()
-    |> Integer.to_string()
-    |> String.reverse()
-    |> String.replace(~r/(.{3})(?=.)/, "\\1,")
-    |> String.reverse()
-  end
-
-  def format_decimal(v, digits \\ 1) do
-    v
-    |> to_float()
-    |> :erlang.float_to_binary(decimals: max(0, digits))
-  end
+  def number_format(value), do: DisplayFormat.integer(value)
+  def format_decimal(value, digits \\ 1), do: DisplayFormat.decimal(value, digits)
 
   def summary_week_trend_class(summary) do
     {_, trend} = normalized_week_change(summary)
@@ -97,42 +85,6 @@ defmodule KogasaFrontendWeb.StatsHTML do
     do: if(get_key(player, :is_admin, false), do: "Admin", else: "Player")
 
   def map_get(summary, key, default \\ nil), do: get_key(summary, key, default)
-
-  defp to_number(v) when is_integer(v), do: v
-  defp to_number(v) when is_float(v), do: v
-
-  defp to_number(v) when is_binary(v) do
-    case Integer.parse(v) do
-      {i, _} ->
-        i
-
-      :error ->
-        case Float.parse(v) do
-          {f, _} -> f
-          :error -> 0
-        end
-    end
-  end
-
-  defp to_number(_), do: 0
-
-  defp to_float(v) when is_float(v), do: v
-  defp to_float(v) when is_integer(v), do: v / 1
-
-  defp to_float(v) when is_binary(v) do
-    case Float.parse(v) do
-      {f, _} ->
-        f
-
-      :error ->
-        case Integer.parse(v) do
-          {i, _} -> i / 1
-          :error -> 0.0
-        end
-    end
-  end
-
-  defp to_float(_), do: 0.0
 
   defp get_key(map, key, default) when is_map(map) do
     Map.get(map, key, Map.get(map, Atom.to_string(key), default))

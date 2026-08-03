@@ -8,7 +8,7 @@ defmodule KogasaFrontend.Value do
   def int(nil), do: 0
   def int(value) when is_integer(value), do: value
   def int(value) when is_float(value), do: trunc(value)
-  def int(%Decimal{} = value), do: value |> Decimal.round(0) |> Decimal.to_integer()
+  def int(%Decimal{} = value), do: value |> Decimal.round(0, :down) |> Decimal.to_integer()
 
   def int(value) when is_binary(value) do
     case Integer.parse(value) do
