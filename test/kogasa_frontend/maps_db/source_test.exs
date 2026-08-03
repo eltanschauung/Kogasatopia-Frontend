@@ -3,10 +3,14 @@ defmodule KogasaFrontend.MapsDb.SourceTest do
 
   alias KogasaFrontend.MapsDb.Source
 
-  test "normalizes missing or unknown sources to mapsdb" do
+  test "normalizes missing sources to mapsdb" do
     assert Source.sanitize(nil) == {:ok, "mapsdb"}
+    assert Source.sanitize("") == {:ok, "mapsdb"}
     assert Source.sanitize("mapsdb") == {:ok, "mapsdb"}
-    assert Source.sanitize("unexpected") == {:ok, "mapsdb"}
+  end
+
+  test "rejects unknown sources" do
+    assert Source.sanitize("unexpected") == {:error, :invalid_source}
   end
 
   test "keeps tfcfg as an editable source" do
