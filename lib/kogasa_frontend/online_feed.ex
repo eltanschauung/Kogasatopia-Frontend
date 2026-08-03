@@ -9,6 +9,7 @@ defmodule KogasaFrontend.OnlineFeed do
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.PlayerIdentity
   alias KogasaFrontend.Quickstats
+  alias KogasaFrontend.QueryResult
   alias KogasaFrontend.Repo
   alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.WeaponCategories
@@ -447,7 +448,5 @@ defmodule KogasaFrontend.OnlineFeed do
     Logger.debug(fn -> "[OnlineFeed] #{context}: #{inspect(reason)}" end)
   end
 
-  defp map_rows(rows, columns) do
-    Enum.map(rows, fn row -> Enum.zip(columns, row) |> Map.new() end)
-  end
+  defp map_rows(rows, columns), do: QueryResult.rows_to_maps(rows, columns)
 end

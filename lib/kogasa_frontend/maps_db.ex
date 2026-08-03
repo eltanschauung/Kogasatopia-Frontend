@@ -7,6 +7,7 @@ defmodule KogasaFrontend.MapsDb do
   alias KogasaFrontend.DisplayFormat
   alias KogasaFrontend.MapsDb.ConfigBrowser
   alias KogasaFrontend.MapsDb.MapMeta
+  alias KogasaFrontend.QueryResult
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.Repo
   alias KogasaFrontend.TimeDisplay
@@ -968,11 +969,7 @@ defmodule KogasaFrontend.MapsDb do
   defp query_rows(sql) do
     case Repo.query(sql) do
       {:ok, %{columns: columns, rows: rows}} ->
-        Enum.map(rows, fn row ->
-          columns
-          |> Enum.zip(row)
-          |> Map.new(fn {key, value} -> {String.to_atom(key), value} end)
-        end)
+        QueryResult.rows_to_maps(rows, columns, :atoms)
 
       _ ->
         []

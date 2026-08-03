@@ -11,6 +11,7 @@ defmodule KogasaFrontend.StatsFeed do
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.MapsDb
   alias KogasaFrontend.PlayerIdentity
+  alias KogasaFrontend.QueryResult
   alias KogasaFrontend.Repo
   alias KogasaFrontend.Stats.MatchLogClasses
   alias KogasaFrontend.WeaponCategories
@@ -1277,7 +1278,7 @@ defmodule KogasaFrontend.StatsFeed do
     end
   end
 
-  defp row_map(row, cols), do: Enum.zip(cols, row) |> Map.new()
+  defp row_map(row, cols), do: QueryResult.row_to_map(row, cols)
 
   defp ceil_div(total, per_page) when per_page > 0, do: div(total + per_page - 1, per_page)
 
