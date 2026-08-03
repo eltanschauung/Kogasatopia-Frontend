@@ -641,6 +641,11 @@ a {
   -webkit-background-clip: text;
 }
 
+.admin-name {
+  color: #f7d774;
+  text-shadow: 0 0 6px rgba(247, 215, 116, 0.6);
+}
+
 .chat-timestamp {
   color: var(--wc-text-faint);
   font-size: 0.75rem;

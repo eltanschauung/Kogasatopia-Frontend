@@ -315,6 +315,7 @@
         list.forEach(player => {
             const steamid = player.steamid || '';
             const personaname = player.personaname || steamid || 'Unknown';
+            const isAdmin = Number(player.is_admin) === 1;
             const avatar = player.avatar || defaultAvatar;
             const profileUrl = player.profileurl || null;
             const team = Number(player.team) || 0;
@@ -372,6 +373,9 @@
             const nameEl = document.createElement('a'); nameEl.textContent = personaname; nameEl.title = personaname;
             if (profileUrl) { nameEl.href = profileUrl; nameEl.target = '_blank'; nameEl.rel = 'noopener'; }
             else { nameEl.href = '#'; nameEl.addEventListener('click', e => e.preventDefault()); }
+            if (window.KogasaPlayerIdentity) {
+                window.KogasaPlayerIdentity.applyNameStyle(nameEl, player.name_style, isAdmin, personaname);
+            }
             infoWrapper.appendChild(nameEl); appendClassIcons(infoWrapper, player.class); playerCell.appendChild(infoWrapper); tr.appendChild(playerCell);
 
             tr.appendChild(createNumberCell(kills, kills.toLocaleString(), 'Kills'));

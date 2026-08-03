@@ -8,14 +8,13 @@ defmodule KogasaFrontend.Chat do
     AvatarService,
     Message,
     MessageParts,
-    NamePreference,
-    NameStyle,
     OutboxMessage,
     Persona,
     RateLimiter,
     SteamProfiles
   }
 
+  alias KogasaFrontend.PlayerIdentity
   alias KogasaFrontend.Repo
 
   @topic "chat:live"
@@ -78,13 +77,10 @@ defmodule KogasaFrontend.Chat do
         _ -> {[], false}
       end
 
-    steam_profiles =
-      rows
-      |> Enum.map(fn r -> r[:steamid] || r["steamid"] end)
-      |> SteamProfiles.fetch_many()
-
-    name_preferences = load_name_preferences(rows)
-    messages = Enum.map(rows, &format_message(&1, steam_profiles, name_preferences))
+    steamids = Enum.map(rows, fn r -> r[:steamid] || r["steamid"] end)
+    steam_profiles = SteamProfiles.fetch_many(steamids)
+    name_styles = PlayerIdentity.name_styles_for_ids(steamids)
+    messages = Enum.map(rows, &format_message(&1, steam_profiles, name_styles))
     ids = Enum.map(messages, & &1.id)
 
     %{
@@ -181,7 +177,7 @@ defmodule KogasaFrontend.Chat do
 
             payload =
               row
-              |> format_message(%{}, load_name_preferences([row]))
+              |> format_message(%{}, PlayerIdentity.name_styles_for_ids([row.steamid]))
               |> message_to_json()
 
             Phoenix.PubSub.broadcast(KogasaFrontend.PubSub, @topic, {:new_message, payload})
@@ -198,7 +194,7 @@ defmodule KogasaFrontend.Chat do
     end
   end
 
-  defp format_message(row, steam_profiles, name_preferences) do
+  defp format_message(row, steam_profiles, name_styles) do
     iphash = row[:iphash] || row["iphash"]
     personaname = row[:personaname] || row["personaname"]
     steamid = row[:steamid] || row["steamid"]
@@ -221,7 +217,7 @@ defmodule KogasaFrontend.Chat do
       created_at: row[:created_at] || row["created_at"] || 0,
       steamid: steamid,
       name: resolved_name(personaname, steamid, iphash, profile),
-      name_style: name_preferences |> Map.get(steamid) |> NameStyle.from_preference(),
+      name_style: Map.get(name_styles, steamid),
       avatar: avatar,
       clan_tag: clan_tag,
       message: message,
@@ -262,31 +258,6 @@ defmodule KogasaFrontend.Chat do
       message: msg.message,
       alert: msg.alert
     }
-  end
-
-  defp load_name_preferences(rows) do
-    steamids =
-      rows
-      |> Enum.map(fn row -> row[:steamid] || row["steamid"] end)
-      |> Enum.filter(&(is_binary(&1) and &1 != ""))
-      |> Enum.uniq()
-
-    if steamids == [] do
-      %{}
-    else
-      try do
-        from(preference in NamePreference,
-          where: preference.steamid in ^steamids,
-          select: {preference.steamid, preference.color, preference.pattern}
-        )
-        |> Repo.all()
-        |> Map.new(fn {steamid, color, pattern} ->
-          {steamid, %{color: color, pattern: pattern}}
-        end)
-      rescue
-        _ -> %{}
-      end
-    end
   end
 
   defp normalize_limit(value) when is_integer(value), do: value |> max(1) |> min(200)

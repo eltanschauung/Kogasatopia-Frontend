@@ -2,6 +2,7 @@ defmodule KogasaFrontendWeb.StatsController do
   use KogasaFrontendWeb, :controller
 
   alias KogasaFrontend.Chat.SteamProfiles
+  alias KogasaFrontend.PlayerIdentity
   alias KogasaFrontend.StatsFeed
   alias KogasaFrontendWeb.StatsFragments
 
@@ -62,13 +63,24 @@ defmodule KogasaFrontendWeb.StatsController do
       true ->
         case StatsFeed.fetch_player(session_steamid) do
           nil ->
+            identity =
+              PlayerIdentity.for_ids([session_steamid]) |> PlayerIdentity.get(session_steamid)
+
             profile = SteamProfiles.fetch_many([session_steamid])[session_steamid] || %{}
 
             %{
               steamid: session_steamid,
-              personaname: profile["personaname"] || session_steamid,
+              personaname:
+                PlayerIdentity.resolve_name(
+                  identity,
+                  profile["personaname"],
+                  "",
+                  session_steamid
+                ),
               avatar: profile["avatarfull"] || default_avatar,
-              profileurl: "https://steamcommunity.com/profiles/" <> session_steamid
+              profileurl: "https://steamcommunity.com/profiles/" <> session_steamid,
+              is_admin: identity.is_admin,
+              name_style: identity.name_style
             }
 
           row ->

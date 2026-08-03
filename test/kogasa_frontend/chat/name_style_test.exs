@@ -32,4 +32,17 @@ defmodule KogasaFrontend.Chat.NameStyleTest do
   test "rejects unknown colors" do
     assert NameStyle.from_preference(%{pattern: "", color: "not-a-color"}) == nil
   end
+
+  test "exposes one CSS contract for pattern and solid styles" do
+    gradient = %{kind: :gradient, first: "#99CCFF", second: "#FF4040"}
+    solid = %{kind: :solid, color: "#3EFF3E"}
+
+    assert NameStyle.custom?(gradient)
+    assert NameStyle.css_class(gradient) == "chat-name-gradient"
+    assert NameStyle.css_style(gradient) =~ "linear-gradient"
+    assert NameStyle.custom?(solid)
+    assert NameStyle.css_class(solid) == nil
+    assert NameStyle.css_style(solid) == "color: #3EFF3E"
+    refute NameStyle.custom?(nil)
+  end
 end

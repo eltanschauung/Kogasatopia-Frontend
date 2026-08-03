@@ -4,10 +4,10 @@ defmodule KogasaFrontend.OnlineFeed do
   import KogasaFrontend.Value, only: [float: 1, int: 1, str: 1]
 
   alias Ecto.Adapters.SQL
-  alias KogasaFrontend.AdminStatus
   alias KogasaFrontend.Chat.SteamProfiles
   alias KogasaFrontend.CountryNames
   alias KogasaFrontend.LegacyPaths
+  alias KogasaFrontend.PlayerIdentity
   alias KogasaFrontend.Repo
   alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.WeaponCategories
@@ -269,8 +269,8 @@ defmodule KogasaFrontend.OnlineFeed do
       |> Enum.reject(&(&1 == ""))
       |> Enum.uniq()
 
+    identities = PlayerIdentity.for_ids(steam_ids)
     profiles = fetch_steam_profiles(steam_ids)
-    admin_flags = AdminStatus.admin_flags_for_ids(steam_ids)
 
     default_avatar =
       Application.get_env(:kogasa_frontend, :default_avatar_url, @default_avatar_url)
@@ -279,12 +279,15 @@ defmodule KogasaFrontend.OnlineFeed do
       row = normalize_online_player(row)
       steamid = str(row["steamid"])
       profile = Map.get(profiles, steamid, %{})
+      identity = PlayerIdentity.get(identities, steamid)
 
       personaname =
-        case str(profile["personaname"]) do
-          "" -> str(row["personaname"])
-          name -> name
-        end
+        PlayerIdentity.resolve_name(
+          identity,
+          profile["personaname"],
+          row["personaname"],
+          steamid
+        )
 
       avatar =
         case str(profile["avatarfull"]) do
@@ -302,8 +305,9 @@ defmodule KogasaFrontend.OnlineFeed do
         )
         |> Map.put(
           "is_admin",
-          if(Map.get(admin_flags, steamid, false), do: 1, else: 0)
+          if(identity.is_admin, do: 1, else: 0)
         )
+        |> Map.put("name_style", identity.name_style)
 
       {weapon_summary, active_acc} = weapon_summary_for_row(row)
 

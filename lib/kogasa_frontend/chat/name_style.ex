@@ -28,6 +28,34 @@ defmodule KogasaFrontend.Chat.NameStyle do
 
   def from_preference(_), do: nil
 
+  def custom?(%{kind: kind}) when kind in [:gradient, :america, :trans, :rainbow, :solid],
+    do: true
+
+  def custom?(_), do: false
+
+  def css_class(%{kind: kind}) when kind in [:gradient, :america, :trans, :rainbow],
+    do: "chat-name-gradient"
+
+  def css_class(_), do: nil
+
+  def css_style(%{kind: :gradient, first: first, second: second}),
+    do: "color: transparent; --chat-name-gradient: linear-gradient(90deg, #{first}, #{second})"
+
+  def css_style(%{kind: :america}),
+    do:
+      "color: transparent; --chat-name-gradient: linear-gradient(90deg, #FF4040 0%, #FF4040 33.333%, #FFFFFF 33.333%, #FFFFFF 66.666%, #1E90FF 66.666%, #1E90FF 100%)"
+
+  def css_style(%{kind: :trans}),
+    do:
+      "color: transparent; --chat-name-gradient: linear-gradient(90deg, #5BCEFA 0%, #5BCEFA 33.333%, #FFFFFF 33.333%, #FFFFFF 66.666%, #F5A9B8 66.666%, #F5A9B8 100%)"
+
+  def css_style(%{kind: :rainbow}),
+    do:
+      "color: transparent; --chat-name-gradient: linear-gradient(90deg, #FF4040, #FFA500, #FFFF00, #3EFF3E, #99CCFF, #4B0082, #EE82EE)"
+
+  def css_style(%{kind: :solid, color: color}), do: "color: #{color}"
+  def css_style(_), do: nil
+
   defp gradient(pattern) do
     with [_, first_name, second_name] <- Regex.run(@gradient_pattern, pattern),
          first when is_binary(first) <- MoreColors.css(first_name),

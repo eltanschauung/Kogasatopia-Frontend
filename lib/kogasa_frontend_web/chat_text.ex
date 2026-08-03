@@ -3,17 +3,19 @@ defmodule KogasaFrontendWeb.ChatText do
   use Phoenix.Component
 
   alias KogasaFrontend.Chat.MoreColors
+  alias KogasaFrontend.Chat.NameStyle
 
   @token_re ~r/(\{[a-zA-Z]+\})/
 
   attr :text, :string, required: true
   attr :class, :string, default: nil
+  attr :title, :string, default: nil
 
   def colored(assigns) do
     assigns = assign(assigns, :segments, segments(assigns.text || ""))
 
     ~H"""
-    <span class={@class}>
+    <span class={@class} title={@title}>
       <%= for segment <- @segments do %>
         <span style={segment_style(segment.color)}>{segment.text}</span>
       <% end %>
@@ -24,42 +26,20 @@ defmodule KogasaFrontendWeb.ChatText do
   attr :text, :string, required: true
   attr :name_style, :map, default: nil
   attr :class, :string, default: nil
+  attr :title, :string, default: nil
 
   def chat_name(assigns) do
     ~H"""
-    <%= case @name_style do %>
-      <% %{kind: :gradient, first: first, second: second} -> %>
-        <span
-          class={[@class, "chat-name-gradient"]}
-          style={"--chat-name-gradient: linear-gradient(90deg, #{first}, #{second})"}
-        >
-          {@text}
-        </span>
-      <% %{kind: :america} -> %>
-        <span
-          class={[@class, "chat-name-gradient"]}
-          style="--chat-name-gradient: linear-gradient(90deg, #FF4040 0%, #FF4040 33.333%, #FFFFFF 33.333%, #FFFFFF 66.666%, #1E90FF 66.666%, #1E90FF 100%)"
-        >
-          {@text}
-        </span>
-      <% %{kind: :trans} -> %>
-        <span
-          class={[@class, "chat-name-gradient"]}
-          style="--chat-name-gradient: linear-gradient(90deg, #5BCEFA 0%, #5BCEFA 33.333%, #FFFFFF 33.333%, #FFFFFF 66.666%, #F5A9B8 66.666%, #F5A9B8 100%)"
-        >
-          {@text}
-        </span>
-      <% %{kind: :rainbow} -> %>
-        <span
-          class={[@class, "chat-name-gradient"]}
-          style="--chat-name-gradient: linear-gradient(90deg, #FF4040, #FFA500, #FFFF00, #3EFF3E, #99CCFF, #4B0082, #EE82EE)"
-        >
-          {@text}
-        </span>
-      <% %{kind: :solid, color: color} -> %>
-        <span class={@class} style={"color: #{color}"}>{@text}</span>
-      <% _ -> %>
-        <.colored text={@text} class={@class} />
+    <%= if NameStyle.custom?(@name_style) do %>
+      <span
+        class={[@class, NameStyle.css_class(@name_style)]}
+        style={NameStyle.css_style(@name_style)}
+        title={@title}
+      >
+        {@text}
+      </span>
+    <% else %>
+      <.colored text={@text} class={@class} title={@title} />
     <% end %>
     """
   end

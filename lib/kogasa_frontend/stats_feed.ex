@@ -5,11 +5,11 @@ defmodule KogasaFrontend.StatsFeed do
 
   require Logger
   alias Ecto.Adapters.SQL
-  alias KogasaFrontend.AdminStatus
   alias KogasaFrontend.Chat.SteamProfiles
   alias KogasaFrontend.CountryNames
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.MapsDb
+  alias KogasaFrontend.PlayerIdentity
   alias KogasaFrontend.Repo
   alias KogasaFrontend.WeaponCategories
 
@@ -332,7 +332,7 @@ defmodule KogasaFrontend.StatsFeed do
 
       sql = """
       SELECT steamid,
-             COALESCE((SELECT fs.last_name FROM filters_steam_names fs WHERE fs.steamid64 = #{@stats_table}.steamid LIMIT 1), cached_personaname, steamid) AS personaname,
+             COALESCE(cached_personaname, steamid) AS personaname,
              COALESCE(country, '') AS country,
              COALESCE(show_country, 0) AS show_country,
              kills, deaths, assists, healing, headshots, backstabs,
@@ -377,7 +377,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     sql = """
     SELECT w.steamid,
-           COALESCE(fs.last_name, w.cached_personaname, w.steamid) AS personaname,
+           COALESCE(w.cached_personaname, w.steamid) AS personaname,
            COALESCE(w.country, '') AS country,
            COALESCE(w.show_country, 0) AS show_country,
            w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
@@ -416,7 +416,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     count_sql = """
     SELECT COUNT(*)
-    FROM #{ranked_stats_from()}
+    FROM #{ranked_stats_search_from()}
     WHERE #{count_where_sql}
     """
 
@@ -427,7 +427,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     sql = """
     SELECT w.steamid,
-           COALESCE(fs.last_name, w.cached_personaname, w.steamid) AS personaname,
+           COALESCE(pr.newname, fs.last_name, w.cached_personaname, w.steamid) AS personaname,
            COALESCE(w.country, '') AS country,
            COALESCE(w.show_country, 0) AS show_country,
            w.kills, w.deaths, w.assists, w.healing, w.headshots, w.backstabs,
@@ -443,7 +443,7 @@ defmodule KogasaFrontend.StatsFeed do
            COALESCE(w.airshots, 0) AS airshots,
            #{favorite_class_expr} AS favorite_class,
            COALESCE(w.last_seen, 0) AS last_seen
-    FROM #{ranked_stats_from()}
+    FROM #{ranked_stats_search_from()}
     WHERE #{where_sql}
     ORDER BY #{stats_cache_order_clause()}
     LIMIT ? OFFSET ?
@@ -460,7 +460,8 @@ defmodule KogasaFrontend.StatsFeed do
 
   defp cumulative_search_where_clause(alias_prefix, like, steam_like, q, cached_profile_ids) do
     base =
-      "LOWER(COALESCE(fs.last_name, #{alias_prefix}cached_personaname, #{alias_prefix}steamid)) LIKE ? " <>
+      "LOWER(COALESCE(pr.newname, fs.last_name, #{alias_prefix}cached_personaname, #{alias_prefix}steamid)) " <>
+        "COLLATE utf8mb4_general_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_general_ci " <>
         "OR #{alias_prefix}steamid LIKE ? " <>
         "OR #{alias_prefix}steamid = ?"
 
@@ -483,13 +484,14 @@ defmodule KogasaFrontend.StatsFeed do
       |> Enum.reject(&(&1 == ""))
       |> Enum.uniq()
 
+    identities = PlayerIdentity.for_ids(steam_ids)
     profiles = SteamProfiles.fetch_many(steam_ids)
-    admin_flags = AdminStatus.admin_flags_for_ids(steam_ids)
     default_avatar = default_avatar_url()
 
     Enum.map(rows, fn row ->
       steamid = str(row["steamid"])
       profile = Map.get(profiles, steamid, %{})
+      identity = PlayerIdentity.get(identities, steamid)
       kills = int(row["kills"])
       deaths = int(row["deaths"])
       assists = int(row["assists"])
@@ -501,10 +503,12 @@ defmodule KogasaFrontend.StatsFeed do
       minutes = if playtime > 0, do: playtime / 60.0, else: 0.0
 
       personaname =
-        case str(profile["personaname"]) do
-          "" -> row["personaname"] |> str()
-          name -> name
-        end
+        PlayerIdentity.resolve_name(
+          identity,
+          profile["personaname"],
+          row["personaname"],
+          steamid
+        )
 
       avatar =
         case str(profile["avatarfull"]) do
@@ -550,7 +554,8 @@ defmodule KogasaFrontend.StatsFeed do
         dtpm: dtpm,
         kd: kd,
         score: kills + assists,
-        is_admin: Map.get(admin_flags, steamid, false),
+        is_admin: identity.is_admin,
+        name_style: identity.name_style,
         is_online: false,
         last_seen: int(row["last_seen"])
       }
@@ -625,7 +630,15 @@ defmodule KogasaFrontend.StatsFeed do
   end
 
   defp ranked_stats_from do
-    "#{@stats_table} w INNER JOIN #{@points_cache_table} pc ON pc.steamid = w.steamid AND COALESCE(pc.rank, 0) > 0 LEFT JOIN filters_steam_names fs ON fs.steamid64 = w.steamid"
+    "#{@stats_table} w " <>
+      "INNER JOIN #{@points_cache_table} pc ON pc.steamid = w.steamid AND COALESCE(pc.rank, 0) > 0"
+  end
+
+  defp ranked_stats_search_from do
+    ranked_stats_from() <>
+      " " <>
+      "LEFT JOIN filters_steam_names fs ON fs.steamid64 = w.steamid " <>
+      "LEFT JOIN prename_rules pr ON pr.pattern COLLATE utf8mb4_general_ci = w.steamid COLLATE utf8mb4_general_ci"
   end
 
   defp summary_top_killstreak do
@@ -634,7 +647,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     sql = """
     SELECT steamid,
-           COALESCE((SELECT fs.last_name FROM filters_steam_names fs WHERE fs.steamid64 = #{@stats_table}.steamid LIMIT 1), cached_personaname, steamid) AS personaname,
+           COALESCE(cached_personaname, steamid) AS personaname,
            COALESCE(country, '') AS country,
            COALESCE(show_country, 0) AS show_country,
            kills, deaths, assists, healing, headshots, backstabs,
@@ -811,6 +824,7 @@ defmodule KogasaFrontend.StatsFeed do
         |> Enum.reject(&(&1 == ""))
         |> Enum.uniq()
 
+      identities = PlayerIdentity.for_ids(steamids)
       profiles = SteamProfiles.fetch_many(steamids)
       default_avatar = default_avatar_url()
 
@@ -818,14 +832,21 @@ defmodule KogasaFrontend.StatsFeed do
         Enum.map(rows, fn row ->
           steamid = str(row["steamid"])
           profile = profiles[steamid] || %{}
+          identity = PlayerIdentity.get(identities, steamid)
 
           %{
             steamid: steamid,
             personaname:
-              str(profile["personaname"])
-              |> fallback_blank(str(row["personaname"]) |> fallback_blank(steamid)),
+              PlayerIdentity.resolve_name(
+                identity,
+                profile["personaname"],
+                row["personaname"],
+                steamid
+              ),
             avatar: str(profile["avatarfull"]) |> fallback_blank(default_avatar),
             profileurl: "https://steamcommunity.com/profiles/" <> steamid,
+            is_admin: identity.is_admin,
+            name_style: identity.name_style,
             best_streak: int(row["best_streak"]),
             kills: int(row["kills"])
           }
@@ -861,16 +882,23 @@ defmodule KogasaFrontend.StatsFeed do
         if playtime > 0 do
           steamid = str(m["steamid"])
           dpm = Float.round(damage * 60.0 / playtime, 1)
+          identity = PlayerIdentity.for_ids([steamid]) |> PlayerIdentity.get(steamid)
           profile = SteamProfiles.fetch_many([steamid])[steamid] || %{}
           default_avatar = default_avatar_url()
 
           owner = %{
             steamid: steamid,
             personaname:
-              str(profile["personaname"])
-              |> fallback_blank(str(m["personaname"]) |> fallback_blank(steamid)),
+              PlayerIdentity.resolve_name(
+                identity,
+                profile["personaname"],
+                m["personaname"],
+                steamid
+              ),
             avatar: str(profile["avatarfull"]) |> fallback_blank(default_avatar),
-            profileurl: "https://steamcommunity.com/profiles/" <> steamid
+            profileurl: "https://steamcommunity.com/profiles/" <> steamid,
+            is_admin: identity.is_admin,
+            name_style: identity.name_style
           }
 
           {dpm, owner}
@@ -1075,18 +1103,11 @@ defmodule KogasaFrontend.StatsFeed do
       |> Enum.join("")
 
     sql = """
-    SELECT lp.log_id, lp.steamid,
-           CASE
-             WHEN lp.personaname = '' OR lp.personaname LIKE '%??%'
-               THEN COALESCE(NULLIF(pr.newname, ''), NULLIF(fs.last_name, ''), lp.personaname)
-             ELSE lp.personaname
-           END AS personaname,
+    SELECT lp.log_id, lp.steamid, lp.personaname,
            lp.kills, lp.deaths, lp.assists, lp.damage, lp.damage_taken, lp.healing,
            lp.headshots, lp.backstabs, lp.total_ubers, lp.playtime, lp.shots, lp.hits#{category_select_clause},
            COALESCE(lp.shots_medic, 0) AS shots_medic, COALESCE(lp.airshots, 0) AS airshots
     FROM #{@log_players_table} lp
-    LEFT JOIN prename_rules pr ON pr.pattern COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
-    LEFT JOIN filters_steam_names fs ON fs.steamid64 COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
     WHERE lp.log_id IN (#{placeholders})
     ORDER BY lp.log_id ASC, lp.kills DESC, lp.assists DESC
     """
@@ -1100,18 +1121,11 @@ defmodule KogasaFrontend.StatsFeed do
 
       {:error, _} ->
         fallback_sql = """
-        SELECT lp.log_id, lp.steamid,
-               CASE
-                 WHEN lp.personaname = '' OR lp.personaname LIKE '%??%'
-                   THEN COALESCE(NULLIF(pr.newname, ''), NULLIF(fs.last_name, ''), lp.personaname)
-                 ELSE lp.personaname
-               END AS personaname,
+        SELECT lp.log_id, lp.steamid, lp.personaname,
                lp.kills, lp.deaths, lp.assists, lp.damage, lp.damage_taken, lp.healing,
                lp.headshots, lp.backstabs, lp.total_ubers, lp.playtime, lp.shots, lp.hits#{category_select_clause},
                COALESCE(lp.shots_medic, 0) AS shots_medic
         FROM #{@log_players_table} lp
-        LEFT JOIN prename_rules pr ON pr.pattern COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
-        LEFT JOIN filters_steam_names fs ON fs.steamid64 COLLATE utf8mb4_uca1400_ai_ci = lp.steamid
         WHERE lp.log_id IN (#{placeholders})
         ORDER BY lp.log_id ASC, lp.kills DESC, lp.assists DESC
         """
@@ -1139,13 +1153,14 @@ defmodule KogasaFrontend.StatsFeed do
       |> Enum.reject(&(&1 == ""))
       |> Enum.uniq()
 
+    identities = PlayerIdentity.for_ids(steam_ids)
     profiles = SteamProfiles.fetch_many(steam_ids)
-    admin_flags = AdminStatus.admin_flags_for_ids(steam_ids)
     default_avatar = default_avatar_url()
 
     Enum.map(rows, fn row ->
       steamid = str(row["steamid"])
       profile = Map.get(profiles, steamid, %{})
+      identity = PlayerIdentity.get(identities, steamid)
       {weapon_summary, active_acc} = weapon_summary_for_log_row(row)
       active_classes = active_match_log_classes(row, weapon_summary)
       {total_shots, total_hits} = total_weapon_accuracy_counts(row)
@@ -1154,10 +1169,12 @@ defmodule KogasaFrontend.StatsFeed do
       accuracy_overall = if shots > 0, do: Float.round(hits * 100.0 / shots, 1), else: 0.0
 
       personaname =
-        case str(row["personaname"]) do
-          "" -> str(profile["personaname"])
-          name -> name
-        end
+        PlayerIdentity.resolve_name(
+          identity,
+          profile["personaname"],
+          row["personaname"],
+          steamid
+        )
 
       avatar =
         case str(profile["avatarfull"]) do
@@ -1172,7 +1189,8 @@ defmodule KogasaFrontend.StatsFeed do
         avatar: avatar,
         profileurl:
           if(steamid != "", do: "https://steamcommunity.com/profiles/" <> steamid, else: nil),
-        is_admin: Map.get(admin_flags, steamid, false),
+        is_admin: identity.is_admin,
+        name_style: identity.name_style,
         kills: int(row["kills"]),
         deaths: int(row["deaths"]),
         assists: int(row["assists"]),

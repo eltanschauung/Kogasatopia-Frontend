@@ -1,6 +1,7 @@
 defmodule KogasaFrontendWeb.StatsFragments do
   @moduledoc false
 
+  alias KogasaFrontend.Chat.NameStyle
   alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.TimeDisplay
 
@@ -54,6 +55,12 @@ defmodule KogasaFrontendWeb.StatsFragments do
     avatar = fallback(row[:avatar], default_avatar)
     name = fallback(row[:personaname], fallback(row[:steamid], "Unknown"))
     name_html = e(name)
+
+    {name_classes, _name_style_attr} =
+      name_presentation(row[:name_style], row[:is_admin], ["stats-player-name"])
+
+    name_title = if row[:is_admin], do: "Admin", else: "Player"
+    name_style = "font-size:1.35rem;font-weight:600;" <> name_style_value(row[:name_style])
     perf = get_opt(opts, :performance_averages, %{})
 
     comparison_enabled =
@@ -135,7 +142,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
       <div class="detail-profile">
         <img src="#{e(avatar)}" alt="" onerror="this.onerror=null;this.src='#{e(default_avatar)}'">
         <div>
-          <div class="stats-player-name" style="font-size:1.35rem;font-weight:600;">#{name_html}</div>
+          <div class="#{e(name_classes)}" style="#{e(name_style)}" title="#{name_title}">#{name_html}</div>
           <div class="detail-profile-links">#{profile_link}</div>
           <div style="color:var(--text-muted,#b7c0d2);">#{number(kills)} K / #{number(deaths)} D / #{number(assists)} A</div>
         </div>
@@ -292,11 +299,11 @@ defmodule KogasaFrontendWeb.StatsFragments do
       |> maybe_push(focused_steamid && steamid == focused_steamid, "player-highlight")
       |> Enum.join(" ")
 
-    name_classes =
-      ["stats-player-name"]
-      |> maybe_push(row[:is_admin], "admin-name")
-      |> maybe_push(row[:is_online], "online-name")
-      |> Enum.join(" ")
+    {name_classes, name_style_attr} =
+      name_presentation(row[:name_style], row[:is_admin], [
+        "stats-player-name",
+        if(row[:is_online], do: "online-name")
+      ])
 
     kd = row[:kd] || 0
     acc = row[:accuracy_overall] || 0
@@ -323,9 +330,9 @@ defmodule KogasaFrontendWeb.StatsFragments do
 
     player_link =
       if is_binary(profile_url) and profile_url != "" do
-        ~s(<a class="#{e(name_classes)}" title="#{e(name_title)}" href="#{e(profile_url)}" target="_blank" rel="noopener">#{player_name_html}</a>)
+        ~s(<a class="#{e(name_classes)}"#{name_style_attr} title="#{e(name_title)}" href="#{e(profile_url)}" target="_blank" rel="noopener">#{player_name_html}</a>)
       else
-        ~s(<span class="#{e(name_classes)}" title="#{e(name_title)}">#{player_name_html}</span>)
+        ~s(<span class="#{e(name_classes)}"#{name_style_attr} title="#{e(name_title)}">#{player_name_html}</span>)
       end
 
     avatar_html =
@@ -434,7 +441,10 @@ defmodule KogasaFrontendWeb.StatsFragments do
           {nil, "Accuracy unavailable"}
       end
 
-    name_cls = if player[:is_admin], do: "admin-name", else: ""
+    {name_cls, name_style_attr} =
+      name_presentation(player[:name_style], player[:is_admin], [])
+
+    name_title = if player[:is_admin], do: "Admin", else: "Player"
 
     avatar_html =
       if is_binary(profile_url) and profile_url != "" do
@@ -445,9 +455,9 @@ defmodule KogasaFrontendWeb.StatsFragments do
 
     link_html =
       if is_binary(profile_url) and profile_url != "" do
-        ~s(<a href="#{e(profile_url)}" target="_blank" rel="noopener" class="#{e(name_cls)}">#{e(name)}</a>)
+        ~s(<a href="#{e(profile_url)}" target="_blank" rel="noopener" class="#{e(name_cls)}"#{name_style_attr} title="#{name_title}">#{e(name)}</a>)
       else
-        ~s(<span class="#{e(name_cls)}">#{e(name)}</span>)
+        ~s(<span class="#{e(name_cls)}"#{name_style_attr} title="#{name_title}">#{e(name)}</span>)
       end
 
     player_info_class =
@@ -662,6 +672,28 @@ defmodule KogasaFrontendWeb.StatsFragments do
   defp player_name_html(name, country_code, country_name) do
     e(name) <> country_flag_html(country_code, country_name)
   end
+
+  defp name_presentation(name_style, is_admin, base_classes) do
+    custom_style? = NameStyle.custom?(name_style)
+    style_class = NameStyle.css_class(name_style)
+
+    classes =
+      base_classes
+      |> Enum.reject(&is_nil/1)
+      |> maybe_push(is_binary(style_class), style_class)
+      |> maybe_push(is_admin && !custom_style?, "admin-name")
+      |> Enum.join(" ")
+
+    style_attr =
+      case name_style_value(name_style) do
+        "" -> ""
+        value -> ~s( style="#{e(value)}")
+      end
+
+    {classes, style_attr}
+  end
+
+  defp name_style_value(name_style), do: NameStyle.css_style(name_style) || ""
 
   defp country_flag_html(country_code, country_name) do
     case normalize_country_code(country_code) do

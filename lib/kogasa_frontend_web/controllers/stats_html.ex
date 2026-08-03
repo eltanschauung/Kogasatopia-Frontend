@@ -1,6 +1,8 @@
 defmodule KogasaFrontendWeb.StatsHTML do
   use KogasaFrontendWeb, :html
 
+  alias KogasaFrontend.Chat.NameStyle
+
   embed_templates "stats_html/*"
 
   def number_format(v) do
@@ -79,6 +81,20 @@ defmodule KogasaFrontendWeb.StatsHTML do
     do: map[:personaname] || map["personaname"] || map[:steamid] || map["steamid"] || "Unknown"
 
   def display_name(v), do: to_string(v)
+
+  def player_name_style(player), do: get_key(player, :name_style, nil)
+
+  def player_name_class(player, base_class) do
+    style = player_name_style(player)
+    is_admin = get_key(player, :is_admin, false)
+
+    [base_class, if(is_admin && !NameStyle.custom?(style), do: "admin-name")]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" ")
+  end
+
+  def player_name_title(player),
+    do: if(get_key(player, :is_admin, false), do: "Admin", else: "Player")
 
   def map_get(summary, key, default \\ nil), do: get_key(summary, key, default)
 

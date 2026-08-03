@@ -304,12 +304,12 @@
                     />
                   <% end %>
                   <div class="header-user-meta">
-                    <span
-                      class={["header-user-name", @viewer_profile[:is_admin] && "admin-name"]}
-                      title={if(@viewer_profile[:is_admin], do: "Admin", else: nil)}
-                    >
-                      {@viewer_profile[:personaname] || @steamid}
-                    </span>
+                    <.chat_name
+                      text={@viewer_profile[:personaname] || @steamid}
+                      name_style={player_name_style(@viewer_profile)}
+                      class={player_name_class(@viewer_profile, "header-user-name")}
+                      title={player_name_title(@viewer_profile)}
+                    />
                     <span class="stats-sub" style="margin:0;">{@steamid || ""}</span>
                   </div>
                 <% else %>
@@ -413,7 +413,12 @@
               <% end %>
               <div>
                 <div class="stat-card-value">{number_format(map_get(s, :top_killstreak, 0))}</div>
-                <div class="stat-card-player-name">{display_name(owner)}</div>
+                <.chat_name
+                  text={display_name(owner)}
+                  name_style={player_name_style(owner)}
+                  class={player_name_class(owner, "stat-card-player-name")}
+                  title={player_name_title(owner)}
+                />
               </div>
             </div>
           <% else %>
@@ -440,7 +445,12 @@
                     <span class="streak-podium__badge">{rank}</span>
                   </div>
                   <div class="streak-podium__details">
-                    <div class="streak-podium__name">{display_name(leader)}</div>
+                    <.chat_name
+                      text={display_name(leader)}
+                      name_style={player_name_style(leader)}
+                      class={player_name_class(leader, "streak-podium__name")}
+                      title={player_name_title(leader)}
+                    />
                     <div class="streak-podium__value">
                       {number_format(map_get(leader, :best_streak, 0))}
                     </div>
@@ -482,7 +492,12 @@
                 <div class="stat-card-value">
                   {format_decimal(map_get(s, :weekly_top_dpm, 0.0), 1)}
                 </div>
-                <div class="stat-card-player-name">{display_name(owner)}</div>
+                <.chat_name
+                  text={display_name(owner)}
+                  name_style={player_name_style(owner)}
+                  class={player_name_class(owner, "stat-card-player-name")}
+                  title={player_name_title(owner)}
+                />
               </div>
             </div>
           <% else %>
@@ -812,13 +827,17 @@
           const acc = shots > 0 ? (hits / shots) * 100 : 0;
           const team = Number(player.team || 0);
           const rowClass = team === 2 ? 'team-red' : (team === 3 ? 'team-blue' : '');
+          const playerName = escapeHtml(player.personaname || player.steamid || 'Unknown');
+          const nameElement = player.profileurl
+            ? `<a class="stats-online-player-name" href="${escapeHtml(player.profileurl)}" target="_blank" rel="noopener">${playerName}</a>`
+            : `<span class="stats-online-player-name">${playerName}</span>`;
           return `
             <tr class="${rowClass}">
               <td>
                 <div class="stats-player-cell">
                   <img src="${escapeHtml(player.avatar || '')}" alt="">
                   <div>
-                    ${player.profileurl ? `<a href="${escapeHtml(player.profileurl)}" target="_blank" rel="noopener">${escapeHtml(player.personaname || player.steamid || 'Unknown')}</a>` : `<span>${escapeHtml(player.personaname || player.steamid || 'Unknown')}</span>`}
+                    ${nameElement}
                   </div>
                 </div>
               </td>
@@ -832,6 +851,17 @@
             </tr>
           `;
         }).join('');
+        els.onlineBody.querySelectorAll('.stats-online-player-name').forEach((element, index) => {
+          const player = players[index];
+          if (player && window.KogasaPlayerIdentity) {
+            window.KogasaPlayerIdentity.applyNameStyle(
+              element,
+              player.name_style,
+              Number(player.is_admin) === 1,
+              player.personaname || player.steamid || 'Player'
+            );
+          }
+        });
       }
 
       async function loadOnline() {

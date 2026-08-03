@@ -1419,11 +1419,6 @@ td {
     }
 }
 
-.admin-name {
-    color: #f7d774;
-    text-shadow: 0 0 6px rgba(247, 215, 116, 0.6);
-}
-
 .online-name {
     color: var(--text-primary);
     text-shadow: none;
