@@ -42,6 +42,20 @@ defmodule KogasaFrontendWeb.ChatText do
         >
           {@text}
         </span>
+      <% %{kind: :trans} -> %>
+        <span
+          class={[@class, "chat-name-gradient"]}
+          style="--chat-name-gradient: linear-gradient(90deg, #5BCEFA 0%, #5BCEFA 33.333%, #FFFFFF 33.333%, #FFFFFF 66.666%, #F5A9B8 66.666%, #F5A9B8 100%)"
+        >
+          {@text}
+        </span>
+      <% %{kind: :rainbow} -> %>
+        <span
+          class={[@class, "chat-name-gradient"]}
+          style="--chat-name-gradient: linear-gradient(90deg, #FF4040, #FFA500, #FFFF00, #3EFF3E, #99CCFF, #4B0082, #EE82EE)"
+        >
+          {@text}
+        </span>
       <% %{kind: :solid, color: color} -> %>
         <span class={@class} style={"color: #{color}"}>{@text}</span>
       <% _ -> %>

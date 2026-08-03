@@ -17,6 +17,11 @@ defmodule KogasaFrontend.Chat.NameStyleTest do
            }
   end
 
+  test "recognizes trans and rainbow presets" do
+    assert NameStyle.from_preference(%{pattern: "trans", color: ""}) == %{kind: :trans}
+    assert NameStyle.from_preference(%{pattern: "rainbow", color: ""}) == %{kind: :rainbow}
+  end
+
   test "falls back to the solid color for an invalid pattern" do
     assert NameStyle.from_preference(%{pattern: "gradient:unknown:red", color: "green"}) == %{
              kind: :solid,

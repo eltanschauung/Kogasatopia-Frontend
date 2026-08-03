@@ -15,6 +15,12 @@ defmodule KogasaFrontend.Chat.NameStyle do
       "america" ->
         %{kind: :america}
 
+      "trans" ->
+        %{kind: :trans}
+
+      "rainbow" ->
+        %{kind: :rainbow}
+
       _ ->
         gradient(pattern) || solid(color)
     end
