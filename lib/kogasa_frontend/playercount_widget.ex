@@ -2,6 +2,7 @@ defmodule KogasaFrontend.PlayercountWidget do
   @moduledoc false
 
   alias KogasaFrontend.LegacyPaths
+  alias KogasaFrontend.Quickstats
   alias KogasaFrontend.Tf2Classes
 
   @public_ip "173.255.237.230"
@@ -41,10 +42,9 @@ defmodule KogasaFrontend.PlayercountWidget do
   defp render_main_widget do
     file = "quickstats.txt"
 
-    case read_lines(file) do
-      {:ok, lines} ->
-        stats = parse_stats(lines, trim_lines?: false)
-        server_name = main_server_name(stats.server_name)
+    case Quickstats.read(file, trim_lines?: false) do
+      {:ok, stats} ->
+        server_name = Quickstats.compact_hostname(stats.server_name, "kogasa.tf | New Jersey")
         map_name = stats.map_name
         map_image = map_image(map_name, false)
 
@@ -73,9 +73,8 @@ defmodule KogasaFrontend.PlayercountWidget do
   end
 
   defp render_player_widget(file, server_ip, flags, include_nue?, unknown_fallback?) do
-    case read_lines(file) do
-      {:ok, lines} ->
-        stats = parse_stats(lines, trim_lines?: true)
+    case Quickstats.read(file, trim_lines?: true) do
+      {:ok, stats} ->
         map_image = map_image(stats.map_name, unknown_fallback?)
 
         [
@@ -103,51 +102,6 @@ defmodule KogasaFrontend.PlayercountWidget do
     end
   end
 
-  defp parse_stats(lines, opts) do
-    parsed_lines =
-      if Keyword.get(opts, :trim_lines?, false) do
-        lines |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
-      else
-        lines
-      end
-
-    Enum.reduce(
-      parsed_lines,
-      %{server_name: "", port: "", player_count: "", map_name: "", players: []},
-      fn line, acc ->
-        cond do
-          String.starts_with?(line, "Hostname:") ->
-            %{acc | server_name: line |> String.replace_prefix("Hostname:", "") |> String.trim()}
-
-          String.starts_with?(line, "Port:") ->
-            %{acc | port: line |> String.replace_prefix("Port:", "") |> String.trim()}
-
-          String.starts_with?(line, "Player Count:") ->
-            %{
-              acc
-              | player_count: line |> String.replace_prefix("Player Count:", "") |> String.trim()
-            }
-
-          String.starts_with?(line, "Map Name:") ->
-            map_name =
-              line
-              |> String.replace_prefix("Map Name:", "")
-              |> String.split(".")
-              |> List.first()
-
-            %{acc | map_name: map_name || ""}
-
-          Regex.match?(~r/^Player \d+: (.+)$/, line) ->
-            [_, player] = Regex.run(~r/^Player \d+: (.+)$/, line)
-            %{acc | players: acc.players ++ [player]}
-
-          true ->
-            acc
-        end
-      end
-    )
-  end
-
   defp main_map_value(map_name) do
     if important_map?(map_name) do
       ~s(<div class="value3"><img src="chaos_emerald_green.png" title="Important Map" style="margin-right:0px;">#{map_name}</div>)
@@ -156,22 +110,9 @@ defmodule KogasaFrontend.PlayercountWidget do
     end
   end
 
-  defp main_server_name(server_name) do
-    server_name
-    |> to_string()
-    |> String.split("|")
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&(&1 == ""))
-    |> Enum.take(2)
-    |> case do
-      [] -> "kogasa.tf | New Jersey"
-      parts -> Enum.join(parts, " | ")
-    end
-  end
-
   defp main_map_stats_html do
     lines =
-      case read_lines("mapstats_output.txt") do
+      case Quickstats.read_lines("mapstats_output.txt") do
         {:ok, lines} ->
           lines |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == "")) |> Enum.take(8)
 
@@ -242,35 +183,6 @@ defmodule KogasaFrontend.PlayercountWidget do
   end
 
   defp flag_img(title, code), do: ~s(<img title="#{title}" src="#{@flag_base}/#{code}.png">)
-
-  defp read_lines(file) do
-    file
-    |> quickstats_paths()
-    |> Enum.find(&File.exists?/1)
-    |> case do
-      nil ->
-        :error
-
-      path ->
-        {:ok,
-         path |> File.read!() |> String.split(~r/\R/, trim: false) |> drop_final_empty_line()}
-    end
-  end
-
-  defp quickstats_paths(file) do
-    [
-      Path.join(LegacyPaths.quickstats_dir(), file),
-      Path.join(root(), file)
-    ]
-    |> Enum.uniq()
-  end
-
-  defp drop_final_empty_line(lines) do
-    case Enum.reverse(lines) do
-      ["" | rest] -> Enum.reverse(rest)
-      _ -> lines
-    end
-  end
 
   defp root do
     LegacyPaths.playercount_widget_dir()

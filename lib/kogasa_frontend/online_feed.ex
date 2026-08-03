@@ -8,6 +8,7 @@ defmodule KogasaFrontend.OnlineFeed do
   alias KogasaFrontend.CountryNames
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.PlayerIdentity
+  alias KogasaFrontend.Quickstats
   alias KogasaFrontend.Repo
   alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.WeaponCategories
@@ -23,12 +24,6 @@ defmodule KogasaFrontend.OnlineFeed do
   @default_avatar_url "/stats/assets/whaley-avatar.jpg"
   @default_game_name "TF2"
   @default_game_url "440"
-
-  @quickstats_by_port %{
-    27015 => "quickstats.txt",
-    27016 => "server27016_quickstats.txt",
-    27018 => "server4_quickstats.txt"
-  }
 
   @weapon_category_columns Enum.flat_map(Map.keys(@weapon_category_metadata), fn slug ->
                              [
@@ -248,7 +243,7 @@ defmodule KogasaFrontend.OnlineFeed do
       %{
         "host_ip" => host_ip,
         "host_port" => host_port,
-        "server_name" => server_name_for_port(host_port),
+        "server_name" => Quickstats.hostname_for_port(host_port),
         "map_name" => map_name,
         "game" => game_name,
         "game_url" => game_url,
@@ -428,51 +423,6 @@ defmodule KogasaFrontend.OnlineFeed do
       true ->
         "https://image.gametracker.com/images/maps/160x120/tf2/#{URI.encode(safe)}.jpg"
     end
-  end
-
-  defp server_name_for_port(port) do
-    port
-    |> quickstats_file_for_port()
-    |> case do
-      nil -> ""
-      file -> hostname_from_quickstats(file)
-    end
-  end
-
-  defp quickstats_file_for_port(port), do: Map.get(@quickstats_by_port, int(port))
-
-  defp hostname_from_quickstats(file) do
-    file
-    |> quickstats_paths()
-    |> Enum.find(&File.exists?/1)
-    |> case do
-      nil -> ""
-      path -> path |> File.stream!() |> Enum.find(&String.starts_with?(&1, "Hostname:"))
-    end
-    |> format_server_name()
-  rescue
-    _ -> ""
-  end
-
-  defp quickstats_paths(file) do
-    [
-      Path.join(LegacyPaths.quickstats_dir(), file),
-      Path.join(LegacyPaths.playercount_widget_dir(), file)
-    ]
-    |> Enum.uniq()
-  end
-
-  defp format_server_name(nil), do: ""
-
-  defp format_server_name(line) do
-    line
-    |> String.replace_prefix("Hostname:", "")
-    |> String.trim()
-    |> String.split("|")
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&(&1 == ""))
-    |> Enum.take(2)
-    |> Enum.join(" | ")
   end
 
   defp parse_flags(nil), do: []
