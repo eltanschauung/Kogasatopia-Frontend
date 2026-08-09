@@ -7,8 +7,16 @@ defmodule KogasaFrontend.Chat.NameStyleTest do
     assert NameStyle.from_preference(%{pattern: "gradient:blue:red", color: ""}) == %{
              kind: :gradient,
              first: "#99CCFF",
-             second: "#FF4040"
+             second: "#FF4040",
+             completion: 50
            }
+  end
+
+  test "uses the configured gradient completion point" do
+    style = NameStyle.from_preference(%{pattern: "gradient:blue:red:75", color: ""})
+
+    assert style.completion == 75
+    assert NameStyle.css_style(style) =~ "#FF4040 75%, #FF4040 100%"
   end
 
   test "uses a valid pattern instead of the solid color" do
@@ -48,7 +56,7 @@ defmodule KogasaFrontend.Chat.NameStyleTest do
   end
 
   test "exposes one CSS contract for pattern and solid styles" do
-    gradient = %{kind: :gradient, first: "#99CCFF", second: "#FF4040"}
+    gradient = %{kind: :gradient, first: "#99CCFF", second: "#FF4040", completion: 50}
     solid = %{kind: :solid, color: "#3EFF3E"}
 
     assert NameStyle.custom?(gradient)

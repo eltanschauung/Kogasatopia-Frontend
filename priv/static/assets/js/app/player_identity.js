@@ -18,7 +18,8 @@
     element.style.removeProperty("--chat-name-gradient");
 
     if (kind === "gradient" && style.first && style.second) {
-      gradient = `linear-gradient(90deg, ${style.first}, ${style.second})`;
+      const completion = Math.max(1, Math.min(90, Number(style.completion) || 50));
+      gradient = `linear-gradient(90deg, ${style.first} 0%, ${style.second} ${completion}%, ${style.second} 100%)`;
     }
 
     if (gradient) {

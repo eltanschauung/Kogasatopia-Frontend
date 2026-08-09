@@ -3,7 +3,8 @@ defmodule KogasaFrontend.Chat.NameStyle do
 
   alias KogasaFrontend.Chat.MoreColors
 
-  @gradient_pattern ~r/\Agradient:([a-z]+):([a-z]+)\z/i
+  @gradient_default_completion 50
+  @gradient_max_completion 90
 
   def from_preference(nil), do: nil
 
@@ -41,8 +42,9 @@ defmodule KogasaFrontend.Chat.NameStyle do
 
   def css_class(_), do: nil
 
-  def css_style(%{kind: :gradient, first: first, second: second}),
-    do: "color: transparent; --chat-name-gradient: linear-gradient(90deg, #{first}, #{second})"
+  def css_style(%{kind: :gradient, first: first, second: second, completion: completion}),
+    do:
+      "color: transparent; --chat-name-gradient: linear-gradient(90deg, #{first} 0%, #{second} #{completion}%, #{second} 100%)"
 
   def css_style(%{kind: :america}),
     do:
@@ -64,12 +66,31 @@ defmodule KogasaFrontend.Chat.NameStyle do
   def css_style(_), do: nil
 
   defp gradient(pattern) do
-    with [_, first_name, second_name] <- Regex.run(@gradient_pattern, pattern),
+    with {:ok, first_name, second_name, completion} <- gradient_parts(pattern),
          first when is_binary(first) <- MoreColors.css(first_name),
          second when is_binary(second) <- MoreColors.css(second_name) do
-      %{kind: :gradient, first: first, second: second}
+      %{kind: :gradient, first: first, second: second, completion: completion}
     else
       _ -> nil
+    end
+  end
+
+  defp gradient_parts(pattern) do
+    case String.split(pattern, ":") do
+      ["gradient", first, second] ->
+        {:ok, first, second, @gradient_default_completion}
+
+      ["gradient", first, second, percentage] ->
+        case Integer.parse(percentage) do
+          {value, ""} when value > 0 and value <= @gradient_max_completion ->
+            {:ok, first, second, value}
+
+          _ ->
+            :error
+        end
+
+      _ ->
+        :error
     end
   end
 
