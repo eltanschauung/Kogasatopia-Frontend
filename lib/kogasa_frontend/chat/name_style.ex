@@ -26,25 +26,31 @@ defmodule KogasaFrontend.Chat.NameStyle do
         %{kind: :rainbow}
 
       _ ->
-        gradient(pattern) || solid(color)
+        triple_gradient(pattern) || gradient(pattern) || solid(color)
     end
   end
 
   def from_preference(_), do: nil
 
-  def custom?(%{kind: kind}) when kind in [:gradient, :america, :map, :trans, :rainbow, :solid],
-    do: true
+  def custom?(%{kind: kind})
+      when kind in [:gradient, :triple_gradient, :america, :map, :trans, :rainbow, :solid],
+      do: true
 
   def custom?(_), do: false
 
-  def css_class(%{kind: kind}) when kind in [:gradient, :america, :map, :trans, :rainbow],
-    do: "chat-name-gradient"
+  def css_class(%{kind: kind})
+      when kind in [:gradient, :triple_gradient, :america, :map, :trans, :rainbow],
+      do: "chat-name-gradient"
 
   def css_class(_), do: nil
 
   def css_style(%{kind: :gradient, first: first, second: second, completion: completion}),
     do:
       "color: transparent; --chat-name-gradient: linear-gradient(90deg, #{first} 0%, #{second} #{completion}%, #{second} 100%)"
+
+  def css_style(%{kind: :triple_gradient, first: first, second: second, third: third}),
+    do:
+      "color: transparent; --chat-name-gradient: linear-gradient(90deg, #{first} 0%, #{second} 50%, #{third} 100%)"
 
   def css_style(%{kind: :america}),
     do:
@@ -70,6 +76,17 @@ defmodule KogasaFrontend.Chat.NameStyle do
          first when is_binary(first) <- MoreColors.css(first_name),
          second when is_binary(second) <- MoreColors.css(second_name) do
       %{kind: :gradient, first: first, second: second, completion: completion}
+    else
+      _ -> nil
+    end
+  end
+
+  defp triple_gradient(pattern) do
+    with ["gradient3", first_name, second_name, third_name] <- String.split(pattern, ":"),
+         first when is_binary(first) <- MoreColors.css(first_name),
+         second when is_binary(second) <- MoreColors.css(second_name),
+         third when is_binary(third) <- MoreColors.css(third_name) do
+      %{kind: :triple_gradient, first: first, second: second, third: third}
     else
       _ -> nil
     end
