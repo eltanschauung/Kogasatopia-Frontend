@@ -465,7 +465,7 @@ a {
   width: calc(100% - 38px);
   max-width: calc(100% - 38px);
   min-width: 0;
-  white-space: nowrap;
+  white-space: normal;
   vertical-align: middle;
 }
 
@@ -474,10 +474,22 @@ a {
   display: inline-block;
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
   vertical-align: middle;
-  white-space: nowrap;
+  white-space: normal;
+}
+
+.logs-container .log-table th[data-log-sort] {
+  cursor: pointer;
+  user-select: none;
+}
+
+.logs-container .log-table th[data-log-sort][aria-sort="ascending"]::after {
+  content: " ▲";
+}
+
+.logs-container .log-table th[data-log-sort][aria-sort="descending"]::after {
+  content: " ▼";
 }
 
 .logs-container .log-player-info.has-accuracy-icon > a,

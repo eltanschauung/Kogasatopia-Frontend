@@ -204,8 +204,6 @@ defmodule KogasaFrontendWeb.StatsFragments do
     player_count = if players != [], do: length(players), else: Map.get(log, :player_count, 0)
     map_name = basename(Map.get(log, :map))
     started_at = Map.get(log, :started_at, 0)
-    duration = Map.get(log, :duration, 0)
-    duration_text = format_playtime(duration)
     started_time_html = format_log_datetime_html(started_at)
     mode = fallback(Map.get(log, :gamemode), "Unknown")
 
@@ -214,7 +212,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
         ~s(<div class="empty-state">No player data recorded for this match.</div>)
       else
         [
-          ~s(<table class="stats-table log-table"><thead><tr><th>Player</th><th>K</th><th>D</th><th>K/D</th><th>Acc.</th><th>Dmg</th><th>D/M</th><th>DT/M</th><th>AS</th><th>HS</th><th>BS</th><th>Heal</th><th>Ubers</th><th>Time</th></tr></thead><tbody>),
+          ~s(<table class="stats-table log-table" data-log-sortable><thead>#{log_table_header_html()}</thead><tbody>),
           Enum.map(players, &current_log_player_row_html(&1, default_avatar)),
           "</tbody></table>"
         ]
@@ -225,7 +223,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
     <div class="log-entry log-current" data-player-count="#{player_count}" data-started-at="#{started_at}">
       <div class="log-summary">
         <span class="gamemode-label">#{e(mode)}</span>
-        <span class="log-title">#{e(map_name)} — #{started_time_html} — #{e(duration_text)}</span>
+        <span class="log-title">#{e(map_name)} | #{started_time_html}</span>
         <span class="log-meta">#{player_count} player#{if player_count == 1, do: "", else: "s"}</span>
       </div>
       <div class="log-body">#{players_table}</div>
@@ -368,14 +366,13 @@ defmodule KogasaFrontendWeb.StatsFragments do
     player_count = Map.get(log, :player_count, 0)
     map_name = basename(Map.get(log, :map))
     started_at = Map.get(log, :started_at, 0)
-    duration = Map.get(log, :duration, 0)
     mode = fallback(Map.get(log, :gamemode), "Unknown")
     players = Map.get(log, :players, [])
 
     body_html =
       if is_list(players) and players != [] do
         [
-          ~s(<div class="table-wrapper"><table class="stats-table log-table"><thead><tr><th>Player</th><th>K</th><th>D</th><th>K/D</th><th>Acc.</th><th>Dmg</th><th>D/M</th><th>DT/M</th><th>AS</th><th>HS</th><th>BS</th><th>Heal</th><th>Ubers</th><th>Time</th></tr></thead><tbody>),
+          ~s(<div class="table-wrapper"><table class="stats-table log-table" data-log-sortable><thead>#{log_table_header_html()}</thead><tbody>),
           Enum.map(players, &current_log_player_row_html(&1, "/stats/assets/whaley-avatar.jpg")),
           "</tbody></table></div>"
         ]
@@ -388,7 +385,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
     <details class="log-entry" data-player-count="#{player_count}" data-started-at="#{started_at}">
       <summary class="log-summary">
         <span class="gamemode-label">#{e(mode)}</span>
-        <span class="log-title">#{e(map_name)} — #{format_log_datetime_html(started_at)} — #{e(format_playtime(duration))}</span>
+        <span class="log-title">#{e(map_name)} | #{format_log_datetime_html(started_at)}</span>
         <span class="log-meta">#{player_count} player#{if player_count == 1, do: "", else: "s"}</span>
       </summary>
       <div class="log-body">
@@ -468,25 +465,50 @@ defmodule KogasaFrontendWeb.StatsFragments do
 
     """
     <tr>
-      <td class="player-cell">
+      <td class="player-cell" data-sort-value="#{e(String.downcase(name))}">
         #{avatar_html}
         <div class="#{player_info_class}">#{link_html}#{accuracy_icon}</div>
       </td>
-      <td>#{number(kills)}</td>
-      <td>#{number(deaths)}</td>
-      <td>#{decimal(kd, 2)}</td>
-      <td class="stat-accuracy-cell" title="#{e(acc_title)}"><span class="stat-accuracy-value">#{if(acc == nil, do: "—", else: decimal(acc, 1) <> "%")}</span></td>
-      <td>#{number(damage)}</td>
-      <td>#{decimal(dpm, 1)}</td>
-      <td>#{decimal(dtpm, 1)}</td>
-      <td>#{number(airshots)}</td>
-      <td>#{number(headshots)}</td>
-      <td>#{number(backstabs)}</td>
-      <td>#{number(healing)}</td>
-      <td>#{number(ubers)}</td>
-      <td>#{e(format_playtime(playtime))}</td>
+      <td data-sort-value="#{kills}">#{number(kills)}</td>
+      <td data-sort-value="#{deaths}">#{number(deaths)}</td>
+      <td data-sort-value="#{kd}">#{decimal(kd, 2)}</td>
+      <td class="stat-accuracy-cell" data-sort-value="#{acc || -1}" title="#{e(acc_title)}"><span class="stat-accuracy-value">#{if(acc == nil, do: "|", else: decimal(acc, 1) <> "%")}</span></td>
+      <td data-sort-value="#{damage}">#{number(damage)}</td>
+      <td data-sort-value="#{dpm}">#{decimal(dpm, 1)}</td>
+      <td data-sort-value="#{dtpm}">#{decimal(dtpm, 1)}</td>
+      <td data-sort-value="#{airshots}">#{number(airshots)}</td>
+      <td data-sort-value="#{headshots}">#{number(headshots)}</td>
+      <td data-sort-value="#{backstabs}">#{number(backstabs)}</td>
+      <td data-sort-value="#{healing}">#{number(healing)}</td>
+      <td data-sort-value="#{ubers}">#{number(ubers)}</td>
+      <td data-sort-value="#{playtime}">#{e(format_playtime(playtime))}</td>
     </tr>
     """
+  end
+
+  defp log_table_header_html do
+    headers = [
+      {"Player", "text"},
+      {"K", "number"},
+      {"D", "number"},
+      {"K/D", "number"},
+      {"Acc.", "number"},
+      {"Dmg", "number"},
+      {"D/M", "number"},
+      {"DT/M", "number"},
+      {"AS", "number"},
+      {"HS", "number"},
+      {"BS", "number"},
+      {"Heal", "number"},
+      {"Ubers", "number"},
+      {"Time", "number"}
+    ]
+
+    headers
+    |> Enum.map_join(fn {label, type} ->
+      ~s(<th data-log-sort data-sort-type="#{type}" aria-sort="none">#{label}</th>)
+    end)
+    |> then(&"<tr>#{&1}</tr>")
   end
 
   defp pagination_html(page, total_pages, prev_url, next_url, classes) do
@@ -523,7 +545,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
   end
 
   defp format_log_datetime(ts) when is_integer(ts) and ts > 0 do
-    case TimeDisplay.format_server_datetime(ts, "%Y-%m-%d %H:%M %Z") do
+    case TimeDisplay.format_server_match_datetime(ts) do
       "n/a" -> "Unknown"
       formatted -> formatted
     end

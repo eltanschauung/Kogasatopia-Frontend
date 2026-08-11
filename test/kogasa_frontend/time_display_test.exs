@@ -17,4 +17,9 @@ defmodule KogasaFrontend.TimeDisplayTest do
     assert TimeDisplay.format_server_datetime(nil) == "n/a"
     assert TimeDisplay.server_hour(0) == nil
   end
+
+  test "formats match log timestamps without a timezone suffix or leading hour zero" do
+    assert TimeDisplay.format_server_match_datetime(1_786_428_720) ==
+             "Aug 11, 2026 2:12 AM"
+  end
 end

@@ -35,4 +35,34 @@ defmodule KogasaFrontendWeb.StatsFragmentsTest do
     assert html =~ "admin-name"
     assert html =~ ~s(title="Admin")
   end
+
+  test "match logs expose typed sort values and the compact timestamp" do
+    html =
+      StatsFragments.current_log_fragment_html(%{
+        map: "cp_badwater",
+        started_at: 1_786_428_720,
+        duration: 720,
+        gamemode: "payload",
+        players: [
+          %{
+            steamid: "76561198000000000",
+            personaname: "A Long Player Name",
+            kills: 12,
+            deaths: 3,
+            shots: 10,
+            hits: 5,
+            playtime: 600
+          }
+        ]
+      })
+
+    assert html =~ ~s(data-log-sortable)
+    assert html =~ ~s(data-sort-type="text")
+    assert html =~ ~s(data-sort-value="a long player name")
+    assert html =~ ~s(data-sort-value="12")
+    assert html =~ "cp_badwater |"
+    assert html =~ "Aug 11, 2026 2:12 AM"
+    refute html =~ "—"
+    refute html =~ "12m"
+  end
 end

@@ -25,6 +25,24 @@ defmodule KogasaFrontend.TimeDisplay do
     format_server_datetime(unix_seconds, format)
   end
 
+  def format_server_match_datetime(unix_seconds)
+      when is_integer(unix_seconds) and unix_seconds > 0 do
+    case unix_to_server_datetime(unix_seconds) do
+      {:ok, datetime, _zone_abbr} ->
+        month = Enum.at(~w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec), datetime.month - 1)
+        hour = rem(datetime.hour + 11, 12) + 1
+        period = if datetime.hour < 12, do: "AM", else: "PM"
+        "#{month} #{datetime.day}, #{datetime.year} #{hour}:#{pad(datetime.minute, 2)} #{period}"
+
+      _ ->
+        "n/a"
+    end
+  rescue
+    _ -> "n/a"
+  end
+
+  def format_server_match_datetime(_), do: "n/a"
+
   def server_hour(unix_seconds) when is_integer(unix_seconds) and unix_seconds > 0 do
     case unix_to_server_datetime(unix_seconds) do
       {:ok, datetime, _zone_abbr} -> datetime.hour

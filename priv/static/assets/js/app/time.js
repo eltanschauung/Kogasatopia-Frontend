@@ -20,11 +20,10 @@
         case "log-datetime":
           return {
             year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZoneName: "short"
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
           };
         case "short-datetime":
         default:
@@ -44,6 +43,17 @@
       return getFormatter(options, timeZone).format(new Date(ts * 1000));
     }
 
+    function formatLogDateTime(unixSeconds, timeZone = userTimeZone) {
+      const ts = Number(unixSeconds || 0);
+      if (!Number.isFinite(ts) || ts <= 0) return "";
+
+      const parts = {};
+      getFormatter(modeOptions("log-datetime"), timeZone)
+        .formatToParts(new Date(ts * 1000))
+        .forEach(({ type, value }) => { parts[type] = value; });
+      return `${parts.month} ${parts.day}, ${parts.year} ${parts.hour}:${parts.minute} ${parts.dayPeriod}`;
+    }
+
     function timeZoneLabel() {
       if (userTimeZone === serverTimeZone) return "ET";
       return userTimeZone;
@@ -60,10 +70,14 @@
         const ts = Number(node.dataset.localTime || 0);
         if (!Number.isFinite(ts) || ts <= 0) return;
         const mode = node.dataset.timeFormat || "short-datetime";
-        const text = formatUnix(ts, modeOptions(mode));
+        const text = mode === "log-datetime"
+          ? formatLogDateTime(ts)
+          : formatUnix(ts, modeOptions(mode));
         if (text && node.textContent !== text) node.textContent = text;
 
-        const serverText = formatUnix(ts, modeOptions(mode), serverTimeZone);
+        const serverText = mode === "log-datetime"
+          ? formatLogDateTime(ts, serverTimeZone)
+          : formatUnix(ts, modeOptions(mode), serverTimeZone);
         if (serverText) node.title = `Server time: ${serverText}`;
       });
     }
