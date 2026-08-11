@@ -49,7 +49,16 @@
             </div>
           </div>
 
-          <.section_nav active={:maps} chat_label_id="nav-chat-label" />
+          <.section_nav active={:maps} chat_label_id="nav-chat-label">
+            <%= if @maps_cache_hash do %>
+              <span
+                class="tab-hash"
+                title={"Analytics cache generated #{@maps_cache_generated_at}"}
+              >
+                #{@maps_cache_hash}
+              </span>
+            <% end %>
+          </.section_nav>
 
           <div class="popularity-card">
             <h2 class="popularity-title">Server popularity (last 90 days)</h2>

@@ -10,17 +10,19 @@ defmodule KogasaFrontend.Application do
     children =
       [
         KogasaFrontendWeb.Telemetry,
-        repo_child(),
-        KogasaFrontend.Chat.RateLimiter,
-        KogasaFrontend.AccessLog,
-        {DNSCluster, query: Application.get_env(:kogasa_frontend, :dns_cluster_query) || :ignore},
-        {Phoenix.PubSub, name: KogasaFrontend.PubSub},
-        # Start a worker by calling: KogasaFrontend.Worker.start_link(arg)
-        # {KogasaFrontend.Worker, arg},
-        # Start to serve requests, typically the last entry
-        KogasaFrontendWeb.Endpoint
-      ]
-      |> Enum.reject(&is_nil/1)
+        repo_child()
+      ] ++
+        mapsdb_cache_children() ++
+        [
+          KogasaFrontend.Chat.RateLimiter,
+          KogasaFrontend.AccessLog,
+          {DNSCluster,
+           query: Application.get_env(:kogasa_frontend, :dns_cluster_query) || :ignore},
+          {Phoenix.PubSub, name: KogasaFrontend.PubSub},
+          KogasaFrontendWeb.Endpoint
+        ]
+
+    children = Enum.reject(children, &is_nil/1)
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -39,6 +41,17 @@ defmodule KogasaFrontend.Application do
   defp repo_child do
     unless Application.get_env(:kogasa_frontend, :skip_repo, false) do
       KogasaFrontend.Repo
+    end
+  end
+
+  defp mapsdb_cache_children do
+    if Application.get_env(:kogasa_frontend, :mapsdb_cache_enabled, true) do
+      [
+        {Task.Supervisor, name: KogasaFrontend.MapsDb.Cache.TaskSupervisor},
+        KogasaFrontend.MapsDb.Cache
+      ]
+    else
+      []
     end
   end
 end

@@ -5,6 +5,7 @@ defmodule KogasaFrontend.MapsDb do
   import KogasaFrontend.Value, only: [float: 1, int: 1]
 
   alias KogasaFrontend.DisplayFormat
+  alias KogasaFrontend.MapsDb.Cache
   alias KogasaFrontend.MapsDb.ConfigBrowser
   alias KogasaFrontend.MapsDb.MapMeta
   alias KogasaFrontend.QueryResult
@@ -47,17 +48,26 @@ defmodule KogasaFrontend.MapsDb do
   def page_data do
     cfg = config()
     maps_dir_missing = not File.dir?(cfg.maps_dir)
+    cache_entry = cached_page_payload()
+
+    Map.merge(cache_entry.payload, %{
+      maps_dir: cfg.maps_dir,
+      maps_dir_missing: maps_dir_missing,
+      analytics_cache_hash: cache_entry.hash,
+      analytics_cached_at: cache_entry.generated_at,
+      map_previews: map_previews(cfg.preview_dir),
+      map_sections: if(maps_dir_missing, do: [], else: build_page_sections(cfg))
+    })
+  end
+
+  def build_cache_payload do
     chart_bundle = popularity_chart_bundle()
 
     %{
-      maps_dir: cfg.maps_dir,
-      maps_dir_missing: maps_dir_missing,
       popular_maps: fetch_map_popularity(25),
       popularity_chart: chart_bundle.chart,
       popularity_active_hours: chart_bundle.active_hours,
-      map_analytics: map_detail_analytics(),
-      map_previews: map_previews(cfg.preview_dir),
-      map_sections: if(maps_dir_missing, do: [], else: build_page_sections(cfg))
+      map_analytics: map_detail_analytics()
     }
   end
 
@@ -344,10 +354,9 @@ defmodule KogasaFrontend.MapsDb do
         query_rows("""
         SELECT CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(message, 'class=', -1), '|', 1) AS UNSIGNED) AS class_id,
                COUNT(*) AS samples
-        FROM #{@plugin_statistics_table}
+        FROM #{@plugin_statistics_table} FORCE INDEX (idx_source_event_time)
         WHERE source_plugin = 'classlimits'
           AND event_name = 'class_snapshot'
-          AND message LIKE '%|class=%'
         GROUP BY class_id
         """)
         |> Map.new(fn row -> {int(row.class_id), int(row.samples)} end)
@@ -977,6 +986,25 @@ defmodule KogasaFrontend.MapsDb do
     end
   rescue
     _ -> []
+  end
+
+  defp cached_page_payload do
+    if Cache.enabled?() do
+      case Cache.get() do
+        {:ok, entry} -> entry
+        {:error, _reason} -> uncached_page_payload()
+      end
+    else
+      uncached_page_payload()
+    end
+  end
+
+  defp uncached_page_payload do
+    %{
+      payload: build_cache_payload(),
+      hash: nil,
+      generated_at: System.system_time(:second)
+    }
   end
 
   defp table_exists?(table) do

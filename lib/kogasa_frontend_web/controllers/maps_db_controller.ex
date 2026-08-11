@@ -2,6 +2,7 @@ defmodule KogasaFrontendWeb.MapsDbController do
   use KogasaFrontendWeb, :controller
 
   alias KogasaFrontend.MapsDb
+  alias KogasaFrontend.TimeDisplay
 
   def index(conn, _params) do
     data = MapsDb.page_data()
@@ -16,7 +17,10 @@ defmodule KogasaFrontendWeb.MapsDbController do
         }),
       map_sections: data.map_sections,
       popular_maps: data.popular_maps,
-      map_previews: data.map_previews
+      map_previews: data.map_previews,
+      maps_cache_hash: data.analytics_cache_hash,
+      maps_cache_generated_at:
+        TimeDisplay.format_server_datetime(data.analytics_cached_at, "%m/%d/%Y %H:%M:%S %Z")
     )
   end
 
