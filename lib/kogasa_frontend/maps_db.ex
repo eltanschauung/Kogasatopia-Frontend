@@ -18,7 +18,7 @@ defmodule KogasaFrontend.MapsDb do
   @map_session_statistics_table "map_statistics_sessions"
   @vote_statistics_table "nativevotes_statistics_events"
   @cwx_weapon_popularity_table "cwx_weapon_popularity"
-  @classlimits_statistics_table "classlimits_statistics_events"
+  @plugin_statistics_table "plugin_statistics_events"
   @class_popularity_order [1, 3, 7, 4, 6, 9, 5, 2, 8]
 
   def config do
@@ -339,13 +339,14 @@ defmodule KogasaFrontend.MapsDb do
   end
 
   defp fetch_class_popularity do
-    if table_exists?(@classlimits_statistics_table) do
+    if table_exists?(@plugin_statistics_table) do
       counts =
         query_rows("""
         SELECT CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(message, 'class=', -1), '|', 1) AS UNSIGNED) AS class_id,
                COUNT(*) AS samples
-        FROM #{@classlimits_statistics_table}
-        WHERE event_name = 'class_snapshot'
+        FROM #{@plugin_statistics_table}
+        WHERE source_plugin = 'classlimits'
+          AND event_name = 'class_snapshot'
           AND message LIKE '%|class=%'
         GROUP BY class_id
         """)
