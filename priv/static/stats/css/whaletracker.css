@@ -876,37 +876,6 @@ body {
     flex-wrap: wrap;
 }
 
-.logs-refresh-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-.logs-refresh-gif {
-    width: 72px;
-    height: auto;
-    object-fit: contain;
-    pointer-events: none;
-}
-
-.logs-refresh {
-    padding: 0.55rem 1.3rem;
-    border: 1px solid var(--border-color);
-    background: rgba(27, 31, 43, 0.8);
-    color: var(--text-primary);
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
-}
-
-.logs-refresh:hover {
-    background: var(--accent);
-    color: #04142a;
-    transform: translateY(-1px);
-}
-
 .logs-container {
     display: flex;
     flex-direction: column;

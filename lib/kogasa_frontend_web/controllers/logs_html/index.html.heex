@@ -26,9 +26,6 @@
           </a>
           <a href="/logs/current" class="logs-mode-pill wt-pill-link">Current Match</a>
         </div>
-        <button type="button" class="logs-refresh wt-action-btn" id="logs-refresh">
-          Refresh Logs
-        </button>
       </div>
 
       <div class="logs-content-shell wt-content-shell">
@@ -55,7 +52,6 @@
       const logsFragmentEndpoint = "/stats/logs_fragment.php";
       const logsContainer = document.getElementById("logs-container");
       const logsEmpty = document.getElementById("logs-empty");
-      const logsRefreshButton = document.getElementById("logs-refresh");
       const paginationContainer = document.getElementById("logs-pagination");
       const perPage = Number(logsContainer?.dataset.perPage || <%= @per_page %>);
       let currentPage = Number(logsContainer?.dataset.currentPage || <%= @page %>);
@@ -94,7 +90,6 @@
       async function fetchLogs(targetPage = currentPage) {
         if (!logsContainer || loading) return;
         loading = true;
-        if (logsRefreshButton) logsRefreshButton.disabled = true;
         setEmptyState(true, "Loading logs...");
         buildPagination();
 
@@ -121,7 +116,6 @@
           setEmptyState(true, "Failed to load logs.");
         } finally {
           loading = false;
-          if (logsRefreshButton) logsRefreshButton.disabled = false;
           buildPagination();
         }
       }
@@ -129,7 +123,6 @@
       function init() {
         updateEmptyStateFromContent();
         buildPagination();
-        if (logsRefreshButton) logsRefreshButton.addEventListener("click", () => fetchLogs(currentPage));
         window.WTNavStatus?.start?.({ online: "nav-online-count", chat: "nav-chat-label" });
       }
 
