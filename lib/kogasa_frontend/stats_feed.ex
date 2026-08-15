@@ -267,11 +267,14 @@ defmodule KogasaFrontend.StatsFeed do
           SELECT 1
           FROM #{@log_players_table} lp_search
           WHERE lp_search.log_id = l.log_id
-            AND LOWER(COALESCE(lp_search.personaname, '')) LIKE ?
+            AND (
+              LOWER(COALESCE(lp_search.personaname, '')) LIKE ?
+              OR COALESCE(lp_search.steamid, '') = ?
+            )
         )
       )
       """,
-      [like, like]
+      [like, like, q]
     }
   end
 
