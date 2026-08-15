@@ -10,7 +10,7 @@
       <div>
         <h1>Match Logs</h1>
       </div>
-      <div class="wt-topbar-badge">
+      <div class="wt-topbar-badge" id="logs-count-badge">
         {@total_logs} logs · Page {@page}/{@total_pages}
       </div>
     </div>
@@ -25,6 +25,17 @@
             Recent Logs
           </a>
           <a href="/logs/current" class="logs-mode-pill wt-pill-link">Current Match</a>
+          <form class="logs-search search-bar" id="logs-search-form" role="search">
+            <label class="sr-only" for="logs-search">Search match logs</label>
+            <input
+              type="text"
+              id="logs-search"
+              name="q"
+              value={@q}
+              placeholder="Search for logs..."
+              autocomplete="off"
+            />
+          </form>
         </div>
       </div>
 
@@ -53,10 +64,16 @@
       const logsContainer = document.getElementById("logs-container");
       const logsEmpty = document.getElementById("logs-empty");
       const paginationContainer = document.getElementById("logs-pagination");
+      const countBadge = document.getElementById("logs-count-badge");
+      const searchForm = document.getElementById("logs-search-form");
+      const searchInput = document.getElementById("logs-search");
       const perPage = Number(logsContainer?.dataset.perPage || <%= @per_page %>);
       let currentPage = Number(logsContainer?.dataset.currentPage || <%= @page %>);
       let totalPages = Number(logsContainer?.dataset.totalPages || <%= @total_pages %>);
+      let totalLogs = Number(logsContainer?.dataset.totalLogs || <%= @total_logs %>);
       let loading = false;
+      let searchTimer = null;
+      let activeRequest = null;
 
       function setEmptyState(visible, message) {
         if (!logsEmpty) return;
@@ -87,34 +104,56 @@
         }
       }
 
+      function updateCountBadge() {
+        if (!countBadge) return;
+        countBadge.textContent = `${totalLogs} logs \u00b7 Page ${currentPage}/${totalPages}`;
+      }
+
       async function fetchLogs(targetPage = currentPage) {
-        if (!logsContainer || loading) return;
+        if (!logsContainer) return;
+        activeRequest?.abort();
+        const request = new AbortController();
+        activeRequest = request;
         loading = true;
         setEmptyState(true, "Loading logs...");
         buildPagination();
 
         try {
+          const query = searchInput?.value.trim() || "";
           const params = new URLSearchParams({
             page: String(targetPage),
             per_page: String(perPage),
             include_players: "1",
             t: String(Date.now())
           });
-          const response = await fetch(`${logsFragmentEndpoint}?${params.toString()}`, { cache: "no-store" });
+          if (query) params.set("q", query);
+          const response = await fetch(`${logsFragmentEndpoint}?${params.toString()}`, {
+            cache: "no-store",
+            signal: request.signal
+          });
           if (!response.ok) throw new Error("Failed request");
           const html = await response.text();
+          if (activeRequest !== request) return;
           logsContainer.innerHTML = html || "";
           currentPage = Number(response.headers.get("x-logs-page") || targetPage) || targetPage;
           totalPages = Number(response.headers.get("x-logs-total-pages") || 1) || 1;
+          totalLogs = Number(response.headers.get("x-logs-total") || 0) || 0;
           logsContainer.dataset.currentPage = String(currentPage);
           logsContainer.dataset.totalPages = String(totalPages);
+          logsContainer.dataset.totalLogs = String(totalLogs);
           updateEmptyStateFromContent();
           buildPagination();
-          history.replaceState(null, "", `/logs?page=${currentPage}`);
+          updateCountBadge();
+          const locationParams = new URLSearchParams({ page: String(currentPage) });
+          if (query) locationParams.set("q", query);
+          history.replaceState(null, "", `/logs?${locationParams.toString()}`);
         } catch (err) {
+          if (err.name === "AbortError") return;
           console.error("[WhaleTracker] Failed to fetch logs:", err);
           setEmptyState(true, "Failed to load logs.");
         } finally {
+          if (activeRequest !== request) return;
+          activeRequest = null;
           loading = false;
           buildPagination();
         }
@@ -123,6 +162,16 @@
       function init() {
         updateEmptyStateFromContent();
         buildPagination();
+        updateCountBadge();
+        searchForm?.addEventListener("submit", (event) => {
+          event.preventDefault();
+          clearTimeout(searchTimer);
+          fetchLogs(1);
+        });
+        searchInput?.addEventListener("input", () => {
+          clearTimeout(searchTimer);
+          searchTimer = setTimeout(() => fetchLogs(1), 300);
+        });
         window.WTNavStatus?.start?.({ online: "nav-online-count", chat: "nav-chat-label" });
       }
 

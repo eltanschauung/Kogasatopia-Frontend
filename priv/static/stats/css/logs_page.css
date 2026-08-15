@@ -11,6 +11,16 @@
     }
     .logs-container .log-title { color: #eff3fb; }
     .logs-container .log-meta { color: #b9c4d7; }
+    .logs-search {
+      flex: 1 1 280px;
+      max-width: 420px;
+      margin: 0 0 0 auto;
+    }
+    .logs-search input[type="text"] {
+      width: 100%;
+      min-width: 0;
+      padding: .5rem .7rem;
+    }
     @media (max-width: 700px) {
       .logs-page { padding-left: 0; padding-right: 0; }
       .logs-shell.wt-shell { padding: .5rem; }
@@ -34,4 +44,9 @@
         overflow-wrap: normal;
       }
       .logs-pagination { gap: .3rem; margin-top: .55rem; }
+      .logs-search {
+        flex-basis: 100%;
+        max-width: none;
+        margin-left: 0;
+      }
     }

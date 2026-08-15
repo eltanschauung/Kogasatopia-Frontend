@@ -60,6 +60,7 @@ defmodule KogasaFrontendWeb.StatsApiController do
   def logs_fragment(conn, params) do
     payload =
       StatsFeed.logs(%{
+        q: Map.get(params, "q", ""),
         page: Map.get(params, "page", "1"),
         per_page: Map.get(params, "perPage", Map.get(params, "per_page", "25")),
         include_players: Map.get(params, "include_players", "0"),
@@ -73,6 +74,7 @@ defmodule KogasaFrontendWeb.StatsApiController do
     |> put_resp_header("cache-control", "public, max-age=10")
     |> put_resp_header("x-logs-page", to_string(payload[:page] || 1))
     |> put_resp_header("x-logs-total-pages", to_string(payload[:total_pages] || 1))
+    |> put_resp_header("x-logs-total", to_string(payload[:total] || 0))
     |> send_resp(200, html)
   end
 

@@ -176,6 +176,13 @@ defmodule KogasaFrontend.StatsFeed do
   end
 
   def logs(opts \\ %{}) do
+    q =
+      opts
+      |> Map.get(:q, Map.get(opts, "q", ""))
+      |> str()
+      |> String.trim()
+      |> String.slice(0, 100)
+
     page = positive_int(Map.get(opts, :page, Map.get(opts, "page", 1)), 1)
 
     per_page =
@@ -188,20 +195,22 @@ defmodule KogasaFrontend.StatsFeed do
       Map.get(opts, :identity_mode, Map.get(opts, "identity_mode", :filters))
 
     offset = (page - 1) * per_page
+    {where_sql, search_params} = logs_search_filter(q)
 
-    total_sql = "SELECT COUNT(*) AS c FROM #{@logs_table} WHERE player_count > 0"
-    total = scalar_query(total_sql, [])
+    total_sql = "SELECT COUNT(*) AS c FROM #{@logs_table} l WHERE #{where_sql}"
+    total = scalar_query(total_sql, search_params)
 
     sql = """
-    SELECT log_id, map, gamemode, started_at, ended_at, duration, player_count, created_at, updated_at
-    FROM #{@logs_table}
-    WHERE player_count > 0
-    ORDER BY started_at DESC
+    SELECT l.log_id, l.map, l.gamemode, l.started_at, l.ended_at, l.duration,
+           l.player_count, l.created_at, l.updated_at
+    FROM #{@logs_table} l
+    WHERE #{where_sql}
+    ORDER BY l.started_at DESC
     LIMIT ? OFFSET ?
     """
 
     rows =
-      case SQL.query(Repo, sql, [per_page, offset]) do
+      case SQL.query(Repo, sql, search_params ++ [per_page, offset]) do
         {:ok, %{rows: rs, columns: cols}} ->
           Enum.map(rs, fn row ->
             m = row_map(row, cols)
@@ -232,6 +241,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     %{
       ok: true,
+      q: q,
       page: page,
       per_page: per_page,
       total: total,
@@ -239,7 +249,29 @@ defmodule KogasaFrontend.StatsFeed do
       rows: rows
     }
   rescue
-    _ -> %{ok: false, rows: [], total: 0, page: 1, total_pages: 1, per_page: 25}
+    _ -> %{ok: false, q: "", rows: [], total: 0, page: 1, total_pages: 1, per_page: 25}
+  end
+
+  defp logs_search_filter(""), do: {"l.player_count > 0", []}
+
+  defp logs_search_filter(q) do
+    like = "%#{String.downcase(q)}%"
+
+    {
+      """
+      l.player_count > 0
+      AND (
+        LOWER(COALESCE(l.map, '')) LIKE ?
+        OR EXISTS (
+          SELECT 1
+          FROM #{@log_players_table} lp_search
+          WHERE lp_search.log_id = l.log_id
+            AND LOWER(COALESCE(lp_search.personaname, '')) LIKE ?
+        )
+      )
+      """,
+      [like, like]
+    }
   end
 
   def current_log(opts \\ %{}) do

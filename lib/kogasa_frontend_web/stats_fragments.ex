@@ -169,13 +169,18 @@ defmodule KogasaFrontendWeb.StatsFragments do
 
   def logs_fragment_html(payload) do
     rows = Map.get(payload, :rows, [])
+    q = Map.get(payload, :q, "")
     page = Map.get(payload, :page, 1)
     total_pages = Map.get(payload, :total_pages, 1)
     total = Map.get(payload, :total, 0)
 
     body =
       if rows == [] do
-        ~s(<div class="empty-state">Logs loading or unavailable...</div>)
+        if String.trim(to_string(q)) == "" do
+          ~s(<div class="empty-state">No logs available.</div>)
+        else
+          ~s(<div class="empty-state">No logs match your search.</div>)
+        end
       else
         Enum.map_join(rows, "", &single_log_summary_html/1)
       end

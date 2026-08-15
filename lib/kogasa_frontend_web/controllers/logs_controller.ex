@@ -24,6 +24,7 @@ defmodule KogasaFrontendWeb.LogsController do
 
     logs =
       StatsFeed.logs(%{
+        q: Map.get(params, "q", ""),
         page: page,
         per_page: @per_page,
         include_players: true
@@ -32,6 +33,7 @@ defmodule KogasaFrontendWeb.LogsController do
     render(conn, :index,
       page_title: "Matches",
       logs_html: StatsFragments.logs_fragment_html(logs),
+      q: logs[:q] || "",
       page: logs[:page] || page,
       total_pages: logs[:total_pages] || 1,
       total_logs: logs[:total] || 0,

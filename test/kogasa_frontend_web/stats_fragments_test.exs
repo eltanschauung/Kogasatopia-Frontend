@@ -65,4 +65,10 @@ defmodule KogasaFrontendWeb.StatsFragmentsTest do
     refute html =~ "—"
     refute html =~ "12m"
   end
+
+  test "empty filtered match logs explain that the search had no matches" do
+    html = StatsFragments.logs_fragment_html(%{rows: [], q: "missing player"})
+
+    assert html =~ "No logs match your search."
+  end
 end
