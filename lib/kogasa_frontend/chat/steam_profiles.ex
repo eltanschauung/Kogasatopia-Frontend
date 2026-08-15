@@ -8,53 +8,32 @@ defmodule KogasaFrontend.Chat.SteamProfiles do
   @php_cache_ttl_seconds 24 * 3600
 
   def fetch_many(steam_ids) when is_list(steam_ids) do
-    ids =
-      steam_ids
-      |> Enum.filter(&is_binary/1)
-      |> Enum.map(&String.trim/1)
-      |> Enum.reject(&(&1 == ""))
-      |> Enum.uniq()
-
-    cond do
-      ids == [] -> %{}
-      true -> cached_and_fetch(ids)
-    end
+    steam_ids
+    |> normalize_ids()
+    |> cached_and_fetch(true)
   end
 
   def fetch_many(_), do: %{}
 
-  def search_cached_ids(term, limit \\ 200)
-
-  def search_cached_ids(term, limit) when is_binary(term) and is_integer(limit) do
-    query =
-      term
-      |> String.trim()
-      |> String.downcase()
-
-    cond do
-      query == "" ->
-        []
-
-      String.length(query) < 2 ->
-        []
-
-      limit <= 0 ->
-        []
-
-      true ->
-        ensure_cache()
-        now = System.system_time(:second)
-        ets_matches = search_ets_cached_ids(query, now, limit)
-        seen = MapSet.new(ets_matches)
-        remaining = max(limit - length(ets_matches), 0)
-
-        ets_matches ++ search_disk_cached_ids(query, seen, remaining)
-    end
+  def fetch_cached_many(steam_ids) when is_list(steam_ids) do
+    steam_ids
+    |> normalize_ids()
+    |> cached_and_fetch(false)
   end
 
-  def search_cached_ids(_, _), do: []
+  def fetch_cached_many(_), do: %{}
 
-  defp cached_and_fetch(ids) do
+  defp normalize_ids(steam_ids) do
+    steam_ids
+    |> Enum.filter(&is_binary/1)
+    |> Enum.map(&String.trim/1)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.uniq()
+  end
+
+  defp cached_and_fetch([], _refresh_missing?), do: %{}
+
+  defp cached_and_fetch(ids, refresh_missing?) do
     ensure_cache()
     now = System.system_time(:second)
 
@@ -87,15 +66,19 @@ defmodule KogasaFrontend.Chat.SteamProfiles do
       end)
 
     fetched =
-      case steam_api_key() do
-        "" ->
-          %{}
+      if refresh_missing? do
+        case steam_api_key() do
+          "" ->
+            %{}
 
-        _ ->
-          missing
-          |> Enum.reverse()
-          |> Enum.chunk_every(100)
-          |> Enum.reduce(%{}, fn chunk, acc -> Map.merge(acc, fetch_chunk(chunk)) end)
+          _ ->
+            missing
+            |> Enum.reverse()
+            |> Enum.chunk_every(100)
+            |> Enum.reduce(%{}, fn chunk, acc -> Map.merge(acc, fetch_chunk(chunk)) end)
+        end
+      else
+        %{}
       end
 
     Enum.each(fetched, fn {sid, profile} ->
@@ -247,92 +230,5 @@ defmodule KogasaFrontend.Chat.SteamProfiles do
     end
   rescue
     _ -> :ok
-  end
-
-  defp search_ets_cached_ids(query, now, limit) do
-    @cache_table
-    |> :ets.tab2list()
-    |> Enum.reduce_while([], fn
-      {steamid, profile, expires_at}, acc
-      when is_binary(steamid) and is_map(profile) and expires_at > now ->
-        name =
-          profile
-          |> Map.get("personaname", "")
-          |> to_string_safe()
-          |> String.downcase()
-
-        cond do
-          name == "" or not String.contains?(name, query) ->
-            {:cont, acc}
-
-          length(acc) >= limit ->
-            {:halt, acc}
-
-          true ->
-            {:cont, [steamid | acc]}
-        end
-
-      _, acc ->
-        {:cont, acc}
-    end)
-    |> Enum.reverse()
-  end
-
-  defp search_disk_cached_ids(_query, _seen, limit) when limit <= 0, do: []
-
-  defp search_disk_cached_ids(query, seen, limit) do
-    case File.ls(disk_cache_dir()) do
-      {:ok, files} ->
-        files
-        |> Enum.reduce_while([], fn file, acc ->
-          cond do
-            length(acc) >= limit ->
-              {:halt, acc}
-
-            not String.ends_with?(file, ".json") ->
-              {:cont, acc}
-
-            true ->
-              steamid = String.trim_trailing(file, ".json")
-
-              cond do
-                MapSet.member?(seen, steamid) ->
-                  {:cont, acc}
-
-                true ->
-                  path = Path.join(disk_cache_dir(), file)
-
-                  case File.read(path) do
-                    {:ok, body} ->
-                      case Jason.decode(body) do
-                        {:ok, %{} = profile} ->
-                          name =
-                            profile
-                            |> normalize_disk_profile(steamid)
-                            |> Map.get("personaname", "")
-                            |> to_string_safe()
-                            |> String.downcase()
-
-                          if name != "" and String.contains?(name, query) do
-                            {:cont, [steamid | acc]}
-                          else
-                            {:cont, acc}
-                          end
-
-                        _ ->
-                          {:cont, acc}
-                      end
-
-                    _ ->
-                      {:cont, acc}
-                  end
-              end
-          end
-        end)
-        |> Enum.reverse()
-
-      _ ->
-        []
-    end
   end
 end

@@ -136,7 +136,8 @@ defmodule KogasaFrontend.StatsFeed do
           fetch_cumulative_search(q, per_page, offset, identity_mode)
         end
 
-      rows = enrich_cumulative_rows(rows, identity_mode)
+      profile_source = if q == "", do: :refresh, else: :cache
+      rows = enrich_cumulative_rows(rows, identity_mode, profile_source)
       total_pages = max(1, ceil_div(total, per_page))
 
       focused_player =
@@ -448,38 +449,13 @@ defmodule KogasaFrontend.StatsFeed do
     category_select_clause = weapon_category_select_clause("w.")
     like = "%" <> String.downcase(q) <> "%"
     steam_like = "%" <> q <> "%"
-    cached_profile_ids = SteamProfiles.search_cached_ids(q)
-
-    {count_where_sql, count_params} =
-      cumulative_search_where_clause(
-        "w.",
-        like,
-        steam_like,
-        q,
-        cached_profile_ids,
-        identity_mode
-      )
-
-    count_sql = """
-    SELECT COUNT(*)
-    FROM #{ranked_stats_search_from(identity_mode)}
-    WHERE #{count_where_sql}
-    """
-
-    total = scalar_query(count_sql, count_params)
 
     {where_sql, params} =
-      cumulative_search_where_clause(
-        "w.",
-        like,
-        steam_like,
-        q,
-        cached_profile_ids,
-        identity_mode
-      )
+      cumulative_search_where_clause("w.", like, steam_like, q, identity_mode)
 
     sql = """
     SELECT w.steamid,
+           COUNT(*) OVER() AS search_total,
            #{search_personaname_expr(identity_mode)} AS personaname,
            COALESCE(w.country, '') AS country,
            COALESCE(w.show_country, 0) AS show_country,
@@ -502,11 +478,28 @@ defmodule KogasaFrontend.StatsFeed do
     LIMIT ? OFFSET ?
     """
 
-    rows =
+    result_rows =
       case SQL.query(Repo, sql, params ++ [limit, offset]) do
         {:ok, %{rows: rs, columns: cols}} -> Enum.map(rs, &row_map(&1, cols))
         _ -> []
       end
+
+    total =
+      case result_rows do
+        [%{"search_total" => search_total} | _] ->
+          int(search_total)
+
+        [] when offset > 0 ->
+          scalar_query(
+            "SELECT COUNT(*) FROM #{ranked_stats_search_from(identity_mode)} WHERE #{where_sql}",
+            params
+          )
+
+        _ ->
+          0
+      end
+
+    rows = Enum.map(result_rows, &Map.delete(&1, "search_total"))
 
     {rows, total}
   end
@@ -516,28 +509,18 @@ defmodule KogasaFrontend.StatsFeed do
          like,
          steam_like,
          q,
-         cached_profile_ids,
          identity_mode
        ) do
-    base =
+    where_sql =
       "LOWER(#{search_personaname_expr(identity_mode, alias_prefix)}) " <>
         "COLLATE utf8mb4_general_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_general_ci " <>
         "OR #{alias_prefix}steamid LIKE ? " <>
         "OR #{alias_prefix}steamid = ?"
 
-    params = [like, steam_like, q]
-
-    case cached_profile_ids do
-      [] ->
-        {base, params}
-
-      ids ->
-        placeholders = Enum.map_join(ids, ", ", fn _ -> "?" end)
-        {base <> " OR #{alias_prefix}steamid IN (" <> placeholders <> ")", params ++ ids}
-    end
+    {where_sql, [like, steam_like, q]}
   end
 
-  defp enrich_cumulative_rows(rows, identity_mode) do
+  defp enrich_cumulative_rows(rows, identity_mode, profile_source \\ :refresh) do
     steam_ids =
       rows
       |> Enum.map(&str(&1["steamid"]))
@@ -545,7 +528,13 @@ defmodule KogasaFrontend.StatsFeed do
       |> Enum.uniq()
 
     identities = PlayerIdentity.for_ids(steam_ids)
-    profiles = SteamProfiles.fetch_many(steam_ids)
+
+    profiles =
+      case profile_source do
+        :cache -> SteamProfiles.fetch_cached_many(steam_ids)
+        :refresh -> SteamProfiles.fetch_many(steam_ids)
+      end
+
     default_avatar = default_avatar_url()
 
     Enum.map(rows, fn row ->

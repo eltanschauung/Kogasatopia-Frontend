@@ -5,7 +5,6 @@ defmodule KogasaFrontendWeb.StatsApiController do
   alias KogasaFrontendWeb.StatsFragments
 
   def fetch_page(conn, params) do
-    performance_averages = StatsFeed.performance_averages()
     logged_in = is_binary(get_session(conn, "steamid")) and get_session(conn, "steamid") != ""
 
     payload =
@@ -42,7 +41,7 @@ defmodule KogasaFrontendWeb.StatsApiController do
         StatsFragments.focused_player_html(
           payload[:focused_player],
           StatsFeed.default_avatar_url(),
-          performance_averages: performance_averages,
+          performance_averages: focused_performance_averages(payload),
           comparison_enabled: logged_in
         )
       )
@@ -101,6 +100,9 @@ defmodule KogasaFrontendWeb.StatsApiController do
 
   defp identity_mode(%{"identity" => "stats"}), do: PlayerIdentity.stats_mode()
   defp identity_mode(_params), do: :filters
+
+  defp focused_performance_averages(%{focused_player: nil}), do: %{}
+  defp focused_performance_averages(_payload), do: StatsFeed.performance_averages()
 
   defp page_url(page, q) do
     params = [{"page", Integer.to_string(page)}]

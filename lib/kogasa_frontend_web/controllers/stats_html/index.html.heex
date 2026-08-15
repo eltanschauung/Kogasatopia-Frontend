@@ -755,7 +755,10 @@
         const clearButton = e.target.closest('[data-search-clear]');
         if (clearButton) {
           e.preventDefault();
-          window.location.assign('/stats');
+          state.cumulative.q = '';
+          state.cumulative.page = 1;
+          state.cumulative.focusedPlayer = '';
+          loadCumulative();
           return;
         }
 
