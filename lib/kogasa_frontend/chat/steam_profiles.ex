@@ -1,11 +1,29 @@
 defmodule KogasaFrontend.Chat.SteamProfiles do
   @moduledoc false
 
+  use GenServer
+
   alias KogasaFrontend.LegacyPaths
 
   @cache_table :kogasa_frontend_steam_profile_cache
   @ttl_seconds 24 * 3600
   @php_cache_ttl_seconds 24 * 3600
+
+  def start_link(_opts) do
+    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+  end
+
+  @impl true
+  def init(state) do
+    create_cache_table()
+    {:ok, state}
+  end
+
+  @impl true
+  def handle_call(:ensure_cache, _from, state) do
+    create_cache_table()
+    {:reply, :ok, state}
+  end
 
   def fetch_many(steam_ids) when is_list(steam_ids) do
     steam_ids
@@ -225,10 +243,24 @@ defmodule KogasaFrontend.Chat.SteamProfiles do
 
   defp ensure_cache do
     case :ets.whereis(@cache_table) do
-      :undefined -> :ets.new(@cache_table, [:named_table, :public, :set, read_concurrency: true])
+      :undefined -> GenServer.call(__MODULE__, :ensure_cache)
       _ -> :ok
     end
-  rescue
-    _ -> :ok
+  end
+
+  defp create_cache_table do
+    case :ets.whereis(@cache_table) do
+      :undefined ->
+        :ets.new(@cache_table, [
+          :named_table,
+          :public,
+          :set,
+          read_concurrency: true,
+          write_concurrency: true
+        ])
+
+      _ ->
+        :ok
+    end
   end
 end

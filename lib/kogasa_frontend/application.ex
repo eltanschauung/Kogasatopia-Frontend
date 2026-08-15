@@ -15,6 +15,7 @@ defmodule KogasaFrontend.Application do
         mapsdb_cache_children() ++
         [
           KogasaFrontend.Chat.RateLimiter,
+          KogasaFrontend.Chat.SteamProfiles,
           KogasaFrontend.AccessLog,
           {DNSCluster,
            query: Application.get_env(:kogasa_frontend, :dns_cluster_query) || :ignore},
