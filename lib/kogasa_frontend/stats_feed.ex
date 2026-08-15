@@ -257,6 +257,17 @@ defmodule KogasaFrontend.StatsFeed do
 
   defp logs_search_filter(q) do
     like = "%#{String.downcase(q)}%"
+    steamids = log_search_steamids(q, like)
+
+    {player_sql, player_params} =
+      case steamids do
+        [] ->
+          {"LOWER(COALESCE(lp_search.personaname, '')) LIKE ?", [like]}
+
+        ids ->
+          placeholders = Enum.map_join(ids, ", ", fn _ -> "?" end)
+          {"lp_search.steamid IN (#{placeholders})", ids}
+      end
 
     {
       """
@@ -267,15 +278,94 @@ defmodule KogasaFrontend.StatsFeed do
           SELECT 1
           FROM #{@log_players_table} lp_search
           WHERE lp_search.log_id = l.log_id
-            AND (
-              LOWER(COALESCE(lp_search.personaname, '')) LIKE ?
-              OR COALESCE(lp_search.steamid, '') = ?
-            )
+            AND #{player_sql}
         )
       )
       """,
-      [like, like, q]
+      [like | player_params]
     }
+  end
+
+  defp log_search_steamids(q, like) do
+    if Regex.match?(~r/^\d{17}$/, q) do
+      [q]
+    else
+      exact_current_log_alias_steamids(q)
+      |> then(fn
+        [] -> historical_log_alias_steamids(q)
+        ids -> ids
+      end)
+      |> then(fn
+        [] -> partial_current_log_alias_steamids(like)
+        ids -> ids
+      end)
+    end
+  end
+
+  defp exact_current_log_alias_steamids(name) do
+    [
+      {"SELECT pattern FROM prename_rules WHERE BINARY COALESCE(newname, '') = BINARY ?", [name]},
+      {"SELECT steamid64 FROM filters_steam_names WHERE BINARY COALESCE(last_name, '') = BINARY ?",
+       [name]},
+      {"SELECT steamid FROM #{@stats_table} WHERE BINARY COALESCE(cached_personaname, '') = BINARY ?",
+       [name]}
+    ]
+    |> Enum.find_value([], fn {sql, params} ->
+      case log_search_steamid_query(sql <> " LIMIT 200", params) do
+        [] -> nil
+        ids -> ids
+      end
+    end)
+  end
+
+  defp partial_current_log_alias_steamids(like) do
+    log_search_steamid_query(
+      """
+      SELECT steamid
+      FROM (
+        SELECT steamid64 AS steamid
+        FROM filters_steam_names
+        WHERE LOWER(COALESCE(last_name, '')) LIKE ?
+        UNION
+        SELECT pattern AS steamid
+        FROM prename_rules
+        WHERE LOWER(COALESCE(newname, '')) LIKE ?
+        UNION
+        SELECT steamid
+        FROM #{@stats_table}
+        WHERE LOWER(COALESCE(cached_personaname, '')) LIKE ?
+      ) current_aliases
+      WHERE COALESCE(steamid, '') <> ''
+      LIMIT 200
+      """,
+      [like, like, like]
+    )
+  end
+
+  defp historical_log_alias_steamids(name) do
+    log_search_steamid_query(
+      """
+      SELECT DISTINCT steamid
+      FROM #{@log_players_table}
+      WHERE BINARY COALESCE(personaname, '') = BINARY ?
+        AND COALESCE(steamid, '') <> ''
+      LIMIT 200
+      """,
+      [name]
+    )
+  end
+
+  defp log_search_steamid_query(sql, params) do
+    case SQL.query(Repo, sql, params) do
+      {:ok, %{rows: rows}} ->
+        rows
+        |> Enum.map(fn [steamid | _] -> str(steamid) end)
+        |> Enum.reject(&(&1 == ""))
+        |> Enum.uniq()
+
+      _ ->
+        []
+    end
   end
 
   def current_log(opts \\ %{}) do
