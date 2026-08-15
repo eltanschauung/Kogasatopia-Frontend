@@ -11,9 +11,17 @@
     }
     .logs-container .log-title { color: #eff3fb; }
     .logs-container .log-meta { color: #b9c4d7; }
+    .logs-mode-row {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      width: 100%;
+      min-width: 0;
+    }
     .logs-search {
-      flex: 1 1 280px;
-      max-width: 420px;
+      flex: 0 1 280px;
+      width: 280px;
+      max-width: 280px;
       margin: 0 0 0 auto;
     }
     .logs-search input[type="text"] {
@@ -44,9 +52,11 @@
         overflow-wrap: normal;
       }
       .logs-pagination { gap: .3rem; margin-top: .55rem; }
+      .logs-mode-row { gap: .3rem; }
       .logs-search {
-        flex-basis: 100%;
-        max-width: none;
-        margin-left: 0;
+        flex: 1 1 140px;
+        width: auto;
+        min-width: 0;
+        max-width: 280px;
       }
     }
