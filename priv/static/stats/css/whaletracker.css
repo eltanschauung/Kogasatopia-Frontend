@@ -1135,12 +1135,6 @@ body {
     padding: 0.4rem 0.5rem;
 }
 
-/* Compact avatar for logs */
-.log-table .player-cell img {
-    width: 24px;
-    height: 24px;
-}
-
 .log-player-info {
     display: inline-flex;
     align-items: center;
@@ -1614,7 +1608,15 @@ td {
     color: #ee6c3b;
 }
 
-.server-flag {
+.server-flag,
+.stats-country-flag {
     width: 16px;
     height: 11px;
+    image-rendering: pixelated;
+    border: 0;
+    object-fit: cover;
+    background: transparent;
+    display: inline-block;
+    vertical-align: -1px;
+    margin-left: 0.25rem;
 }
