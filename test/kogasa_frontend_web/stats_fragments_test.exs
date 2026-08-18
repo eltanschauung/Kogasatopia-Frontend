@@ -47,6 +47,8 @@ defmodule KogasaFrontendWeb.StatsFragmentsTest do
           %{
             steamid: "76561198000000000",
             personaname: "A Long Player Name",
+            country_code: "millennium",
+            country_name: "Millennium Science School",
             kills: 12,
             deaths: 3,
             shots: 10,
@@ -60,6 +62,8 @@ defmodule KogasaFrontendWeb.StatsFragmentsTest do
     assert html =~ ~s(data-sort-type="text")
     assert html =~ ~s(data-sort-value="a long player name")
     assert html =~ ~s(data-sort-value="12")
+    assert html =~ ~s(src="https://bantculture.com/static/flags/millennium.png")
+    assert html =~ ~s(title="Millennium Science School")
     assert html =~ "cp_badwater |"
     assert html =~ "Aug 11, 2026 2:12 AM"
     refute html =~ "—"

@@ -1256,8 +1256,10 @@ defmodule KogasaFrontend.StatsFeed do
     SELECT lp.log_id, lp.steamid, lp.personaname,
            lp.kills, lp.deaths, lp.assists, lp.damage, lp.damage_taken, lp.healing,
            lp.headshots, lp.backstabs, lp.total_ubers, lp.playtime, lp.shots, lp.hits#{category_select_clause},
-           COALESCE(lp.shots_medic, 0) AS shots_medic, COALESCE(lp.airshots, 0) AS airshots
+           COALESCE(lp.shots_medic, 0) AS shots_medic, COALESCE(lp.airshots, 0) AS airshots,
+           COALESCE(w.country, '') AS country, COALESCE(w.show_country, 0) AS show_country
     FROM #{@log_players_table} lp
+    LEFT JOIN #{@stats_table} w ON w.steamid = lp.steamid
     WHERE lp.log_id IN (#{placeholders})
     ORDER BY lp.log_id ASC, lp.kills DESC, lp.assists DESC
     """
@@ -1274,8 +1276,10 @@ defmodule KogasaFrontend.StatsFeed do
         SELECT lp.log_id, lp.steamid, lp.personaname,
                lp.kills, lp.deaths, lp.assists, lp.damage, lp.damage_taken, lp.healing,
                lp.headshots, lp.backstabs, lp.total_ubers, lp.playtime, lp.shots, lp.hits#{category_select_clause},
-               COALESCE(lp.shots_medic, 0) AS shots_medic
+               COALESCE(lp.shots_medic, 0) AS shots_medic,
+               COALESCE(w.country, '') AS country, COALESCE(w.show_country, 0) AS show_country
         FROM #{@log_players_table} lp
+        LEFT JOIN #{@stats_table} w ON w.steamid = lp.steamid
         WHERE lp.log_id IN (#{placeholders})
         ORDER BY lp.log_id ASC, lp.kills DESC, lp.assists DESC
         """
@@ -1317,6 +1321,7 @@ defmodule KogasaFrontend.StatsFeed do
       shots = if total_shots > 0, do: total_shots, else: int(row["shots"])
       hits = if total_shots > 0, do: total_hits, else: int(row["hits"])
       accuracy_overall = if shots > 0, do: Float.round(hits * 100.0 / shots, 1), else: 0.0
+      country_code = country_code_for_row(row)
 
       personaname =
         PlayerIdentity.resolve_name(
@@ -1337,6 +1342,8 @@ defmodule KogasaFrontend.StatsFeed do
         log_id: str(row["log_id"]),
         steamid: steamid,
         personaname: if(personaname == "", do: steamid, else: personaname),
+        country_code: country_code,
+        country_name: CountryNames.display_name(country_code),
         avatar: avatar,
         profileurl:
           if(steamid != "", do: "https://steamcommunity.com/profiles/" <> steamid, else: nil),

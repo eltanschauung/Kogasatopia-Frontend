@@ -446,6 +446,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
       name_presentation(player[:name_style], player[:is_admin], [])
 
     name_title = if player[:is_admin], do: "Admin", else: "Player"
+    player_name_html = player_name_html(name, player[:country_code], player[:country_name])
 
     avatar_html =
       if is_binary(profile_url) and profile_url != "" do
@@ -456,9 +457,9 @@ defmodule KogasaFrontendWeb.StatsFragments do
 
     link_html =
       if is_binary(profile_url) and profile_url != "" do
-        ~s(<a href="#{e(profile_url)}" target="_blank" rel="noopener" class="#{e(name_cls)}"#{name_style_attr} title="#{name_title}">#{e(name)}</a>)
+        ~s(<a href="#{e(profile_url)}" target="_blank" rel="noopener" class="#{e(name_cls)}"#{name_style_attr} title="#{name_title}">#{player_name_html}</a>)
       else
-        ~s(<span class="#{e(name_cls)}"#{name_style_attr} title="#{name_title}">#{e(name)}</span>)
+        ~s(<span class="#{e(name_cls)}"#{name_style_attr} title="#{name_title}">#{player_name_html}</span>)
       end
 
     player_info_class =
