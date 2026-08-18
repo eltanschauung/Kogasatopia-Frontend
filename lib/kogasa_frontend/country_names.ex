@@ -5,7 +5,8 @@ defmodule KogasaFrontend.CountryNames do
   @cache_key {__MODULE__, :iso3166_names}
   @custom_flag_names %{
     "ancap" => "Anarcho-Capitalist",
-    "dixie" => "Dixie"
+    "dixie" => "Dixie",
+    "millennium" => "Millennium Science School"
   }
 
   def metadata(code) do

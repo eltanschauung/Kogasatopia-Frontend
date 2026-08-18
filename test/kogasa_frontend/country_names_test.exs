@@ -16,5 +16,6 @@ defmodule KogasaFrontend.CountryNamesTest do
   test "uses display names for custom flags" do
     assert CountryNames.display_name("ancap") == "Anarcho-Capitalist"
     assert CountryNames.display_name("DIXIE") == "Dixie"
+    assert CountryNames.display_name("millennium") == "Millennium Science School"
   end
 end

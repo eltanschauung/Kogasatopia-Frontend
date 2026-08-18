@@ -35,5 +35,10 @@ defmodule KogasaFrontend.PlayerPresentationTest do
              PlayerPresentation.country_flag("ancap")
 
     assert String.ends_with?(custom_url, "/ancap.png")
+
+    assert %{name: "Millennium Science School", url: millennium_url} =
+             PlayerPresentation.country_flag("millennium")
+
+    assert String.ends_with?(millennium_url, "/millennium.png")
   end
 end
