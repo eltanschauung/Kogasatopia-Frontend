@@ -3,6 +3,10 @@ defmodule KogasaFrontend.CountryNames do
 
   @default_iso3166_tab_path "/usr/share/zoneinfo/iso3166.tab"
   @cache_key {__MODULE__, :iso3166_names}
+  @custom_flag_names %{
+    "ancap" => "Anarcho-Capitalist",
+    "dixie" => "Dixie"
+  }
 
   def metadata(code) do
     case normalize_code(code) do
@@ -13,8 +17,15 @@ defmodule KogasaFrontend.CountryNames do
 
   def display_name(code) do
     case normalize_code(code) do
-      "" -> ""
-      normalized -> Map.get(country_names(), String.upcase(normalized), String.upcase(normalized))
+      "" ->
+        ""
+
+      normalized ->
+        Map.get(
+          @custom_flag_names,
+          normalized,
+          Map.get(country_names(), String.upcase(normalized), String.upcase(normalized))
+        )
     end
   end
 

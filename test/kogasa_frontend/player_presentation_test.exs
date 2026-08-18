@@ -30,5 +30,10 @@ defmodule KogasaFrontend.PlayerPresentationTest do
 
     assert String.ends_with?(url, "/ca.png")
     assert PlayerPresentation.country_flag("../CA", "Canada").code == "ca"
+
+    assert %{name: "Anarcho-Capitalist", url: custom_url} =
+             PlayerPresentation.country_flag("ancap")
+
+    assert String.ends_with?(custom_url, "/ancap.png")
   end
 end

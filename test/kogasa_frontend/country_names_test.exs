@@ -12,4 +12,9 @@ defmodule KogasaFrontend.CountryNamesTest do
     assert %{code: "zz", name: "ZZ"} = CountryNames.metadata("ZZ")
     assert CountryNames.metadata("") == nil
   end
+
+  test "uses display names for custom flags" do
+    assert CountryNames.display_name("ancap") == "Anarcho-Capitalist"
+    assert CountryNames.display_name("DIXIE") == "Dixie"
+  end
 end
