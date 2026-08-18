@@ -137,7 +137,6 @@
   .current-log-container .stat-accuracy-icon {
     width: 18px;
     height: 18px;
-    margin-left: 3px;
     vertical-align: middle;
   }
   @media (min-width: 1280px) {

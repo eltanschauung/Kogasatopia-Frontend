@@ -1146,6 +1146,10 @@ body {
     text-decoration: none;
 }
 
+.log-table .stat-accuracy-icon {
+    margin-left: 0.35rem;
+}
+
 .log-player-info a:hover {
     text-decoration: underline;
 }
@@ -1618,5 +1622,4 @@ td {
     background: transparent;
     display: inline-block;
     vertical-align: -1px;
-    margin-right: 0.25rem;
 }
