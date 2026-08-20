@@ -57,17 +57,20 @@
     const container = $("#button-container");
     const search = $("#search");
     const customOnly = $("#custom-only");
-    if (!classBar || !container || !search || !customOnly) return;
+    const showReskins = $("#show-reskins");
+    if (!classBar || !container || !search || !customOnly || !showReskins) return;
 
     const clickSound = new Audio("/info/sound/tf2-button-click.mp3");
     clickSound.preload = "auto";
     clickSound.volume = 0.5;
     customOnly.checked = false;
+    showReskins.checked = true;
 
     const state = {
       activeClass: payload.active_class || "scout",
       filter: "",
       customOnly: false,
+      showReskins: true,
       itemsByClass: payload.items_by_class
     };
 
@@ -85,6 +88,7 @@
 
       sourceItems.forEach((item) => {
         if (state.customOnly && !item.is_custom) return;
+        if (!state.showReskins && item.is_reskin) return;
         if (state.filter && !(item.search || "").includes(state.filter)) return;
 
         const dedupeKey = item.title || item.name || JSON.stringify(item);
@@ -165,6 +169,11 @@
       }
 
       syncClassButtons();
+      renderTiles();
+    });
+
+    showReskins.addEventListener("change", () => {
+      state.showReskins = showReskins.checked;
       renderTiles();
     });
 

@@ -91,7 +91,7 @@ body {
   cursor: pointer;
   user-select: none;
 }
-.custom-only-toggle {
+.filters .filter-toggle {
   width: 100%;
   margin-top: .7rem;
 }

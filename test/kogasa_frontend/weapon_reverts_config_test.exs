@@ -42,6 +42,7 @@ defmodule KogasaFrontend.WeaponRevertsConfigTest do
           "inherits" "TF_WEAPON_MINIGUN"
           "name" "Custom Heavy Gun"
           "image" "heavy.png"
+          "reskin_only" "true"
           "description"
           {
             "positive" "Heavy positive"
@@ -79,7 +80,14 @@ defmodule KogasaFrontend.WeaponRevertsConfigTest do
 
     assert [%{name: "Revert Gun"}] = items["scout"]
 
-    assert [%{name: "Custom Heavy Gun", image: "heavy.png", positive: "Heavy positive"}] =
+    assert [
+             %{
+               name: "Custom Heavy Gun",
+               image: "heavy.png",
+               positive: "Heavy positive",
+               reskin_only: true
+             }
+           ] =
              items["heavy"]
 
     assert [
@@ -88,7 +96,8 @@ defmodule KogasaFrontend.WeaponRevertsConfigTest do
                image: "100px-item_icon_wrangler.png",
                positive: "",
                neutral: "",
-               negative: ""
+               negative: "",
+               reskin_only: false
              }
            ] = items["soldier"]
 

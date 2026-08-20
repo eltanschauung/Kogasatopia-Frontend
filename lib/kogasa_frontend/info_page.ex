@@ -46,18 +46,20 @@ defmodule KogasaFrontend.InfoPage do
       name: item.name,
       icon: icon_path(item.image, class_key),
       is_custom: item.type == "custom",
+      is_reskin: item.reskin_only,
       title: title_text(item.name, title_segments),
-      search: search_text(item.name, title_segments, item.type),
+      search: search_text(item.name, title_segments, item.type, item.reskin_only),
       effects: effects
     }
   end
 
-  defp search_text(name, title_segments, "custom") do
-    String.downcase(name <> " " <> Enum.join(title_segments, " ") <> " custom cwx")
-  end
+  defp search_text(name, title_segments, type, reskin_only) do
+    type_terms = if type == "custom", do: "custom cwx", else: type
+    reskin_term = if reskin_only, do: " reskin", else: ""
 
-  defp search_text(name, title_segments, type) do
-    String.downcase(name <> " " <> Enum.join(title_segments, " ") <> " " <> type)
+    String.downcase(
+      name <> " " <> Enum.join(title_segments, " ") <> " " <> type_terms <> reskin_term
+    )
   end
 
   defp effect_segment(value, class_name) when is_binary(value) do

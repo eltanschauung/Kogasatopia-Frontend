@@ -185,6 +185,7 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
       name: value(children, "name", item_key),
       image: value(children, "image", ""),
       type: value(description, "type", ""),
+      reskin_only: truthy_value?(value(children, "reskin_only", "")),
       positive: value(description, "positive", ""),
       neutral: value(description, "neutral", ""),
       negative: value(description, "negative", "")
@@ -199,6 +200,7 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
       name: value(children, "name", item_key),
       image: first_value(children, ["image", "icon"], @default_cwx_image),
       type: "custom",
+      reskin_only: truthy_value?(value(children, "reskin_only", "")),
       positive: value(description, "positive", ""),
       neutral: value(description, "neutral", ""),
       negative: value(description, "negative", "")
@@ -272,9 +274,10 @@ defmodule KogasaFrontend.WeaponRevertsConfig do
          positive: positive,
          neutral: neutral,
          negative: negative,
-         image: image
+         image: image,
+         reskin_only: reskin_only
        }) do
-    Enum.join([name, positive, neutral, negative, image], "|")
+    Enum.join([name, positive, neutral, negative, image, reskin_only], "|")
   end
 
   defp dedupe_items(items) do
