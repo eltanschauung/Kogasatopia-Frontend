@@ -7,30 +7,27 @@ defmodule KogasaFrontend.Online do
   alias KogasaFrontend.Repo
 
   @default_visible_max 32
+  @online_fresh_seconds 30
 
   def summary do
     now = System.system_time(:second)
     cutoff = now - 180
+    human_player_count = human_online_count(now)
 
-    {player_count, visible_max, updated} =
+    visible_max =
       case aggregate_server_counts(cutoff, now) do
-        {players, slots, _updated_at} when slots > 0 ->
-          # OnlineFeed uses the live client rows when a fresh server heartbeat
-          # reports zero players, so preserve that behavior for nav/API parity.
-          fallback_players =
-            if players > 0, do: players, else: elem(fallback_online_count(now), 0)
-
-          {fallback_players, slots, now}
+        {_players, slots, _updated_at} when slots > 0 ->
+          slots
 
         _ ->
-          fallback_online_count(now)
+          @default_visible_max
       end
 
     %{
       success: true,
-      player_count: max(player_count, 0),
+      player_count: max(human_player_count, 0),
       visible_max: if(visible_max > 0, do: visible_max, else: @default_visible_max),
-      updated: updated
+      updated: now
     }
   end
 
@@ -55,12 +52,18 @@ defmodule KogasaFrontend.Online do
     _ -> {0, 0, now}
   end
 
-  defp fallback_online_count(now) do
-    case SQL.query(Repo, "SELECT COUNT(*) AS total_players FROM whaletracker_online", []) do
-      {:ok, %{rows: [[players]]}} -> {int(players), @default_visible_max, now}
-      _ -> {0, @default_visible_max, now}
+  defp human_online_count(now) do
+    cutoff = now - @online_fresh_seconds
+
+    case SQL.query(
+           Repo,
+           "SELECT COUNT(*) AS total_players FROM whaletracker_online WHERE last_update >= ?",
+           [cutoff]
+         ) do
+      {:ok, %{rows: [[players]]}} -> int(players)
+      _ -> 0
     end
   rescue
-    _ -> {0, @default_visible_max, now}
+    _ -> 0
   end
 end
