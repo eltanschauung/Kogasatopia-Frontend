@@ -11,6 +11,28 @@
     }
     .logs-container .log-title { color: #eff3fb; }
     .logs-container .log-meta { color: #b9c4d7; }
+    .logs-container .log-table {
+      min-width: 1080px;
+      table-layout: auto;
+    }
+    .logs-container .log-table th:first-child,
+    .logs-container .log-table td:first-child {
+      width: 30%;
+      min-width: 280px;
+    }
+    .logs-container .log-player-info {
+      width: auto;
+      max-width: none;
+      white-space: nowrap;
+    }
+    .logs-container .log-player-info > a,
+    .logs-container .log-player-info > span,
+    .logs-container .log-player-info.has-accuracy-icon > a,
+    .logs-container .log-player-info.has-accuracy-icon > span {
+      max-width: none;
+      white-space: nowrap;
+      overflow-wrap: normal;
+    }
     .logs-mode-row {
       display: flex;
       align-items: center;
