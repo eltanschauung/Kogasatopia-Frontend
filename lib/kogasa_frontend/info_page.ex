@@ -48,6 +48,7 @@ defmodule KogasaFrontend.InfoPage do
       type_level: type_level,
       icon: icon_path(item.image, class_key),
       is_custom: item.type == "custom",
+      is_hidden: item.hidden,
       is_reskin: item.reskin_only,
       title: title_text(item.name, title_segments),
       search:

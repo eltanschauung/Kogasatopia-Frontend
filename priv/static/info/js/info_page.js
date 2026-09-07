@@ -95,6 +95,7 @@
       sourceItems.forEach((item) => {
         if (state.customOnly && !item.is_custom) return;
         if (!state.showReskins && item.is_reskin) return;
+        if (state.filter && item.is_hidden) return;
         if (state.filter && !(item.search || "").includes(state.filter)) return;
 
         const dedupeKey = item.title || item.name || JSON.stringify(item);

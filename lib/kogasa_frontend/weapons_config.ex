@@ -67,17 +67,13 @@ defmodule KogasaFrontend.WeaponsConfig do
     |> custom_items_root()
     |> Enum.reduce(blank_map, fn
       {item_key, children}, acc when is_list(children) ->
-        if hidden_item?(children) do
-          acc
-        else
-          item = normalize_custom_item(item_key, children)
+        item = normalize_custom_item(item_key, children)
 
-          children
-          |> custom_class_keys(class_keys)
-          |> Enum.reduce(acc, fn class_key, class_acc ->
-            Map.update!(class_acc, class_key, &[item | &1])
-          end)
-        end
+        children
+        |> custom_class_keys(class_keys)
+        |> Enum.reduce(acc, fn class_key, class_acc ->
+          Map.update!(class_acc, class_key, &[item | &1])
+        end)
 
       _, acc ->
         acc
@@ -173,7 +169,6 @@ defmodule KogasaFrontend.WeaponsConfig do
   defp item_for_key(item_key, %{keyed: keyed, tokenized: tokenized}) do
     with children when is_list(children) <-
            Map.get(keyed, item_key) || Map.get(tokenized, item_key),
-         false <- hidden_item?(children),
          item <- normalize_item(item_key, children),
          false <- blank_effects?(item) do
       item
@@ -191,6 +186,7 @@ defmodule KogasaFrontend.WeaponsConfig do
       image: value(children, "image", ""),
       type: value(description, "type", ""),
       weapon_type: value(children, "type", ""),
+      hidden: hidden_item?(children),
       reskin_only: truthy_value?(value(children, "reskin_only", "")),
       positive: value(description, "positive", ""),
       neutral: value(description, "neutral", ""),
@@ -207,6 +203,7 @@ defmodule KogasaFrontend.WeaponsConfig do
       image: first_value(children, ["image", "icon"], @default_custom_image),
       type: "custom",
       weapon_type: value(children, "type", ""),
+      hidden: hidden_item?(children),
       reskin_only: truthy_value?(value(children, "reskin_only", "")),
       positive: value(description, "positive", ""),
       neutral: value(description, "neutral", ""),
