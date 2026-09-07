@@ -163,7 +163,7 @@ div#button-container > a.on:hover {
 /* Effects inside tiles */
 .effects { max-width: 90%; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
 /* Remove background/border for chips and apply config description colors */
-.effects .seg { display: inline-block; padding: .08rem .4rem; background: none; border: none; font-size: .95rem; }
+.effects .seg { display: inline-block; padding: .08rem .4rem; background: none; border: none; font-size: .95rem; white-space: pre-line; }
 .effects .positive { color: #99ccff; background: none; border: none; }
 .effects .negative { color: #dc322f; background: none; border: none; }
 .effects .neutral { color: white; background: none; border: none; }

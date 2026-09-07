@@ -65,7 +65,7 @@ defmodule KogasaFrontend.InfoPage do
   defp effect_segment(value, class_name) when is_binary(value) do
     case String.trim(value) do
       "" -> nil
-      trimmed -> %{text: trimmed, cls: class_name}
+      trimmed -> %{text: String.replace(trimmed, ", ", "\n"), cls: class_name}
     end
   end
 
