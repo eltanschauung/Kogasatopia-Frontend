@@ -151,14 +151,13 @@ div#button-container > a.on {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 10px;
     color: var(--text);
     text-decoration: none;
 }
 div#button-container > a.on:hover {
     border-color: #857d7a;
 }
-.btn-icon { width: 96px; height: 96px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
+.btn-icon { width: 96px; height: 96px; margin-bottom: 5px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
 .btn-label {
   color: rgb(255, 215, 0);
   font-family: 'TF2 Build', Verdana, Geneva, sans-serif;
