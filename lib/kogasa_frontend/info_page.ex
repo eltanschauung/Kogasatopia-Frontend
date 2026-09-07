@@ -41,25 +41,38 @@ defmodule KogasaFrontend.InfoPage do
       |> Enum.reject(&is_nil/1)
 
     title_segments = Enum.map(effects, & &1.text)
+    type_level = type_level(item.weapon_type)
 
     %{
       name: item.name,
+      type_level: type_level,
       icon: icon_path(item.image, class_key),
       is_custom: item.type == "custom",
       is_reskin: item.reskin_only,
       title: title_text(item.name, title_segments),
-      search: search_text(item.name, title_segments, item.type, item.reskin_only),
+      search:
+        search_text(item.name, title_segments, item.type, item.weapon_type, item.reskin_only),
       effects: effects
     }
   end
 
-  defp search_text(name, title_segments, type, reskin_only) do
+  defp search_text(name, title_segments, type, weapon_type, reskin_only) do
     type_terms = if type == "custom", do: "custom cwx", else: type
     reskin_term = if reskin_only, do: " reskin", else: ""
 
     String.downcase(
-      name <> " " <> Enum.join(title_segments, " ") <> " " <> type_terms <> reskin_term
+      name <>
+        " " <>
+        Enum.join(title_segments, " ") <>
+        " " <> type_terms <> " " <> weapon_type <> reskin_term
     )
+  end
+
+  defp type_level(weapon_type) when is_binary(weapon_type) do
+    case String.trim(weapon_type) do
+      "" -> ""
+      value -> "Level 1 " <> value
+    end
   end
 
   defp effect_segment(value, class_name) when is_binary(value) do

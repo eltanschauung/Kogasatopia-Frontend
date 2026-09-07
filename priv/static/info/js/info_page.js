@@ -34,6 +34,10 @@
     label.className = "btn-label";
     label.textContent = item.name || "";
 
+    const typeLevel = document.createElement("span");
+    typeLevel.className = "type-lvl";
+    typeLevel.textContent = item.type_level || "";
+
     const effects = document.createElement("div");
     effects.className = "effects";
 
@@ -45,7 +49,9 @@
     });
 
     // link.append(iconFrame, label, effects);
-    link.append(icon, label, effects);
+    link.append(icon, label);
+    if (item.type_level) link.append(typeLevel);
+    link.append(effects);
     return link;
   }
 

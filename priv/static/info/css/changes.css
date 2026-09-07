@@ -166,6 +166,11 @@ div#button-container > a.on:hover {
   line-height: 16px;
   text-shadow: 2px 1px 1px #24201b;
 }
+.type-lvl {
+  color: #756b5e;
+  font-family: 'TF2 Secondary', Verdana, Geneva, sans-serif;
+  font-size: 16px;
+}
 /* Effects inside tiles */
 .effects { max-width: 90%; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
 /* Remove background/border for chips and apply config description colors */
