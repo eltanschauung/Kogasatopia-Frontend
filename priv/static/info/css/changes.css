@@ -159,11 +159,26 @@ div#button-container > a.on:hover {
     border-color: #857d7a;
 }
 .btn-icon { width: 96px; height: 96px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
-.btn-label { font-family: TF2Build, Impact, sans-serif; font-size: 1.15rem; text-shadow: 1px 1px 0 #000; }
+.btn-label {
+  color: rgb(255, 215, 0);
+  font-family: TF2Build, Verdana, Geneva, sans-serif;
+  font-size: 18px;
+  line-height: 16px;
+  text-shadow: 2px 1px 1px #24201b;
+}
 /* Effects inside tiles */
 .effects { max-width: 90%; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
 /* Remove background/border for chips and apply config description colors */
-.effects .seg { display: inline-block; width: 100%; padding: .08rem .4rem; background: none; border: none; font-size: .95rem; white-space: pre-line; }
+.effects .seg {
+  display: inline-block;
+  width: 100%;
+  padding: .08rem .4rem;
+  background: none;
+  border: none;
+  font-family: TF2Secondary, Verdana, Geneva, sans-serif;
+  font-size: 15px;
+  white-space: pre-line;
+}
 .effects .positive { color: #99ccff; background: none; border: none; }
 .effects .negative { color: #dc322f; background: none; border: none; }
 .effects .neutral { color: white; background: none; border: none; }
@@ -266,16 +281,11 @@ div#neutral{ color: white; }
     width: 72px;
     height: 72px;
   }
-  .btn-label {
-    font-size: .88rem;
-    line-height: 1.1;
-  }
   .effects {
     max-width: 96%;
     gap: 2px;
   }
   .effects .seg {
-    font-size: .8rem;
     padding: .02rem .24rem;
   }
 }
@@ -304,11 +314,5 @@ div#neutral{ color: white; }
   .btn-icon {
     width: 56px;
     height: 56px;
-  }
-  .btn-label {
-    font-size: .8rem;
-  }
-  .effects .seg {
-    font-size: .72rem;
   }
 }
