@@ -67,13 +67,17 @@ defmodule KogasaFrontend.WeaponsConfig do
     |> custom_items_root()
     |> Enum.reduce(blank_map, fn
       {item_key, children}, acc when is_list(children) ->
-        item = normalize_custom_item(item_key, children)
+        if hidden_item?(children) do
+          acc
+        else
+          item = normalize_custom_item(item_key, children)
 
-        children
-        |> custom_class_keys(class_keys)
-        |> Enum.reduce(acc, fn class_key, class_acc ->
-          Map.update!(class_acc, class_key, &[item | &1])
-        end)
+          children
+          |> custom_class_keys(class_keys)
+          |> Enum.reduce(acc, fn class_key, class_acc ->
+            Map.update!(class_acc, class_key, &[item | &1])
+          end)
+        end
 
       _, acc ->
         acc
@@ -169,6 +173,7 @@ defmodule KogasaFrontend.WeaponsConfig do
   defp item_for_key(item_key, %{keyed: keyed, tokenized: tokenized}) do
     with children when is_list(children) <-
            Map.get(keyed, item_key) || Map.get(tokenized, item_key),
+         false <- hidden_item?(children),
          item <- normalize_item(item_key, children),
          false <- blank_effects?(item) do
       item
@@ -262,6 +267,8 @@ defmodule KogasaFrontend.WeaponsConfig do
   end
 
   defp truthy_value?(value), do: truthy?(value)
+
+  defp hidden_item?(children), do: truthy_value?(value(children, "hidden", ""))
 
   defp blank_effects?(%{positive: positive, neutral: neutral, negative: negative}) do
     [positive, neutral, negative]

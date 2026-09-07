@@ -22,6 +22,7 @@ defmodule KogasaFrontend.WeaponsConfigTest do
         "scout"
         {
           "100" "1"
+          "101" "1"
         }
       }
       "100"
@@ -33,6 +34,15 @@ defmodule KogasaFrontend.WeaponsConfigTest do
           "positive" "Buffed"
           "neutral" "Neutral note"
           "negative" "Nerfed"
+        }
+      }
+      "101"
+      {
+        "name" "Hidden Revert Gun"
+        "hidden" "true"
+        "description"
+        {
+          "positive" "Should not be shown"
         }
       }
       "CustomWeapons"
@@ -59,6 +69,16 @@ defmodule KogasaFrontend.WeaponsConfigTest do
             "positive" ""
             "neutral" ""
             "negative" ""
+          }
+        }
+        "hidden_custom"
+        {
+          "inherits" "TF_WEAPON_MINIGUN"
+          "name" "Hidden Custom Gun"
+          "hidden" "true"
+          "description"
+          {
+            "positive" "Should not be shown"
           }
         }
         "custom_all_class"
@@ -104,10 +124,13 @@ defmodule KogasaFrontend.WeaponsConfigTest do
     assert [%{name: "All Class Item", positive: "Everyone can equip it"}] = items["all_class"]
 
     refute Enum.any?(items["scout"], &(&1.name == "All Class Item"))
+    refute Enum.any?(items["scout"], &(&1.name == "Hidden Revert Gun"))
+    refute Enum.any?(items["heavy"], &(&1.name == "Hidden Custom Gun"))
 
     assert WeaponsConfig.custom_item_names(config_path) == %{
              "custom_heavy" => "Custom Heavy Gun",
              "custom_soldier" => "Custom Soldier Banner",
+             "hidden_custom" => "Hidden Custom Gun",
              "custom_all_class" => "All Class Item"
            }
   end
