@@ -128,7 +128,7 @@ body {
 .filter-label { display: block; color: var(--muted); margin-bottom: .25rem; font-size: .85rem; }
 .search { width: 100%; padding: .6rem .7rem; border: 1px solid #000; background: #2b2722; color: var(--text); }
 
-.effects { font-size: .92rem; line-height: 1.25; color: var(--text); }
+.effects { font-size: .92rem; color: var(--text); }
 .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 2rem 1rem; border: 1px dashed rgba(0,0,0,0.5); background: rgba(0,0,0,0.1); }
 
 @media (max-width: 960px) {
@@ -172,7 +172,6 @@ div#button-container > a.on:hover {
 .effects .seg {
   display: inline-block;
   width: 100%;
-  padding: .08rem .4rem;
   background: none;
   border: none;
   font-family: 'TF2 Secondary', Verdana, Geneva, sans-serif;
@@ -284,9 +283,6 @@ div#neutral{ color: white; }
   .effects {
     max-width: 96%;
     gap: 2px;
-  }
-  .effects .seg {
-    padding: .02rem .24rem;
   }
 }
 
