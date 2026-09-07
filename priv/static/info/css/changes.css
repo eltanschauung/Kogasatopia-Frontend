@@ -175,7 +175,7 @@ div#button-container > a.on:hover {
   background: none;
   border: none;
   font-family: 'TF2 Secondary', Verdana, Geneva, sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   white-space: pre-line;
 }
 .effects .positive { color: #99ccff; background: none; border: none; }
