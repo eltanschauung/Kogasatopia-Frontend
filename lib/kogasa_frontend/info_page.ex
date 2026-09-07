@@ -52,12 +52,26 @@ defmodule KogasaFrontend.InfoPage do
       is_reskin: item.reskin_only,
       title: title_text(item.name, title_segments),
       search:
-        search_text(item.name, title_segments, item.type, item.weapon_type, item.reskin_only),
+        search_text(
+          item.name,
+          title_segments,
+          item.type,
+          item.weapon_type,
+          item.points_store_purchase,
+          item.reskin_only
+        ),
       effects: effects
     }
   end
 
-  defp search_text(name, title_segments, type, weapon_type, reskin_only) do
+  defp search_text(
+         name,
+         title_segments,
+         type,
+         weapon_type,
+         points_store_purchase,
+         reskin_only
+       ) do
     type_terms = if type == "custom", do: "custom cwx", else: type
     reskin_term = if reskin_only, do: " reskin", else: ""
 
@@ -65,7 +79,8 @@ defmodule KogasaFrontend.InfoPage do
       name <>
         " " <>
         Enum.join(title_segments, " ") <>
-        " " <> type_terms <> " " <> weapon_type <> reskin_term
+        " " <>
+        type_terms <> " " <> weapon_type <> " " <> points_store_purchase <> reskin_term
     )
   end
 

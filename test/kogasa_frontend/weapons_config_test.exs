@@ -52,6 +52,7 @@ defmodule KogasaFrontend.WeaponsConfigTest do
           "inherits" "TF_WEAPON_MINIGUN"
           "name" "Custom Heavy Gun"
           "type" "Minigun"
+          "points_store_purchase" "heavy_pack"
           "image" "heavy.png"
           "reskin_only" "true"
           "description"
@@ -109,6 +110,7 @@ defmodule KogasaFrontend.WeaponsConfigTest do
                name: "Custom Heavy Gun",
                image: "heavy.png",
                weapon_type: "Minigun",
+               points_store_purchase: "heavy_pack",
                positive: "Heavy positive",
                hidden: false,
                reskin_only: true
