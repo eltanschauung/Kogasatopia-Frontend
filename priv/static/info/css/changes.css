@@ -151,13 +151,14 @@ div#button-container > a.on {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    gap: 3px;
     color: var(--text);
     text-decoration: none;
 }
 div#button-container > a.on:hover {
     border-color: #857d7a;
 }
-.btn-icon { width: 96px; height: 96px; margin-bottom: 5px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
+.btn-icon { width: 96px; height: 96px; margin-bottom: 3px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
 .btn-label {
   color: rgb(255, 215, 0);
   font-family: 'TF2 Build', Verdana, Geneva, sans-serif;
@@ -171,7 +172,7 @@ div#button-container > a.on:hover {
   font-size: 16px;
 }
 /* Effects inside tiles */
-.effects { max-width: 90%; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.effects { max-width: 90%; display: flex; flex-wrap: wrap; justify-content: center; }
 /* Remove background/border for chips and apply config description colors */
 .effects .seg {
   display: inline-block;
