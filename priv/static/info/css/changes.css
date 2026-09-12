@@ -135,7 +135,7 @@ body {
   .content { grid-template-columns: 1fr; }
 }
 
-div#button-container > a.on {
+div#button-container a.on {
     width: 330px;  /* ~3x width */
     height: 300px; /* ~3x height */
     border-style: solid;
@@ -155,7 +155,7 @@ div#button-container > a.on {
     color: var(--text);
     text-decoration: none;
 }
-div#button-container > a.on:hover {
+div#button-container a.on:hover {
     border-color: #857d7a;
 }
 .btn-icon { width: 96px; height: 96px; margin-bottom: 3px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
@@ -271,7 +271,7 @@ div#neutral{ color: white; }
   .search {
     padding: .5rem .55rem;
   }
-  div#button-container > a.on {
+  div#button-container a.on {
     width: calc(50% - 10px);
     min-width: 0;
     height: auto;
@@ -307,7 +307,7 @@ div#neutral{ color: white; }
   .class-bar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  div#button-container > a.on {
+  div#button-container a.on {
     width: calc(100% - 8px);
     margin: 4px;
     min-height: 150px;
@@ -348,7 +348,30 @@ html.weapons-ingame #button-container {
   max-width: 1000px;
   gap: 5px;
 }
-html.weapons-ingame div#button-container > a.on {
+html.weapons-ingame #button-container.weapons-ingame-grouped {
+  display: block;
+}
+html.weapons-ingame .weapons-ingame-group + .weapons-ingame-group {
+  margin-top: 15px;
+}
+html.weapons-ingame .weapons-ingame-group > .tab-button-label {
+  display: block;
+  color: var(--text);
+  font-family: 'TF2 Build', Impact, sans-serif;
+  font-size: 1.2rem;
+  text-shadow: 1px 1px 0 #000;
+}
+html.weapons-ingame .weapons-ingame-group > hr {
+  margin: 3px 0 5px;
+  border: 0;
+  border-top: 1px solid #756b5e;
+}
+html.weapons-ingame .weapons-ingame-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+html.weapons-ingame #button-container a.on {
   width: 100%;
   max-width: 330px;
   height: 300px;

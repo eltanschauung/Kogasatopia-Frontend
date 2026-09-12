@@ -79,6 +79,23 @@
     return link;
   }
 
+  function createIngameGroup(label, items) {
+    const section = document.createElement("section");
+    section.className = "weapons-ingame-group";
+
+    const heading = document.createElement("span");
+    heading.className = "tab-button-label tab-button-label--desktop";
+    heading.textContent = label;
+
+    const divider = document.createElement("hr");
+    const grid = document.createElement("div");
+    grid.className = "weapons-ingame-grid";
+    items.forEach((item) => grid.appendChild(createTile(item)));
+
+    section.append(heading, divider, grid);
+    return section;
+  }
+
   function boot() {
     const payload = parsePayload();
     if (!payload || !payload.items_by_class) return;
@@ -106,6 +123,7 @@
       filter: "",
       customOnly: Boolean(hashState && hashState.customOnly),
       revertsOnly: Boolean(hashState && hashState.revertsOnly),
+      ingame: Boolean(hashState && hashState.ingame),
       showReskins: true,
       itemsByClass: payload.items_by_class
     };
@@ -153,6 +171,22 @@
     function renderTiles() {
       const items = matchingItems();
       container.innerHTML = "";
+      const groupedCustomIngame = state.ingame && state.customOnly;
+      container.classList.toggle("weapons-ingame-grouped", groupedCustomIngame);
+
+      if (groupedCustomIngame) {
+        container.append(
+          createIngameGroup(
+            "Custom Weapons",
+            items.filter((item) => !item.is_reskin)
+          ),
+          createIngameGroup(
+            "Reskins",
+            items.filter((item) => item.is_reskin)
+          )
+        );
+        return;
+      }
 
       if (!items.length) {
         const empty = document.createElement("div");
@@ -225,6 +259,7 @@
       state.filter = "";
       state.customOnly = Boolean(nextHashState && nextHashState.customOnly);
       state.revertsOnly = Boolean(nextHashState && nextHashState.revertsOnly);
+      state.ingame = Boolean(nextHashState && nextHashState.ingame);
       state.showReskins = true;
 
       search.value = "";
@@ -232,7 +267,7 @@
       showReskins.checked = true;
       document.documentElement.classList.toggle(
         "weapons-ingame",
-        Boolean(nextHashState && nextHashState.ingame)
+        state.ingame
       );
 
       syncClassButtons();
