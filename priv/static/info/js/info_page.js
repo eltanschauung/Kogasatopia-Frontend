@@ -1,4 +1,10 @@
 (() => {
+  const classAliases = {
+    demo: "demoman",
+    engi: "engineer",
+    all: "all_class"
+  };
+
   function $(selector, root = document) {
     return root.querySelector(selector);
   }
@@ -12,6 +18,22 @@
     } catch (_err) {
       return null;
     }
+  }
+
+  function parseHashState(itemsByClass) {
+    const hash = decodeURIComponent(window.location.hash.slice(1)).trim().toLowerCase();
+    if (!hash) return null;
+
+    const parts = hash.split("-").filter(Boolean);
+    const requestedClass = classAliases[parts[0]] || parts[0];
+    if (!Object.prototype.hasOwnProperty.call(itemsByClass, requestedClass)) return null;
+
+    const options = new Set(parts.slice(1));
+    return {
+      activeClass: requestedClass,
+      customOnly: options.has("custom"),
+      ingame: options.has("ingame")
+    };
   }
 
   function createTile(item) {
@@ -66,16 +88,21 @@
     const showReskins = $("#show-reskins");
     if (!classBar || !container || !search || !customOnly || !showReskins) return;
 
+    const hashState = parseHashState(payload.items_by_class);
     const clickSound = new Audio("/info/sound/tf2-button-click.mp3");
     clickSound.preload = "auto";
     clickSound.volume = 0.5;
-    customOnly.checked = false;
+    customOnly.checked = hashState ? hashState.customOnly : false;
     showReskins.checked = true;
+    document.documentElement.classList.toggle(
+      "weapons-ingame",
+      Boolean(hashState && hashState.ingame)
+    );
 
     const state = {
-      activeClass: payload.active_class || "scout",
+      activeClass: (hashState && hashState.activeClass) || payload.active_class || "scout",
       filter: "",
-      customOnly: false,
+      customOnly: Boolean(hashState && hashState.customOnly),
       showReskins: true,
       itemsByClass: payload.items_by_class
     };
@@ -181,6 +208,26 @@
 
     showReskins.addEventListener("change", () => {
       state.showReskins = showReskins.checked;
+      renderTiles();
+    });
+
+    window.addEventListener("hashchange", () => {
+      const nextHashState = parseHashState(state.itemsByClass);
+      state.activeClass =
+        (nextHashState && nextHashState.activeClass) || payload.active_class || "scout";
+      state.filter = "";
+      state.customOnly = Boolean(nextHashState && nextHashState.customOnly);
+      state.showReskins = true;
+
+      search.value = "";
+      customOnly.checked = state.customOnly;
+      showReskins.checked = true;
+      document.documentElement.classList.toggle(
+        "weapons-ingame",
+        Boolean(nextHashState && nextHashState.ingame)
+      );
+
+      syncClassButtons();
       renderTiles();
     });
 

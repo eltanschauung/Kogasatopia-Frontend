@@ -16,6 +16,11 @@
     />
     <meta property="og:url" content="https://kogasa.tf/info" />
     <meta property="og:type" content="website" />
+    <script>
+      if (/(?:^|-)ingame(?:-|$)/.test(decodeURIComponent(window.location.hash.slice(1)).toLowerCase())) {
+        document.documentElement.classList.add("weapons-ingame");
+      }
+    </script>
     <link rel="preload" as="style" href={"/info/css/changes.css?v=" <> @asset_version} />
     <link rel="preload" as="script" href={"/info/js/info_page.js?v=" <> @asset_version} />
     <link rel="preload" as="audio" href="/info/sound/tf2-button-click.mp3" />

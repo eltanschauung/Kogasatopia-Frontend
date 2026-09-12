@@ -317,3 +317,40 @@ div#neutral{ color: white; }
     height: 56px;
   }
 }
+
+html.weapons-ingame,
+html.weapons-ingame body {
+  min-height: 100%;
+  background: #3a352e;
+}
+html.weapons-ingame .weapons-nav,
+html.weapons-ingame .header,
+html.weapons-ingame .class-bar,
+html.weapons-ingame .filters {
+  display: none;
+}
+html.weapons-ingame .page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 5px;
+  background: transparent;
+  box-shadow: none;
+}
+html.weapons-ingame .content {
+  display: block;
+}
+html.weapons-ingame #button-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 5px;
+}
+html.weapons-ingame div#button-container > a.on {
+  width: calc(100vw - 10px);
+  max-width: 330px;
+  height: 300px;
+  max-height: 300px;
+  margin: 0;
+  float: none;
+}
