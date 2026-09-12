@@ -22,9 +22,7 @@ defmodule KogasaFrontendWeb.InfoHTML do
       <span class="btn-label">{@item.name}</span>
       <span :if={@item.type_level != ""} class="type-lvl">{@item.type_level}</span>
       <div class="effects">
-        <span :for={segment <- @item.effects} class={"seg " <> segment.cls}>
-          {segment.text}
-        </span>
+        <span :for={segment <- @item.effects} class={"seg " <> segment.cls}>{segment.text}</span>
       </div>
     </a>
     """

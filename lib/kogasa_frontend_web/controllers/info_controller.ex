@@ -8,11 +8,15 @@ defmodule KogasaFrontendWeb.InfoController do
 
     conn
     |> put_root_layout(false)
-    |> put_info_cache_headers()
+    |> put_info_cache_headers(params["view"])
     |> render(:index, assigns)
   end
 
-  defp put_info_cache_headers(conn) do
+  defp put_info_cache_headers(conn, view) when is_binary(view) and view != "" do
+    put_resp_header(conn, "cache-control", "no-store")
+  end
+
+  defp put_info_cache_headers(conn, _view) do
     put_resp_header(conn, "cache-control", "public, max-age=3600")
   end
 end
