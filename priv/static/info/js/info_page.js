@@ -29,9 +29,11 @@
     if (!Object.prototype.hasOwnProperty.call(itemsByClass, requestedClass)) return null;
 
     const options = new Set(parts.slice(1));
+    const revertsOnly = options.has("reverts");
     return {
       activeClass: requestedClass,
-      customOnly: options.has("custom"),
+      customOnly: !revertsOnly && options.has("custom"),
+      revertsOnly,
       ingame: options.has("ingame")
     };
   }
@@ -103,6 +105,7 @@
       activeClass: (hashState && hashState.activeClass) || payload.active_class || "scout",
       filter: "",
       customOnly: Boolean(hashState && hashState.customOnly),
+      revertsOnly: Boolean(hashState && hashState.revertsOnly),
       showReskins: true,
       itemsByClass: payload.items_by_class
     };
@@ -120,6 +123,7 @@
       const list = [];
 
       sourceItems.forEach((item) => {
+        if (state.revertsOnly && item.is_custom) return;
         if (state.customOnly && !item.is_custom) return;
         if (!state.showReskins && item.is_reskin) return;
         if (state.filter && item.is_hidden) return;
@@ -153,9 +157,11 @@
       if (!items.length) {
         const empty = document.createElement("div");
         empty.className = "empty";
-        empty.textContent = state.customOnly
-          ? "No custom weapons match your filter."
-          : "No changes for this class match your filter.";
+        empty.textContent = state.revertsOnly
+          ? "No weapon reverts match your filter."
+          : state.customOnly
+            ? "No custom weapons match your filter."
+            : "No changes for this class match your filter.";
         container.appendChild(empty);
         return;
       }
@@ -196,6 +202,7 @@
 
     customOnly.addEventListener("change", () => {
       state.customOnly = customOnly.checked;
+      state.revertsOnly = false;
 
       if (state.customOnly && !customItemsAvailableForActiveClass()) {
         const nextClass = firstClassWithCustomItems();
@@ -217,6 +224,7 @@
         (nextHashState && nextHashState.activeClass) || payload.active_class || "scout";
       state.filter = "";
       state.customOnly = Boolean(nextHashState && nextHashState.customOnly);
+      state.revertsOnly = Boolean(nextHashState && nextHashState.revertsOnly);
       state.showReskins = true;
 
       search.value = "";
