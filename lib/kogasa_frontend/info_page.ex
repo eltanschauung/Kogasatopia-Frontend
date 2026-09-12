@@ -7,21 +7,77 @@ defmodule KogasaFrontend.InfoPage do
   @active_class "scout"
   @classes Tf2Classes.info_classes()
   @class_icons Map.new(@classes, fn %{key: key, icon: icon} -> {key, icon} end)
+  @class_aliases %{"demo" => "demoman", "engi" => "engineer", "all" => "all_class"}
 
-  def assigns do
+  def assigns(view \\ nil) do
     items_by_class = load_items_by_class()
-    preload_images = preload_images(items_by_class)
+    initial_state = initial_state(view, items_by_class)
+    initial_items = initial_items(items_by_class, initial_state)
     config_update = config_update_metadata()
 
     %{
       classes: @classes,
-      active_class: @active_class,
-      initial_items: Map.get(items_by_class, @active_class, []),
-      payload_json: Jason.encode!(%{active_class: @active_class, items_by_class: items_by_class}),
+      active_class: initial_state.active_class,
+      initial_items: initial_items,
+      initial_custom_items: Enum.reject(initial_items, & &1.is_reskin),
+      initial_reskin_items: Enum.filter(initial_items, & &1.is_reskin),
+      initial_state: initial_state,
+      grouped_custom_ingame: initial_state.ingame && initial_state.custom_only,
+      payload_json:
+        if(initial_state.ingame,
+          do: nil,
+          else:
+            Jason.encode!(%{
+              active_class: initial_state.active_class,
+              initial_state: initial_state,
+              items_by_class: items_by_class
+            })
+        ),
       asset_version: asset_version(),
-      preload_images: preload_images,
+      preload_images: preload_images(initial_items, initial_state.ingame),
       config_update: config_update
     }
+  end
+
+  defp initial_state(view, items_by_class) when is_binary(view) do
+    case view |> String.trim() |> String.downcase() |> String.split("-", trim: true) do
+      [requested_class | options] ->
+        active_class = Map.get(@class_aliases, requested_class, requested_class)
+
+        if Map.has_key?(items_by_class, active_class) do
+          reverts_only = "reverts" in options
+
+          %{
+            active_class: active_class,
+            custom_only: !reverts_only && "custom" in options,
+            reverts_only: reverts_only,
+            ingame: "ingame" in options
+          }
+        else
+          default_state()
+        end
+
+      _ ->
+        default_state()
+    end
+  end
+
+  defp initial_state(_, _items_by_class), do: default_state()
+
+  defp default_state do
+    %{active_class: @active_class, custom_only: false, reverts_only: false, ingame: false}
+  end
+
+  defp initial_items(items_by_class, state) do
+    items_by_class
+    |> Map.get(state.active_class, [])
+    |> Enum.filter(fn item ->
+      cond do
+        state.reverts_only -> !item.is_custom
+        state.custom_only -> item.is_custom
+        true -> true
+      end
+    end)
   end
 
   defp load_items_by_class do
@@ -117,15 +173,11 @@ defmodule KogasaFrontend.InfoPage do
   defp fallback_icon(class_key),
     do: "/info/icons/" <> Map.get(@class_icons, class_key, "scout.png")
 
-  defp preload_images(items_by_class) do
+  defp preload_images(items, ingame) do
     class_images =
-      Enum.map(@classes, fn %{icon: icon} -> "/info/icons/" <> icon end)
+      if ingame, do: [], else: Enum.map(@classes, &("/info/icons/" <> &1.icon))
 
-    item_images =
-      items_by_class
-      |> Map.values()
-      |> List.flatten()
-      |> Enum.map(& &1.icon)
+    item_images = Enum.map(items, & &1.icon)
 
     (class_images ++ item_images)
     |> Enum.uniq()

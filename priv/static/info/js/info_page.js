@@ -38,12 +38,37 @@
     };
   }
 
+  function parseServerState(payload) {
+    const state = payload.initial_state;
+    if (!state) {
+      return {
+        activeClass: payload.active_class || "scout",
+        customOnly: false,
+        revertsOnly: false,
+        ingame: false
+      };
+    }
+
+    return {
+      activeClass: state.active_class || payload.active_class || "scout",
+      customOnly: Boolean(state.custom_only),
+      revertsOnly: Boolean(state.reverts_only),
+      ingame: Boolean(state.ingame)
+    };
+  }
+
+  function sameViewState(left, right) {
+    return left.activeClass === right.activeClass
+      && left.customOnly === right.customOnly
+      && left.revertsOnly === right.revertsOnly
+      && left.ingame === right.ingame;
+  }
+
   function createTile(item) {
     const link = document.createElement("a");
     link.href = "#";
     link.className = "on";
     link.title = item.title || item.name || "";
-    link.addEventListener("click", (event) => event.preventDefault());
 
     // Preserved for the TF2 backpack-style item frame experiment.
     // const iconFrame = document.createElement("div");
@@ -107,23 +132,25 @@
     const showReskins = $("#show-reskins");
     if (!classBar || !container || !search || !customOnly || !showReskins) return;
 
+    const serverState = parseServerState(payload);
     const hashState = parseHashState(payload.items_by_class);
+    const initialState = hashState || serverState;
     const clickSound = new Audio("/info/sound/tf2-button-click.mp3");
     clickSound.preload = "auto";
     clickSound.volume = 0.5;
-    customOnly.checked = hashState ? hashState.customOnly : false;
+    customOnly.checked = initialState.customOnly;
     showReskins.checked = true;
     document.documentElement.classList.toggle(
       "weapons-ingame",
-      Boolean(hashState && hashState.ingame)
+      initialState.ingame
     );
 
     const state = {
-      activeClass: (hashState && hashState.activeClass) || payload.active_class || "scout",
+      activeClass: initialState.activeClass,
       filter: "",
-      customOnly: Boolean(hashState && hashState.customOnly),
-      revertsOnly: Boolean(hashState && hashState.revertsOnly),
-      ingame: Boolean(hashState && hashState.ingame),
+      customOnly: initialState.customOnly,
+      revertsOnly: initialState.revertsOnly,
+      ingame: initialState.ingame,
       showReskins: true,
       itemsByClass: payload.items_by_class
     };
@@ -229,6 +256,10 @@
       btn.addEventListener("click", () => playClickSound());
     });
 
+    container.addEventListener("click", (event) => {
+      if (event.target.closest("a.on")) event.preventDefault();
+    });
+
     search.addEventListener("input", () => {
       state.filter = (search.value || "").trim().toLowerCase();
       renderTiles();
@@ -275,7 +306,7 @@
     });
 
     syncClassButtons();
-    renderTiles();
+    if (!sameViewState(state, serverState)) renderTiles();
   }
 
   if (document.readyState === "loading") {

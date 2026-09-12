@@ -323,6 +323,9 @@ html.weapons-ingame body {
   min-height: 100%;
   background: #3a352e;
 }
+html.weapons-preloading .page {
+  visibility: hidden;
+}
 html.weapons-ingame .weapons-nav,
 html.weapons-ingame .header,
 html.weapons-ingame .class-bar,

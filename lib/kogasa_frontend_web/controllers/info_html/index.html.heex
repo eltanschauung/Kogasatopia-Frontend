@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class={@initial_state.ingame && "weapons-ingame"}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -17,26 +17,63 @@
     <meta property="og:url" content="https://kogasa.tf/info" />
     <meta property="og:type" content="website" />
     <script>
-      if (/(?:^|-)ingame(?:-|$)/.test(decodeURIComponent(window.location.hash.slice(1)).toLowerCase())) {
-        document.documentElement.classList.add("weapons-ingame");
+      const weaponsRoot = document.documentElement;
+      const weaponsHashIsIngame = /(?:^|-)ingame(?:-|$)/.test(
+        decodeURIComponent(window.location.hash.slice(1)).toLowerCase()
+      );
+
+      if (weaponsRoot.classList.contains("weapons-ingame") || weaponsHashIsIngame) {
+        weaponsRoot.classList.add("weapons-ingame", "weapons-preloading");
+        window.addEventListener("load", function () {
+          weaponsRoot.classList.remove("weapons-preloading");
+        });
       }
     </script>
     <link rel="preload" as="style" href={"/info/css/changes.css?v=" <> @asset_version} />
-    <link rel="preload" as="script" href={"/info/js/info_page.js?v=" <> @asset_version} />
-    <link rel="preload" as="audio" href="/info/sound/tf2-button-click.mp3" />
     <link
+      :if={!@initial_state.ingame}
+      rel="preload"
+      as="script"
+      href={"/info/js/info_page.js?v=" <> @asset_version}
+    />
+    <link rel="preload" as="font" type="font/ttf" href="/fonts/TF2Build.ttf" crossorigin />
+    <link rel="preload" as="font" type="font/ttf" href="/fonts/TF2Secondary.ttf" crossorigin />
+    <link
+      :if={!@initial_state.ingame}
+      rel="preload"
+      as="audio"
+      href="/info/sound/tf2-button-click.mp3"
+    />
+    <link
+      :if={!@initial_state.ingame}
       rel="preload"
       as="image"
       href="/info/icons/backgrounds/tf2full.jpg"
       fetchpriority="high"
     />
-    <link :for={src <- @preload_images} rel="preload" as="image" href={src} />
+    <link
+      :for={src <- @preload_images}
+      rel="preload"
+      as="image"
+      href={src}
+      fetchpriority="high"
+    />
     <link rel="stylesheet" href={"/info/css/changes.css?v=" <> @asset_version} />
+    <noscript>
+      <style>
+        html.weapons-preloading .page { visibility: visible; }
+      </style>
+    </noscript>
   </head>
   <body>
-    <.section_nav active={:weapons} class="weapons-nav" online_count_id={nil} />
+    <.section_nav
+      :if={!@initial_state.ingame}
+      active={:weapons}
+      class="weapons-nav"
+      online_count_id={nil}
+    />
     <div class="page">
-      <header class="header">
+      <header :if={!@initial_state.ingame} class="header">
         <div class="title-group">
           <div class="brand-line">
             <div class="brand">Kogasatopia Weapons Page</div>
@@ -50,7 +87,7 @@
         </div>
       </header>
 
-      <nav class="class-bar" id="class-bar">
+      <nav :if={!@initial_state.ingame} class="class-bar" id="class-bar">
         <button
           :for={class <- @classes}
           class={["class-btn", class.key == @active_class && "active"]}
@@ -63,7 +100,7 @@
       </nav>
 
       <section class="content">
-        <aside class="filters">
+        <aside :if={!@initial_state.ingame} class="filters">
           <label class="filter-label">Search</label>
           <input type="text" id="search" class="search" placeholder="Find a weapon or effect..." />
           <label class="home-btn filter-toggle" for="custom-only">
@@ -76,30 +113,52 @@
           </label>
         </aside>
         <main>
-          <div id="button-container">
-            <a :for={item <- @initial_items} href="#" class="on" title={item.title}>
-              <%!--
-              <div class="tf-backpack-item-center">
-                <img class="btn-icon" src={item.icon} />
-              </div>
-              --%>
-              <img class="btn-icon" src={item.icon} />
-              <span class="btn-label">{item.name}</span>
-              <span :if={item.type_level != ""} class="type-lvl">{item.type_level}</span>
-              <div class="effects">
-                <span :for={segment <- item.effects} class={"seg " <> segment.cls}>
-                  {segment.text}
-                </span>
-              </div>
-            </a>
+          <div
+            id="button-container"
+            class={@grouped_custom_ingame && "weapons-ingame-grouped"}
+          >
+            <%= if @grouped_custom_ingame do %>
+              <section class="weapons-ingame-group">
+                <span class="tab-button-label tab-button-label--desktop">Custom Weapons</span>
+                <hr />
+                <div class="weapons-ingame-grid">
+                  <.weapon_tile
+                    :for={item <- @initial_custom_items}
+                    item={item}
+                    inert={true}
+                  />
+                </div>
+              </section>
+              <section class="weapons-ingame-group">
+                <span class="tab-button-label tab-button-label--desktop">Reskins</span>
+                <hr />
+                <div class="weapons-ingame-grid">
+                  <.weapon_tile
+                    :for={item <- @initial_reskin_items}
+                    item={item}
+                    inert={true}
+                  />
+                </div>
+              </section>
+            <% else %>
+              <.weapon_tile
+                :for={item <- @initial_items}
+                item={item}
+                inert={@initial_state.ingame}
+              />
+            <% end %>
           </div>
         </main>
       </section>
     </div>
-    <script id="info-data" type="application/json">
+    <script :if={!@initial_state.ingame} id="info-data" type="application/json">
       <%= Phoenix.HTML.raw(@payload_json) %>
     </script>
-    <script defer src={"/info/js/info_page.js?v=" <> @asset_version}>
+    <script
+      :if={!@initial_state.ingame}
+      defer
+      src={"/info/js/info_page.js?v=" <> @asset_version}
+    >
     </script>
   </body>
 </html>

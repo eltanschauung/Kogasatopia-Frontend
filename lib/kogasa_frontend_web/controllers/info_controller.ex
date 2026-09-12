@@ -3,8 +3,8 @@ defmodule KogasaFrontendWeb.InfoController do
 
   alias KogasaFrontend.InfoPage
 
-  def entry(conn, _params) do
-    assigns = InfoPage.assigns()
+  def entry(conn, params) do
+    assigns = InfoPage.assigns(params["view"])
 
     conn
     |> put_root_layout(false)
