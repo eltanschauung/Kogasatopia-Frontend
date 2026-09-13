@@ -87,6 +87,8 @@ defmodule KogasaFrontendWeb.Router do
     pipe_through :api
 
     get "/playercount", OnlineSummaryController, :index
+    post "/weapons/panel/:token/actions", WeaponsPanelController, :create_action
+    get "/weapons/panel/:token/actions/:action_id", WeaponsPanelController, :show_action
   end
 
   scope "/playercount_widget", KogasaFrontendWeb do

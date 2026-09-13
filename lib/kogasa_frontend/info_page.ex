@@ -2,6 +2,7 @@ defmodule KogasaFrontend.InfoPage do
   @moduledoc false
 
   alias KogasaFrontend.Tf2Classes
+  alias KogasaFrontend.WeaponPanel
   alias KogasaFrontend.WeaponsConfig
 
   @active_class "scout"
@@ -9,10 +10,16 @@ defmodule KogasaFrontend.InfoPage do
   @class_icons Map.new(@classes, fn %{key: key, icon: icon} -> {key, icon} end)
   @class_aliases %{"demo" => "demoman", "engi" => "engineer", "all" => "all_class"}
 
-  def assigns(view \\ nil) do
+  def assigns(view \\ nil, session_token \\ nil) do
     items_by_class = load_items_by_class()
     initial_state = initial_state(view, items_by_class)
-    initial_items = initial_items(items_by_class, initial_state)
+    panel_session = panel_session(session_token, initial_state)
+
+    initial_items =
+      items_by_class
+      |> initial_items(initial_state)
+      |> mark_equipped(panel_session)
+
     config_update = config_update_metadata()
 
     %{
@@ -23,6 +30,7 @@ defmodule KogasaFrontend.InfoPage do
       initial_reskin_items: Enum.filter(initial_items, & &1.is_reskin),
       initial_state: initial_state,
       grouped_custom_ingame: initial_state.ingame && initial_state.custom_only,
+      panel_session: panel_session,
       payload_json:
         if(initial_state.ingame,
           do: nil,
@@ -101,6 +109,7 @@ defmodule KogasaFrontend.InfoPage do
 
     %{
       name: item.name,
+      uid: item.key,
       type_level: type_level,
       icon: icon_path(item.image, class_key),
       is_custom: item.type == "custom",
@@ -118,6 +127,23 @@ defmodule KogasaFrontend.InfoPage do
         ),
       effects: effects
     }
+  end
+
+  defp panel_session(token, %{ingame: true, custom_only: true, active_class: class_key}) do
+    class_id = Enum.find_value(@classes, &if(&1.key == class_key, do: &1.id))
+
+    case WeaponPanel.fetch_session(token, class_id) do
+      {:ok, session} -> session
+      :error -> nil
+    end
+  end
+
+  defp panel_session(_token, _state), do: nil
+
+  defp mark_equipped(items, nil), do: Enum.map(items, &Map.put(&1, :equipped, false))
+
+  defp mark_equipped(items, session) do
+    Enum.map(items, &Map.put(&1, :equipped, MapSet.member?(session.equipped_uids, &1.uid)))
   end
 
   defp search_text(
@@ -185,7 +211,11 @@ defmodule KogasaFrontend.InfoPage do
   end
 
   defp asset_version do
-    ["priv/static/info/css/changes.css", "priv/static/info/js/info_page.js"]
+    [
+      "priv/static/info/css/changes.css",
+      "priv/static/info/js/info_page.js",
+      "priv/static/info/js/weapons_panel.js"
+    ]
     |> Enum.flat_map(fn path ->
       case File.stat(Path.expand(path), time: :posix) do
         {:ok, %{mtime: mtime}} -> [mtime]

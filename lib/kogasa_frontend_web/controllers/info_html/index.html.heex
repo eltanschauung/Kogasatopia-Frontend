@@ -1,5 +1,13 @@
 <!doctype html>
-<html lang="en" class={@initial_state.ingame && "weapons-ingame"}>
+<html
+  lang="en"
+  class={[
+    @initial_state.ingame && "weapons-ingame",
+    @panel_session && "weapons-panel-active"
+  ]}
+  data-steamid64={@panel_session && @panel_session.steamid64}
+  data-weapons-session={@panel_session && @panel_session.token}
+>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -35,6 +43,12 @@
       rel="preload"
       as="script"
       href={"/info/js/info_page.js?v=" <> @asset_version}
+    />
+    <link
+      :if={@panel_session}
+      rel="preload"
+      as="script"
+      href={"/info/js/weapons_panel.js?v=" <> @asset_version}
     />
     <link rel="preload" as="font" type="font/ttf" href="/fonts/TF2Build.ttf" crossorigin />
     <link rel="preload" as="font" type="font/ttf" href="/fonts/TF2Secondary.ttf" crossorigin />
@@ -125,7 +139,8 @@
                   <.weapon_tile
                     :for={item <- @initial_custom_items}
                     item={item}
-                    inert={true}
+                    inert={is_nil(@panel_session)}
+                    interactive={!is_nil(@panel_session)}
                   />
                 </div>
               </section>
@@ -136,7 +151,8 @@
                   <.weapon_tile
                     :for={item <- @initial_reskin_items}
                     item={item}
-                    inert={true}
+                    inert={is_nil(@panel_session)}
+                    interactive={!is_nil(@panel_session)}
                   />
                 </div>
               </section>
@@ -145,6 +161,7 @@
                 :for={item <- @initial_items}
                 item={item}
                 inert={@initial_state.ingame}
+                interactive={false}
               />
             <% end %>
           </div>
@@ -158,6 +175,12 @@
       :if={!@initial_state.ingame}
       defer
       src={"/info/js/info_page.js?v=" <> @asset_version}
+    >
+    </script>
+    <script
+      :if={@panel_session}
+      defer
+      src={"/info/js/weapons_panel.js?v=" <> @asset_version}
     >
     </script>
   </body>

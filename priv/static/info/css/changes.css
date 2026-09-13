@@ -157,6 +157,16 @@ div#button-container a.on {
 div#button-container a.on:hover {
     border-color: #857d7a;
 }
+html.weapons-panel-active div#button-container a.on {
+  cursor: pointer;
+}
+div#button-container a.on.is-equipped,
+div#button-container a.on.is-equipped:hover {
+  border-color: rgb(255, 215, 0);
+}
+div#button-container a.on.is-pending {
+  pointer-events: none;
+}
 .btn-icon { width: 96px; height: 96px; margin-bottom: 3px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
 .btn-label {
   color: rgb(255, 215, 0);
