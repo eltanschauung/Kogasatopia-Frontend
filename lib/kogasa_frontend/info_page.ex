@@ -26,8 +26,8 @@ defmodule KogasaFrontend.InfoPage do
       classes: @classes,
       active_class: initial_state.active_class,
       initial_items: initial_items,
-      initial_custom_items: Enum.reject(initial_items, &(&1.is_reskin || &1.is_all_class)),
-      initial_reskin_items: Enum.filter(initial_items, &(&1.is_reskin || &1.is_all_class)),
+      initial_custom_items: section_items(initial_items, false),
+      initial_reskin_items: section_items(initial_items, true),
       initial_state: initial_state,
       grouped_custom_ingame: initial_state.ingame && initial_state.custom_only,
       panel_session: panel_session,
@@ -145,6 +145,12 @@ defmodule KogasaFrontend.InfoPage do
 
   defp mark_equipped(items, session) do
     Enum.map(items, &Map.put(&1, :equipped, MapSet.member?(session.equipped_uids, &1.uid)))
+  end
+
+  defp section_items(items, reskin?) do
+    items
+    |> Enum.filter(&(&1.is_reskin == reskin?))
+    |> Enum.sort_by(&if(&1.is_all_class, do: 1, else: 0))
   end
 
   defp search_text(

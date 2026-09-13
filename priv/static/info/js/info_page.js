@@ -121,6 +121,12 @@
     return section;
   }
 
+  function sectionItems(items, reskin) {
+    return items
+      .filter((item) => Boolean(item.is_reskin) === reskin)
+      .sort((left, right) => Number(left.is_all_class) - Number(right.is_all_class));
+  }
+
   function boot() {
     const payload = parsePayload();
     if (!payload || !payload.items_by_class) return;
@@ -205,11 +211,11 @@
         container.append(
           createIngameGroup(
             "Custom Weapons",
-            items.filter((item) => !item.is_reskin && !item.is_all_class)
+            sectionItems(items, false)
           ),
           createIngameGroup(
             "Reskins",
-            items.filter((item) => item.is_reskin || item.is_all_class)
+            sectionItems(items, true)
           )
         );
         return;
