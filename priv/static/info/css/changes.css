@@ -167,6 +167,14 @@ div#button-container a.on.is-equipped:hover {
 div#button-container a.on.is-pending {
   pointer-events: none;
 }
+div#button-container a.on.is-locked,
+div#button-container a.on.is-locked:hover {
+  border-color: rgb(71, 68, 64);
+  cursor: default;
+  filter: grayscale(0.75);
+  opacity: 0.55;
+  pointer-events: none;
+}
 .btn-icon { width: 96px; height: 96px; margin-bottom: 3px; object-fit: contain; image-rendering: -webkit-optimize-contrast; filter: drop-shadow(0 1px 0 #000); }
 .btn-label {
   color: rgb(255, 215, 0);

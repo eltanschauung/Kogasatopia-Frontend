@@ -8,9 +8,13 @@ defmodule KogasaFrontend.WeaponPanel do
 
   def fetch_session(token, expected_class_id) when is_integer(expected_class_id) do
     with true <- valid_session_token?(token),
-         {:ok, %{rows: [[steamid64, ^expected_class_id, equipped_uids]]}} <-
+         {:ok,
+          %{
+            rows: [[steamid64, ^expected_class_id, equipped_uids, locked_purchase_keys]]
+          }} <-
            Repo.query(
-             "SELECT steamid64, class_index, equipped_uids FROM weapons_web_sessions " <>
+             "SELECT steamid64, class_index, equipped_uids, locked_purchase_keys " <>
+               "FROM weapons_web_sessions " <>
                "WHERE token = ? AND expires_at >= ? LIMIT 1",
              [token, now()]
            ) do
@@ -19,7 +23,8 @@ defmodule KogasaFrontend.WeaponPanel do
          token: token,
          steamid64: steamid64,
          class_id: expected_class_id,
-         equipped_uids: split_loadout(equipped_uids)
+         equipped_uids: split_list(equipped_uids),
+         locked_purchase_keys: split_list(locked_purchase_keys)
        }}
     else
       _ -> :error
@@ -72,7 +77,7 @@ defmodule KogasaFrontend.WeaponPanel do
       {:ok,
        %{
          status: status,
-         equipped_uids: result_loadout |> split_loadout() |> MapSet.to_list(),
+         equipped_uids: result_loadout |> split_list() |> MapSet.to_list(),
          error: error_code
        }}
     else
@@ -87,12 +92,12 @@ defmodule KogasaFrontend.WeaponPanel do
     byte_size(uid) in 1..64 and not String.contains?(uid, ["\0", "|", "\r", "\n"])
   end
 
-  defp split_loadout(value) when is_binary(value) do
+  defp split_list(value) when is_binary(value) do
     value
     |> String.split("|", trim: true)
     |> MapSet.new()
   end
 
-  defp split_loadout(_value), do: MapSet.new()
+  defp split_list(_value), do: MapSet.new()
   defp now, do: System.system_time(:second)
 end

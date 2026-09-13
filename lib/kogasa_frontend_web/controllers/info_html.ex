@@ -10,12 +10,13 @@ defmodule KogasaFrontendWeb.InfoHTML do
   def weapon_tile(assigns) do
     ~H"""
     <a
-      href={if @inert, do: nil, else: "#"}
-      class={["on", @item.equipped && "is-equipped"]}
+      href={if @inert || @item.locked, do: nil, else: "#"}
+      class={["on", @item.equipped && "is-equipped", @item.locked && "is-locked"]}
       title={@item.title}
       data-weapon-uid={@item.uid}
       data-weapon-name={@item.name}
-      aria-pressed={@interactive && to_string(@item.equipped)}
+      aria-pressed={@interactive && !@item.locked && to_string(@item.equipped)}
+      aria-disabled={@item.locked && "true"}
     >
       <img
         class="btn-icon"
@@ -28,7 +29,9 @@ defmodule KogasaFrontendWeb.InfoHTML do
         fetchpriority="high"
       />
       <span class="btn-label">{if @item.equipped, do: "Equipped", else: @item.name}</span>
-      <span :if={@item.type_level != ""} class="type-lvl">{@item.type_level}</span>
+      <span :if={@item.locked || @item.type_level != ""} class="type-lvl">
+        {if @item.locked, do: "!shop Item", else: @item.type_level}
+      </span>
       <div class="effects">
         <span :for={segment <- @item.effects} class={"seg " <> segment.cls}>{segment.text}</span>
       </div>

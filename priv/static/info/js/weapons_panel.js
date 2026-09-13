@@ -58,7 +58,7 @@
     const card = event.target.closest("a.on[data-weapon-uid]");
     if (!card || !container.contains(card)) return;
     event.preventDefault();
-    if (busy) return;
+    if (busy || card.classList.contains("is-locked")) return;
 
     const previous = cards()
       .filter((item) => item.classList.contains("is-equipped"))

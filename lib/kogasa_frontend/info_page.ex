@@ -116,6 +116,7 @@ defmodule KogasaFrontend.InfoPage do
       is_hidden: item.hidden,
       is_reskin: item.reskin_only,
       is_all_class: item.all_class,
+      purchase_key: item.points_store_purchase,
       title: title_text(item.name, title_segments),
       search:
         search_text(
@@ -141,10 +142,19 @@ defmodule KogasaFrontend.InfoPage do
 
   defp panel_session(_token, _state), do: nil
 
-  defp mark_equipped(items, nil), do: Enum.map(items, &Map.put(&1, :equipped, false))
+  defp mark_equipped(items, nil) do
+    Enum.map(items, &Map.merge(&1, %{equipped: false, locked: false}))
+  end
 
   defp mark_equipped(items, session) do
-    Enum.map(items, &Map.put(&1, :equipped, MapSet.member?(session.equipped_uids, &1.uid)))
+    Enum.map(items, fn item ->
+      Map.merge(item, %{
+        equipped: MapSet.member?(session.equipped_uids, item.uid),
+        locked:
+          item.purchase_key != "" &&
+            MapSet.member?(session.locked_purchase_keys, item.purchase_key)
+      })
+    end)
   end
 
   defp section_items(items, reskin?) do
