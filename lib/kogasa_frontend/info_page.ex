@@ -26,8 +26,8 @@ defmodule KogasaFrontend.InfoPage do
       classes: @classes,
       active_class: initial_state.active_class,
       initial_items: initial_items,
-      initial_custom_items: Enum.reject(initial_items, & &1.is_reskin),
-      initial_reskin_items: Enum.filter(initial_items, & &1.is_reskin),
+      initial_custom_items: Enum.reject(initial_items, &(&1.is_reskin || &1.is_all_class)),
+      initial_reskin_items: Enum.filter(initial_items, &(&1.is_reskin || &1.is_all_class)),
       initial_state: initial_state,
       grouped_custom_ingame: initial_state.ingame && initial_state.custom_only,
       panel_session: panel_session,
@@ -115,6 +115,7 @@ defmodule KogasaFrontend.InfoPage do
       is_custom: item.type == "custom",
       is_hidden: item.hidden,
       is_reskin: item.reskin_only,
+      is_all_class: item.all_class,
       title: title_text(item.name, title_segments),
       search:
         search_text(

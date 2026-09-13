@@ -205,11 +205,11 @@
         container.append(
           createIngameGroup(
             "Custom Weapons",
-            items.filter((item) => !item.is_reskin)
+            items.filter((item) => !item.is_reskin && !item.is_all_class)
           ),
           createIngameGroup(
             "Reskins",
-            items.filter((item) => item.is_reskin)
+            items.filter((item) => item.is_reskin || item.is_all_class)
           )
         );
         return;

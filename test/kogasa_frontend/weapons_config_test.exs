@@ -102,7 +102,8 @@ defmodule KogasaFrontend.WeaponsConfigTest do
 
     assert [
              %{name: "Revert Gun", hidden: false},
-             %{name: "Hidden Revert Gun", hidden: true}
+             %{name: "Hidden Revert Gun", hidden: true},
+             %{name: "All Class Item", all_class: true}
            ] = items["scout"]
 
     assert [
@@ -118,6 +119,10 @@ defmodule KogasaFrontend.WeaponsConfigTest do
              %{
                name: "Hidden Custom Gun",
                hidden: true
+             },
+             %{
+               name: "All Class Item",
+               all_class: true
              }
            ] =
              items["heavy"]
@@ -130,12 +135,15 @@ defmodule KogasaFrontend.WeaponsConfigTest do
                neutral: "",
                negative: "",
                reskin_only: false
+             },
+             %{
+               name: "All Class Item",
+               all_class: true
              }
            ] = items["soldier"]
 
-    assert [%{name: "All Class Item", positive: "Everyone can equip it"}] = items["all_class"]
-
-    refute Enum.any?(items["scout"], &(&1.name == "All Class Item"))
+    assert [%{name: "All Class Item", positive: "Everyone can equip it", all_class: true}] =
+             items["all_class"]
 
     assert WeaponsConfig.custom_item_names(config_path) == %{
              "custom_heavy" => "Custom Heavy Gun",

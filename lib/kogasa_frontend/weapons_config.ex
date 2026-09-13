@@ -31,9 +31,19 @@ defmodule KogasaFrontend.WeaponsConfig do
     root = load_weapons_root(path)
     standard_items = standard_items_by_class(classes, root)
     custom_items = custom_items_by_class(classes, root)
+    all_class_custom_items = Map.get(custom_items, @all_class_key, [])
 
     Enum.into(classes, %{}, fn %{key: class_key} ->
-      {class_key, Map.get(standard_items, class_key, []) ++ Map.get(custom_items, class_key, [])}
+      class_custom_items = Map.get(custom_items, class_key, [])
+
+      class_custom_items =
+        if class_key == @all_class_key do
+          class_custom_items
+        else
+          class_custom_items ++ all_class_custom_items
+        end
+
+      {class_key, Map.get(standard_items, class_key, []) ++ class_custom_items}
     end)
   end
 
@@ -189,6 +199,7 @@ defmodule KogasaFrontend.WeaponsConfig do
       points_store_purchase: value(children, "points_store_purchase", ""),
       hidden: hidden_item?(children),
       reskin_only: truthy_value?(value(children, "reskin_only", "")),
+      all_class: false,
       positive: value(description, "positive", ""),
       neutral: value(description, "neutral", ""),
       negative: value(description, "negative", "")
@@ -207,6 +218,7 @@ defmodule KogasaFrontend.WeaponsConfig do
       points_store_purchase: value(children, "points_store_purchase", ""),
       hidden: hidden_item?(children),
       reskin_only: truthy_value?(value(children, "reskin_only", "")),
+      all_class: truthy_value?(value(children, "all_class", "")),
       positive: value(description, "positive", ""),
       neutral: value(description, "neutral", ""),
       negative: value(description, "negative", "")
