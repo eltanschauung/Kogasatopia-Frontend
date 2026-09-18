@@ -296,7 +296,10 @@
         <div class="stats-toolbar">
           <div class="stats-muted" id="stats-cumulative-meta">
             {number_format(@cumulative[:total] || 0)}
-            <span class="admin-name" title="(kills + deaths) >= 200  and playtime >= 3 hours">
+            <span
+              class="admin-name"
+              title="Play in a minimum of 50 matches on one of 70 qualifying maps. Stats are derived from your most recent 50 match logs."
+            >
               ranked
             </span>
             players
@@ -436,7 +439,7 @@
       }
 
       function renderCumulative(payload) {
-        const rankedTitle = '(kills + deaths) >= 200  and playtime >= 3 hours';
+        const rankedTitle = 'Play in a minimum of 50 matches on one of 70 qualifying maps. Stats are derived from your most recent 50 match logs.';
         const rankedLabel = `<span class="admin-name" title="${UI.escapeHtml(rankedTitle)}">ranked</span>`;
         els.cumulativeMeta.innerHTML = `${UI.numberFormat(payload.totalRows ?? payload.total ?? 0)} ${rankedLabel} players • page ${payload.page || 1} / ${payload.totalPages || payload.total_pages || 1}`;
         if (typeof payload.html === 'string' && els.cumulativeFragment) {
