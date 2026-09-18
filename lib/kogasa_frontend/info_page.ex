@@ -91,7 +91,12 @@ defmodule KogasaFrontend.InfoPage do
   defp load_items_by_class do
     WeaponsConfig.items_by_class(@classes)
     |> Enum.into(%{}, fn {class_key, items} ->
-      {class_key, Enum.map(items, &normalize_item(&1, class_key))}
+      normalized_items =
+        items
+        |> Enum.map(&normalize_item(&1, class_key))
+        |> Enum.sort_by(& &1.display_order)
+
+      {class_key, normalized_items}
     end)
   end
 
@@ -116,6 +121,7 @@ defmodule KogasaFrontend.InfoPage do
       is_hidden: item.hidden,
       is_reskin: item.reskin_only,
       is_all_class: item.all_class,
+      display_order: display_order(item.reskin_only, item.all_class),
       purchase_key: item.points_store_purchase,
       title: title_text(item.name, title_segments),
       search:
@@ -160,7 +166,10 @@ defmodule KogasaFrontend.InfoPage do
   defp section_items(items, reskin?) do
     items
     |> Enum.filter(&(&1.is_reskin == reskin?))
-    |> Enum.sort_by(&if(&1.is_all_class, do: 1, else: 0))
+  end
+
+  defp display_order(reskin?, all_class?) do
+    if(reskin?, do: 2, else: 0) + if(all_class?, do: 1, else: 0)
   end
 
   defp search_text(

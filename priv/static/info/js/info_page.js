@@ -124,7 +124,7 @@
   function sectionItems(items, reskin) {
     return items
       .filter((item) => Boolean(item.is_reskin) === reskin)
-      .sort((left, right) => Number(left.is_all_class) - Number(right.is_all_class));
+      .sort((left, right) => Number(left.display_order) - Number(right.display_order));
   }
 
   function boot() {
@@ -186,7 +186,9 @@
         list.push(item);
       });
 
-      return list;
+      return list.sort(
+        (left, right) => Number(left.display_order) - Number(right.display_order)
+      );
     }
 
     function customItemsAvailableForActiveClass() {
