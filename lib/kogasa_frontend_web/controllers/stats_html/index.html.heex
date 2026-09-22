@@ -213,15 +213,15 @@
         </div>
 
         <div class="stat-card stat-card--currency">
-          <h3>Server Currency (<span class="gems-accent">Gems</span>)</h3>
+          <h3>Server Currency</h3>
           <p>
-            Total <span class="gems-accent">Gems</span>:
+            Total Gems:
             <span class="gems-value">
               {if @currency_snapshot, do: number_format(@currency_snapshot.total_gems), else: "—"}
             </span>
           </p>
           <p>
-            Players With Over 100 <span class="gems-accent">Gems</span>:
+            Players With Over 100 Gems:
             <span class="gems-value">
               {if @currency_snapshot,
                 do: number_format(@currency_snapshot.players_over_100),
@@ -229,8 +229,7 @@
             </span>
           </p>
           <p>
-            <span class="gems-accent">Gems</span>
-            in Welfare Pool (Deflated):
+            Gems in Welfare Pool (Deflated):
             <span class="gems-value">
               {if @currency_snapshot,
                 do: number_format(@currency_snapshot.welfare_pool_gems),

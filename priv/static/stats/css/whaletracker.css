@@ -637,7 +637,6 @@ body {
     line-height: 1.35;
 }
 
-.stat-card--currency .gems-accent,
 .stat-card--currency .gems-value {
     color: #00ffff;
 }
