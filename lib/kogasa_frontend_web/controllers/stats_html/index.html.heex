@@ -1,6 +1,7 @@
 <Layouts.app flash={@flash} wide={true}>
-  <script defer src="/assets/js/app/match_log_sort.js"></script>
-  <link rel="stylesheet" href={"/stats/css/whaletracker.css?v=#{@tab_hash || "dev"}"} />
+  <script defer src="/assets/js/app/match_log_sort.js">
+  </script>
+  <link rel="stylesheet" href={"/stats/css/whaletracker.css?v=#{@tab_hash || "dev"}-currency-1"} />
   <link rel="stylesheet" href="/stats/css/stats_page.css" />
 
   <div class="stats-shell">
@@ -211,9 +212,31 @@
           <p>{number_format(map_get(s, :total_damage, 0))}</p>
         </div>
 
-        <div class="stat-card">
-          <h3>Total Damage Taken</h3>
-          <p>{number_format(map_get(s, :total_damage_taken, 0))}</p>
+        <div class="stat-card stat-card--currency">
+          <h3>Server Currency (<span class="gems-accent">Gems</span>)</h3>
+          <p>
+            Total <span class="gems-accent">Gems</span>:
+            <span class="gems-value">
+              {if @currency_snapshot, do: number_format(@currency_snapshot.total_gems), else: "—"}
+            </span>
+          </p>
+          <p>
+            Players With Over 100 <span class="gems-accent">Gems</span>:
+            <span class="gems-value">
+              {if @currency_snapshot,
+                do: number_format(@currency_snapshot.players_over_100),
+                else: "—"}
+            </span>
+          </p>
+          <p>
+            <span class="gems-accent">Gems</span>
+            in Welfare Pool (Deflated):
+            <span class="gems-value">
+              {if @currency_snapshot,
+                do: number_format(@currency_snapshot.welfare_pool_gems),
+                else: "—"}
+            </span>
+          </p>
         </div>
 
         <div class="stat-card stat-card-streak">

@@ -19,6 +19,7 @@ defmodule KogasaFrontend.StatsFeed do
 
   @default_avatar "/stats/assets/whaley-avatar.jpg"
   @stats_table "whaletracker"
+  @currency_snapshot_table "points_store_currency_snapshot"
   @points_cache_table "whaletracker_points_cache"
   @logs_table "whaletracker_logs"
   @log_players_table "whaletracker_log_players"
@@ -57,6 +58,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     %{
       summary: summary(),
+      currency_snapshot: currency_snapshot(),
       performance_averages: performance_averages(),
       cumulative: cumulative(%{q: search, page: page, per_page: per_page, player: player}),
       current_log: current_log(%{identity_mode: PlayerIdentity.stats_mode()}),
@@ -112,6 +114,25 @@ defmodule KogasaFrontend.StatsFeed do
     end
   rescue
     _ -> %{}
+  end
+
+  def currency_snapshot do
+    sql =
+      "SELECT total_gems, players_over_100, welfare_pool_gems FROM #{@currency_snapshot_table} WHERE id = 1"
+
+    case SQL.query(Repo, sql, []) do
+      {:ok, %{rows: [[total_gems, players_over_100, welfare_pool_gems]]}} ->
+        %{
+          total_gems: int(total_gems),
+          players_over_100: int(players_over_100),
+          welfare_pool_gems: int(welfare_pool_gems)
+        }
+
+      _ ->
+        nil
+    end
+  rescue
+    _ -> nil
   end
 
   def cumulative(opts \\ %{}) do

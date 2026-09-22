@@ -629,6 +629,23 @@ body {
     letter-spacing: 0.03em;
 }
 
+.stat-card.stat-card--currency > p {
+    margin-top: 0.4rem;
+    font-size: clamp(0.9rem, 1.2vw, 1.05rem);
+    font-weight: 500;
+    letter-spacing: normal;
+    line-height: 1.35;
+}
+
+.stat-card--currency .gems-accent,
+.stat-card--currency .gems-value {
+    color: #00ffff;
+}
+
+.stat-card--currency .gems-value {
+    font-weight: 700;
+}
+
 /* Whales (players) card stacked layout */
 .stat-card--whales .whales-breakdown {
     display: flex;

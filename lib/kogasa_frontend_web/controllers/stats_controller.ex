@@ -25,6 +25,7 @@ defmodule KogasaFrontendWeb.StatsController do
 
     render(conn, :index,
       summary: payload.summary,
+      currency_snapshot: payload.currency_snapshot,
       performance_averages: payload.performance_averages,
       cumulative: cumulative,
       current_log: payload.current_log,
