@@ -5,7 +5,7 @@ defmodule KogasaFrontend.MapsDb.Cache do
 
   require Logger
 
-  @cache_version 1
+  @cache_version 2
   @default_ttl_seconds 24 * 60 * 60
   @default_retry_delay_ms 60_000
   @table __MODULE__

@@ -153,14 +153,28 @@
                 <% end %>
               </div>
 
-              <div class="map-analytics-chart-grid map-analytics-chart-grid-single">
-                <div class="map-analytics-band map-analytics-chart">
-                  <div class="map-analytics-header">
-                    <h3 class="map-analytics-title">Most Popular Maps in Action</h3>
-                  </div>
-                  <div class="map-analytics-chart-frame map-analytics-chart-frame-large">
-                    <canvas id="map-best-performing-curve"></canvas>
-                  </div>
+              <div class="map-analytics-band">
+                <div class="map-analytics-header">
+                  <h3 class="map-analytics-title">Most Popular Custom Hats</h3>
+                  <span class="map-analytics-sub">Players with the hat equipped</span>
+                </div>
+                <div class="map-analytics-scroll map-analytics-scroll-custom-items">
+                  <table class="map-analytics-table">
+                    <thead>
+                      <tr>
+                        <th>Hat</th>
+                        <th class="numeric">Equipped</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%= for hat <- analytics[:popular_custom_hats] || [] do %>
+                        <tr>
+                          <td><span class="map-analytics-name">{hat.name}</span></td>
+                          <td class="numeric">{hat.equipped_clients}</td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -265,7 +279,7 @@
                   <h3 class="map-analytics-title">Most Popular Custom Weapons</h3>
                   <span class="map-analytics-sub">Players with the item equipped</span>
                 </div>
-                <div class="map-analytics-scroll map-analytics-scroll-custom-weapons">
+                <div class="map-analytics-scroll map-analytics-scroll-custom-items">
                   <table class="map-analytics-table">
                     <thead>
                       <tr>
@@ -385,7 +399,6 @@
 
     <script>
       window.mapsdbChartSeries = <%= Phoenix.HTML.raw(@chart_json) %>;
-      window.mapsdbAnalyticsCharts = <%= Phoenix.HTML.raw(@analytics_chart_json) %>;
     </script>
 
     <script>
@@ -566,64 +579,6 @@
           document.head.appendChild(script);
         } else {
           renderChart();
-        }
-      })();
-    </script>
-
-    <script>
-      (function() {
-        const charts = window.mapsdbAnalyticsCharts || {};
-        const lineColor = (idx) => `hsl(${Math.round((idx * 137.508) % 360)} 72% 62%)`;
-
-        const renderLineChart = (canvasId, chartData, yTitle) => {
-          const canvas = document.getElementById(canvasId);
-          if (!canvas || !chartData || !chartData.labels || !chartData.series || typeof Chart === 'undefined') return;
-
-          const datasets = chartData.series.map((series, idx) => ({
-            label: series.label,
-            data: series.data,
-            borderColor: lineColor(idx),
-            backgroundColor: 'rgba(127, 200, 255, 0.08)',
-            tension: 0.25,
-            pointRadius: 0,
-            borderWidth: chartData.series.length > 12 ? 1.2 : 1.8,
-            spanGaps: true
-          }));
-
-          new Chart(canvas, {
-            type: 'line',
-            data: { labels: chartData.labels, datasets },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              interaction: { mode: 'index', intersect: false },
-              scales: {
-                y: { beginAtZero: true, suggestedMax: 24, title: { display: true, text: yTitle }, ticks: { stepSize: 4 } },
-                x: { ticks: { maxTicksLimit: 12 } }
-              },
-              plugins: {
-                legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
-              }
-            }
-          });
-        };
-
-        const renderAnalyticsCharts = () => {
-          renderLineChart('map-best-performing-curve', charts.bestPerforming, 'Average players');
-        };
-
-        if (typeof Chart === 'undefined') {
-          const existing = document.querySelector('script[src*="chart.js"]');
-          if (existing) {
-            existing.addEventListener('load', renderAnalyticsCharts, { once: true });
-          } else {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-            script.onload = renderAnalyticsCharts;
-            document.head.appendChild(script);
-          }
-        } else {
-          renderAnalyticsCharts();
         }
       })();
     </script>

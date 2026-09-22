@@ -3,6 +3,8 @@ defmodule KogasaFrontend.WeaponsConfig do
 
   import KogasaFrontend.Value, only: [truthy?: 1]
 
+  alias KogasaFrontend.ValveKeyValues
+
   @item_classes_section "ItemClasses"
   @root_section "Weapons"
   @custom_items_section "CustomWeapons"
@@ -121,14 +123,7 @@ defmodule KogasaFrontend.WeaponsConfig do
   end
 
   defp load_entries(path) do
-    with {:ok, body} <- File.read(path) do
-      body
-      |> tokenize()
-      |> parse_entries()
-      |> elem(0)
-    else
-      _ -> []
-    end
+    ValveKeyValues.load_file(path)
   end
 
   defp root_entries(entries), do: section(entries, @root_section) || entries
@@ -315,14 +310,7 @@ defmodule KogasaFrontend.WeaponsConfig do
     |> Enum.reverse()
   end
 
-  defp section(nil, _key), do: nil
-
-  defp section(entries, key) do
-    Enum.find_value(entries, fn
-      {^key, children} when is_list(children) -> children
-      _ -> nil
-    end)
-  end
+  defp section(entries, key), do: ValveKeyValues.section(entries, key)
 
   defp first_value(entries, keys, default) do
     Enum.find_value(keys, default, fn key ->
@@ -334,10 +322,7 @@ defmodule KogasaFrontend.WeaponsConfig do
   end
 
   defp value(entries, key, default) do
-    Enum.find_value(entries, default, fn
-      {^key, value} when is_binary(value) -> String.trim(value)
-      _ -> nil
-    end)
+    ValveKeyValues.value(entries, key, default)
   end
 
   defp split_item_key(item_key) do
@@ -346,56 +331,4 @@ defmodule KogasaFrontend.WeaponsConfig do
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&(&1 == ""))
   end
-
-  defp tokenize(body) do
-    body
-    |> String.split("\n")
-    |> Enum.flat_map(fn line ->
-      line
-      |> strip_comment()
-      |> line_tokens()
-    end)
-  end
-
-  defp strip_comment(line) do
-    line
-    |> String.to_charlist()
-    |> strip_comment(false, [])
-    |> Enum.reverse()
-    |> to_string()
-  end
-
-  defp strip_comment([], _quoted, acc), do: acc
-  defp strip_comment([?/, ?/ | _], false, acc), do: acc
-  defp strip_comment([?" | rest], quoted, acc), do: strip_comment(rest, not quoted, [?" | acc])
-  defp strip_comment([char | rest], quoted, acc), do: strip_comment(rest, quoted, [char | acc])
-
-  defp line_tokens(line) do
-    ~r/"([^"]*)"|([{}])/
-    |> Regex.scan(line)
-    |> Enum.map(fn
-      ["{", "", "{"] -> :open
-      ["}", "", "}"] -> :close
-      [_, value] -> {:string, value}
-      [_, value, ""] -> {:string, value}
-      [_, "", "{"] -> :open
-      [_, "", "}"] -> :close
-    end)
-  end
-
-  defp parse_entries(tokens), do: parse_entries(tokens, [])
-
-  defp parse_entries([], acc), do: {Enum.reverse(acc), []}
-  defp parse_entries([:close | rest], acc), do: {Enum.reverse(acc), rest}
-
-  defp parse_entries([{:string, key}, :open | rest], acc) do
-    {children, rest} = parse_entries(rest, [])
-    parse_entries(rest, [{key, children} | acc])
-  end
-
-  defp parse_entries([{:string, key}, {:string, value} | rest], acc) do
-    parse_entries(rest, [{key, value} | acc])
-  end
-
-  defp parse_entries([_ | rest], acc), do: parse_entries(rest, acc)
 end

@@ -65,8 +65,8 @@
       .map-analytics-table th { color:#dce7f5; font-weight:650; }
       .map-analytics-table td.numeric, .map-analytics-table th.numeric { text-align:right; }
       .map-analytics-scroll { overflow-x:auto; }
-      .map-analytics-scroll-custom-weapons { max-height: 31rem; overflow:auto; }
-      .map-analytics-scroll-custom-weapons .map-analytics-table thead th { position:sticky; top:0; background:rgba(12,14,21,.98); z-index:1; }
+      .map-analytics-scroll-custom-items { max-height: 31rem; overflow:auto; }
+      .map-analytics-scroll-custom-items .map-analytics-table thead th { position:sticky; top:0; background:rgba(12,14,21,.98); z-index:1; }
       .class-popularity-table { table-layout:fixed; }
       .class-popularity-table th:nth-child(1), .class-popularity-table td:nth-child(1) { width:9rem; }
       .class-popularity-table th:nth-child(2), .class-popularity-table td:nth-child(2) { width:6rem; }

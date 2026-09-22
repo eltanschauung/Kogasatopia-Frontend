@@ -5,6 +5,7 @@ defmodule KogasaFrontend.MapsDb do
   import KogasaFrontend.Value, only: [float: 1, int: 1]
 
   alias KogasaFrontend.DisplayFormat
+  alias KogasaFrontend.CustomHatPopularity
   alias KogasaFrontend.MapsDb.Cache
   alias KogasaFrontend.MapsDb.ConfigBrowser
   alias KogasaFrontend.MapsDb.MapMeta
@@ -145,8 +146,8 @@ defmodule KogasaFrontend.MapsDb do
       worst_sessions: fetch_session_extremes(:worst, 8),
       weekday_hours: fetch_weekday_hour_performance(12),
       class_popularity: fetch_class_popularity(),
+      popular_custom_hats: CustomHatPopularity.list(),
       popular_custom_weapons: fetch_popular_custom_weapons(),
-      best_performing_chart: rows |> Enum.take(15) |> fetch_map_lifecycle_chart(10),
       vote_table_available: table_exists?(@vote_statistics_table)
     }
   end
@@ -411,121 +412,6 @@ defmodule KogasaFrontend.MapsDb do
       end)
     else
       []
-    end
-  end
-
-  defp fetch_map_lifecycle_chart(rows, bucket_count) do
-    map_names =
-      rows
-      |> Enum.map(& &1.map_name)
-      |> Enum.reject(&(&1 == ""))
-      |> Enum.take(15)
-
-    bucket_count = max(1, min(bucket_count, 20))
-    common_seconds = fetch_common_lifecycle_seconds(map_names)
-    labels = lifecycle_chart_labels(bucket_count, common_seconds)
-
-    if map_names == [] or common_seconds <= 0 do
-      %{"labels" => labels, "series" => []}
-    else
-      rows =
-        query_rows("""
-        SELECT p.map_name,
-               LEAST(#{bucket_count - 1}, FLOOR((p.map_elapsed_seconds * #{bucket_count}) / #{common_seconds})) AS bucket,
-               ROUND(AVG(CASE WHEN p.player_count > 23 THEN 24 ELSE p.player_count END), 2) AS avg_players
-        FROM #{@population_statistics_table} p
-        JOIN #{@map_session_statistics_table} s
-          ON s.host_port = p.host_port
-         AND s.map_session_id = p.map_session_id
-         AND s.map_name = p.map_name
-        WHERE p.map_name IN (#{sql_string_list(map_names)})
-          AND p.map_elapsed_seconds >= 0
-          AND p.map_elapsed_seconds <= #{common_seconds}
-          AND #{valid_map_session_sql("s")}
-          AND #{valid_population_sample_sql("p", "s")}
-        GROUP BY p.map_name, bucket
-        ORDER BY p.map_name ASC, bucket ASC
-        """)
-
-      values =
-        rows
-        |> Enum.group_by(& &1.map_name)
-        |> Map.new(fn {map_name, points} ->
-          point_map =
-            Map.new(points, fn point -> {int(point.bucket), float(point.avg_players)} end)
-
-          {map_name, point_map}
-        end)
-
-      series =
-        Enum.map(map_names, fn map_name ->
-          %{
-            "label" => map_name,
-            "data" =>
-              values
-              |> Map.get(map_name, %{})
-              |> lifecycle_chart_data(bucket_count)
-          }
-        end)
-
-      %{"labels" => labels, "series" => series}
-    end
-  end
-
-  defp fetch_common_lifecycle_seconds([]), do: 0
-
-  defp fetch_common_lifecycle_seconds(map_names) do
-    query_rows("""
-    SELECT MIN(map_max_elapsed) AS common_seconds
-    FROM (
-      SELECT p.map_name,
-             MAX(LEAST(p.map_elapsed_seconds, s.duration)) AS map_max_elapsed
-      FROM #{@population_statistics_table} p
-      JOIN #{@map_session_statistics_table} s
-        ON s.host_port = p.host_port
-       AND s.map_session_id = p.map_session_id
-       AND s.map_name = p.map_name
-      WHERE p.map_name IN (#{sql_string_list(map_names)})
-        AND p.map_elapsed_seconds >= 0
-        AND #{valid_map_session_sql("s")}
-        AND #{valid_population_sample_sql("p", "s")}
-      GROUP BY p.map_name
-    ) map_ends
-    """)
-    |> case do
-      [%{common_seconds: seconds}] -> int(seconds)
-      _ -> 0
-    end
-  end
-
-  defp lifecycle_chart_data(point_map, bucket_count) do
-    values = for bucket <- 0..(bucket_count - 1), do: Map.get(point_map, bucket)
-    first_value = Enum.find(values, &(!is_nil(&1)))
-
-    values
-    |> Enum.map_reduce(first_value, fn
-      nil, last_value -> {last_value, last_value}
-      value, _last_value -> {value, value}
-    end)
-    |> elem(0)
-  end
-
-  defp lifecycle_chart_labels(bucket_count, common_seconds) do
-    for bucket <- 0..(bucket_count - 1) do
-      cond do
-        bucket == 0 ->
-          "Start"
-
-        bucket == bucket_count - 1 ->
-          "End"
-
-        common_seconds > 0 ->
-          minutes = round(bucket * common_seconds / max(bucket_count - 1, 1) / 60)
-          "#{minutes}m"
-
-        true ->
-          "#{div(bucket * 100, bucket_count)}%"
-      end
     end
   end
 
@@ -1016,14 +902,6 @@ defmodule KogasaFrontend.MapsDb do
     end
   rescue
     _ -> false
-  end
-
-  defp sql_string(value), do: "'" <> String.replace(to_string(value), "'", "''") <> "'"
-
-  defp sql_string_list(values) do
-    values
-    |> Enum.map(&sql_string/1)
-    |> Enum.join(",")
   end
 
   defp format_slot(nil), do: "n/a"
