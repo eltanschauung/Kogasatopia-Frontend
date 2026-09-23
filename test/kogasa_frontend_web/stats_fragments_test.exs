@@ -3,6 +3,22 @@ defmodule KogasaFrontendWeb.StatsFragmentsTest do
 
   alias KogasaFrontendWeb.StatsFragments
 
+  test "cumulative table displays cached Gems instead of damage taken" do
+    html =
+      StatsFragments.cumulative_fragment_html(%{
+        rows: [
+          %{steamid: "76561198000000000", personaname: "Player", gems: 1_234, damage_taken: 9_999}
+        ],
+        total: 1
+      })
+
+    assert html =~ ~s(<th data-key="gems" data-type="number">Gems</th>)
+    assert html =~ ~s(data-gems="1234")
+    assert html =~ "<td>1,234</td>"
+    refute html =~ ~s(data-key="damage_taken")
+    refute html =~ "gems-accent"
+  end
+
   test "custom player styles replace the admin class without hiding admin status" do
     html =
       StatsFragments.cumulative_rows_html([

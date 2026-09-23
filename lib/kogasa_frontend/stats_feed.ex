@@ -20,6 +20,7 @@ defmodule KogasaFrontend.StatsFeed do
   @default_avatar "/stats/assets/whaley-avatar.jpg"
   @stats_table "whaletracker"
   @currency_snapshot_table "points_store_currency_snapshot"
+  @player_gems_cache_table "points_store_player_gems_cache"
   @points_cache_table "whaletracker_points_cache"
   @logs_table "whaletracker_logs"
   @log_players_table "whaletracker_log_players"
@@ -642,6 +643,7 @@ defmodule KogasaFrontend.StatsFeed do
       |> Enum.uniq()
 
     identities = PlayerIdentity.for_ids(steam_ids)
+    cached_gems = cached_gems_by_steamid(steam_ids)
 
     profiles =
       case profile_source do
@@ -709,6 +711,7 @@ defmodule KogasaFrontend.StatsFeed do
         playtime_human: DisplayFormat.duration(playtime),
         damage_dealt: damage,
         damage_taken: damage_taken,
+        gems: Map.get(cached_gems, steamid, 0),
         accuracy_overall: accuracy.value,
         accuracy_class: accuracy.class_id,
         accuracy_class_title: accuracy.title,
@@ -724,6 +727,25 @@ defmodule KogasaFrontend.StatsFeed do
         last_seen: int(row["last_seen"])
       }
     end)
+  end
+
+  defp cached_gems_by_steamid([]), do: %{}
+
+  defp cached_gems_by_steamid(steam_ids) do
+    placeholders = Enum.map_join(steam_ids, ", ", fn _ -> "?" end)
+
+    sql =
+      "SELECT steamid64, balance FROM #{@player_gems_cache_table} WHERE steamid64 IN (#{placeholders})"
+
+    case SQL.query(Repo, sql, steam_ids) do
+      {:ok, %{rows: rows}} ->
+        Map.new(rows, fn [steamid, balance] -> {str(steamid), int(balance)} end)
+
+      _ ->
+        %{}
+    end
+  rescue
+    _ -> %{}
   end
 
   defp count_ranked_cumulative_rows do

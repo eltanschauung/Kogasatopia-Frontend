@@ -269,7 +269,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
             <th data-key="kills" data-type="number">Kills|Deaths|Assists</th>
             <th data-key="kd" data-type="number">K/D</th>
             <th data-key="damage" data-type="number">Dmg</th>
-            <th data-key="damage_taken" data-type="number">DT</th>
+            <th data-key="gems" data-type="number">Gems</th>
             <th data-key="dpm" data-type="number">D/M</th>
             <th data-key="dtpm" data-type="number">DT/M</th>
             <th data-key="accuracy" data-type="number">Acc.</th>
@@ -345,7 +345,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
       end
 
     """
-    <tr#{tr_class} data-steamid="#{e(steamid)}" data-player="#{e(String.downcase(personaname))}" data-kills="#{row[:kills] || 0}" data-deaths="#{row[:deaths] || 0}" data-assists="#{row[:assists] || 0}" data-kd="#{decimal(kd, 4)}" data-damage="#{row[:damage_dealt] || 0}" data-damage_taken="#{row[:damage_taken] || 0}" data-dpm="#{decimal(row[:dpm] || 0, 4)}" data-dtpm="#{decimal(row[:dtpm] || 0, 4)}" data-accuracy="#{decimal(acc, 4)}" data-accuracy_class="#{accuracy_class}" data-airshots="#{row[:airshots] || 0}" data-drops="#{row[:medic_drops] || 0}" data-dropped="#{row[:uber_drops] || 0}" data-healing="#{row[:healing] || 0}" data-headshots="#{row[:headshots] || 0}" data-backstabs="#{row[:backstabs] || 0}" data-streak="#{row[:best_killstreak] || 0}" data-playtime="#{row[:playtime] || 0}" data-score="#{row[:score] || 0}" data-online="#{if row[:is_online], do: 1, else: 0}">
+    <tr#{tr_class} data-steamid="#{e(steamid)}" data-player="#{e(String.downcase(personaname))}" data-kills="#{row[:kills] || 0}" data-deaths="#{row[:deaths] || 0}" data-assists="#{row[:assists] || 0}" data-kd="#{decimal(kd, 4)}" data-damage="#{row[:damage_dealt] || 0}" data-gems="#{row[:gems] || 0}" data-dpm="#{decimal(row[:dpm] || 0, 4)}" data-dtpm="#{decimal(row[:dtpm] || 0, 4)}" data-accuracy="#{decimal(acc, 4)}" data-accuracy_class="#{accuracy_class}" data-airshots="#{row[:airshots] || 0}" data-drops="#{row[:medic_drops] || 0}" data-dropped="#{row[:uber_drops] || 0}" data-healing="#{row[:healing] || 0}" data-headshots="#{row[:headshots] || 0}" data-backstabs="#{row[:backstabs] || 0}" data-streak="#{row[:best_killstreak] || 0}" data-playtime="#{row[:playtime] || 0}" data-score="#{row[:score] || 0}" data-online="#{if row[:is_online], do: 1, else: 0}">
       <td class="player-cell">
         #{avatar_html}
         <div>#{player_link}</div>
@@ -353,7 +353,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
       <td>#{number(row[:kills])}|#{number(row[:deaths])}|#{number(row[:assists])}</td>
       <td>#{decimal(kd, 2)}</td>
       <td>#{number(row[:damage_dealt])}</td>
-      <td>#{number(row[:damage_taken])}</td>
+      <td>#{number(row[:gems])}</td>
       <td>#{decimal(row[:dpm] || 0, 1)}</td>
       <td>#{decimal(row[:dtpm] || 0, 1)}</td>
       <td class="stat-accuracy-cell"><span class="stat-accuracy-value">#{decimal(acc, 1)}%</span>#{accuracy_icon}</td>
