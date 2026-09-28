@@ -82,6 +82,18 @@ defmodule KogasaFrontend.CustomHatPopularityTest do
            }
   end
 
+  test "hat backpack items use the standard metadata defaults", %{config_path: config_path} do
+    items = CustomHatsConfig.items(config_path)
+
+    assert Enum.map(items, & &1.id) ==
+             ["mercenary_derby", "punishing_bird", "single_hat"]
+
+    assert Enum.all?(items, &(&1.image == "100px-item_icon_nonomi_minigun.png"))
+    assert Enum.all?(items, &(&1.type == "Custom Hat" and &1.level == 10))
+    assert Enum.all?(items, &(&1.slot == "default"))
+    assert Enum.all?(items, &CustomHatsConfig.visible_for_class?(&1, "soldier"))
+  end
+
   test "counts hats equipped by more than one player", context do
     assert CustomHatPopularity.list(
              clientprefs_path: context.database_path,

@@ -33,6 +33,32 @@ defmodule KogasaFrontend.WeaponPanel do
 
   def fetch_session(_token, _expected_class_id), do: :error
 
+  def fetch_hat_session(token) do
+    with true <- valid_session_token?(token),
+         {:ok,
+          %{
+            rows: [[steamid64, class_index, equipped_uids, locked_purchase_keys]]
+          }} <-
+           Repo.query(
+             "SELECT steamid64, class_index, equipped_uids, locked_purchase_keys " <>
+               "FROM weapons_web_sessions " <>
+               "WHERE token = ? AND class_index < 0 AND expires_at >= ? LIMIT 1",
+             [token, now()]
+           ),
+         true <- class_index in -9..-1 do
+      {:ok,
+       %{
+         token: token,
+         steamid64: steamid64,
+         class_id: -class_index,
+         equipped_uids: split_list(equipped_uids),
+         locked_purchase_keys: split_list(locked_purchase_keys)
+       }}
+    else
+      _ -> :error
+    end
+  end
+
   def enqueue_action(token, weapon_uid, desired_equipped)
       when is_binary(weapon_uid) and is_boolean(desired_equipped) do
     action_id = Ecto.UUID.generate()

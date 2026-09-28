@@ -2,6 +2,7 @@ defmodule KogasaFrontend.InfoPage do
   @moduledoc false
 
   alias KogasaFrontend.Tf2Classes
+  alias KogasaFrontend.CustomHatsConfig
   alias KogasaFrontend.WeaponPanel
   alias KogasaFrontend.WeaponsConfig
 
@@ -16,8 +17,11 @@ defmodule KogasaFrontend.InfoPage do
     panel_session = panel_session(session_token, initial_state)
 
     initial_items =
-      items_by_class
-      |> initial_items(initial_state)
+      if initial_state.hats do
+        load_hat_items(panel_session)
+      else
+        initial_items(items_by_class, initial_state)
+      end
       |> mark_equipped(panel_session)
 
     config_update = config_update_metadata()
@@ -28,8 +32,10 @@ defmodule KogasaFrontend.InfoPage do
       initial_items: initial_items,
       initial_custom_items: section_items(initial_items, false),
       initial_reskin_items: section_items(initial_items, true),
+      initial_hat_groups: group_hats(initial_items, initial_state.hats),
       initial_state: initial_state,
       grouped_custom_ingame: initial_state.ingame && initial_state.custom_only,
+      grouped_hats_ingame: initial_state.hats,
       panel_session: panel_session,
       payload_json:
         if(initial_state.ingame,
@@ -48,6 +54,16 @@ defmodule KogasaFrontend.InfoPage do
   end
 
   defp initial_state(view, items_by_class) when is_binary(view) do
+    if String.downcase(String.trim(view)) == "hats-ingame" do
+      %{default_state() | hats: true, ingame: true}
+    else
+      class_initial_state(view, items_by_class)
+    end
+  end
+
+  defp initial_state(_, _items_by_class), do: default_state()
+
+  defp class_initial_state(view, items_by_class) do
     case view |> String.trim() |> String.downcase() |> String.split("-", trim: true) do
       [requested_class | options] ->
         active_class = Map.get(@class_aliases, requested_class, requested_class)
@@ -59,7 +75,8 @@ defmodule KogasaFrontend.InfoPage do
             active_class: active_class,
             custom_only: !reverts_only && "custom" in options,
             reverts_only: reverts_only,
-            ingame: "ingame" in options
+            ingame: "ingame" in options,
+            hats: false
           }
         else
           default_state()
@@ -70,10 +87,51 @@ defmodule KogasaFrontend.InfoPage do
     end
   end
 
-  defp initial_state(_, _items_by_class), do: default_state()
-
   defp default_state do
-    %{active_class: @active_class, custom_only: false, reverts_only: false, ingame: false}
+    %{
+      active_class: @active_class,
+      custom_only: false,
+      reverts_only: false,
+      ingame: false,
+      hats: false
+    }
+  end
+
+  defp load_hat_items(session) do
+    class_key =
+      if session do
+        Enum.find_value(@classes, &if(&1.id == session.class_id, do: &1.key))
+      end
+
+    CustomHatsConfig.items()
+    |> Enum.filter(&(is_nil(class_key) or CustomHatsConfig.visible_for_class?(&1, class_key)))
+    |> Enum.map(fn hat ->
+      %{
+        name: hat.name,
+        uid: hat.id,
+        slot: hat.slot,
+        type_level: "Level #{hat.level} #{hat.type}",
+        icon: "/info/icons/" <> hat.image,
+        is_custom: true,
+        is_hidden: false,
+        is_reskin: false,
+        is_all_class: false,
+        display_order: 0,
+        purchase_key: hat.points_store_purchase,
+        title: hat.name,
+        search: String.downcase(hat.name <> " " <> hat.slot <> " " <> hat.type),
+        effects: []
+      }
+    end)
+  end
+
+  defp group_hats(_items, false), do: []
+
+  defp group_hats(items, true) do
+    items
+    |> Enum.map(& &1.slot)
+    |> Enum.uniq()
+    |> Enum.map(fn slot -> %{slot: slot, items: Enum.filter(items, &(&1.slot == slot))} end)
   end
 
   defp initial_items(items_by_class, state) do
@@ -135,6 +193,13 @@ defmodule KogasaFrontend.InfoPage do
         ),
       effects: effects
     }
+  end
+
+  defp panel_session(token, %{ingame: true, hats: true}) do
+    case WeaponPanel.fetch_hat_session(token) do
+      {:ok, session} -> session
+      :error -> nil
+    end
   end
 
   defp panel_session(token, %{ingame: true, custom_only: true, active_class: class_key}) do

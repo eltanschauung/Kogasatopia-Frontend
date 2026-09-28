@@ -25,6 +25,13 @@
     <meta property="og:url" content="https://kogasa.tf/info" />
     <meta property="og:type" content="website" />
     <script>
+      if (
+        window.location.hash.toLowerCase() === "#hats-ingame" &&
+        !new URLSearchParams(window.location.search).has("view")
+      ) {
+        window.location.replace("/weapons?view=hats-ingame#hats-ingame");
+      }
+
       const weaponsRoot = document.documentElement;
       const weaponsHashIsIngame = /(?:^|-)ingame(?:-|$)/.test(
         decodeURIComponent(window.location.hash.slice(1)).toLowerCase()
@@ -129,27 +136,15 @@
         <main>
           <div
             id="button-container"
-            class={@grouped_custom_ingame && "weapons-ingame-grouped"}
+            class={(@grouped_custom_ingame || @grouped_hats_ingame) && "weapons-ingame-grouped"}
           >
-            <%= if @grouped_custom_ingame do %>
-              <section class="weapons-ingame-group">
-                <span class="tab-button-label tab-button-label--desktop">Custom Weapons</span>
+            <%= if @grouped_hats_ingame do %>
+              <section :for={group <- @initial_hat_groups} class="weapons-ingame-group">
+                <span class="tab-button-label tab-button-label--desktop">{group.slot}</span>
                 <hr />
                 <div class="weapons-ingame-grid">
                   <.weapon_tile
-                    :for={item <- @initial_custom_items}
-                    item={item}
-                    inert={is_nil(@panel_session)}
-                    interactive={!is_nil(@panel_session)}
-                  />
-                </div>
-              </section>
-              <section class="weapons-ingame-group">
-                <span class="tab-button-label tab-button-label--desktop">Reskins</span>
-                <hr />
-                <div class="weapons-ingame-grid">
-                  <.weapon_tile
-                    :for={item <- @initial_reskin_items}
+                    :for={item <- group.items}
                     item={item}
                     inert={is_nil(@panel_session)}
                     interactive={!is_nil(@panel_session)}
@@ -157,12 +152,39 @@
                 </div>
               </section>
             <% else %>
-              <.weapon_tile
-                :for={item <- @initial_items}
-                item={item}
-                inert={@initial_state.ingame}
-                interactive={false}
-              />
+              <%= if @grouped_custom_ingame do %>
+                <section class="weapons-ingame-group">
+                  <span class="tab-button-label tab-button-label--desktop">Custom Weapons</span>
+                  <hr />
+                  <div class="weapons-ingame-grid">
+                    <.weapon_tile
+                      :for={item <- @initial_custom_items}
+                      item={item}
+                      inert={is_nil(@panel_session)}
+                      interactive={!is_nil(@panel_session)}
+                    />
+                  </div>
+                </section>
+                <section class="weapons-ingame-group">
+                  <span class="tab-button-label tab-button-label--desktop">Reskins</span>
+                  <hr />
+                  <div class="weapons-ingame-grid">
+                    <.weapon_tile
+                      :for={item <- @initial_reskin_items}
+                      item={item}
+                      inert={is_nil(@panel_session)}
+                      interactive={!is_nil(@panel_session)}
+                    />
+                  </div>
+                </section>
+              <% else %>
+                <.weapon_tile
+                  :for={item <- @initial_items}
+                  item={item}
+                  inert={@initial_state.ingame}
+                  interactive={false}
+                />
+              <% end %>
             <% end %>
           </div>
         </main>
