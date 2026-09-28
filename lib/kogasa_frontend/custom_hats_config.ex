@@ -3,7 +3,7 @@ defmodule KogasaFrontend.CustomHatsConfig do
 
   alias KogasaFrontend.ValveKeyValues
 
-  @default_config_path "/home/kogasa/hlserver/tf2/tf/addons/sourcemod/configs/custom_hats.cfg"
+  @default_config_path "/home/kogasa/Kogasatopia-Frontend/custom_hats.cfg"
   @default_image "100px-item_icon_nonomi_minigun.png"
 
   def names(path \\ config_path()) do

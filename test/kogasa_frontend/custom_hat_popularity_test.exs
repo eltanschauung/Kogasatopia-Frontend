@@ -94,6 +94,11 @@ defmodule KogasaFrontend.CustomHatPopularityTest do
     assert Enum.all?(items, &CustomHatsConfig.visible_for_class?(&1, "soldier"))
   end
 
+  test "the frontend reads its repository copy by default" do
+    assert CustomHatsConfig.config_path() ==
+             "/home/kogasa/Kogasatopia-Frontend/custom_hats.cfg"
+  end
+
   test "counts hats equipped by more than one player", context do
     assert CustomHatPopularity.list(
              clientprefs_path: context.database_path,
