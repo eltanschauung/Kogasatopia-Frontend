@@ -90,8 +90,14 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     assert weapons_html =~ ~s(width="96" height="96")
   end
 
-  test "hat cards are 240 pixels without changing weapon card dimensions" do
+  test "hat cards form four close columns without changing the weapon layout" do
     css = File.read!(Path.expand("../../priv/static/info/css/changes.css", __DIR__))
+
+    assert css =~
+             ~r/html\.weapons-ingame \.weapons-ingame-grid \{[^}]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);[^}]*gap: 5px;/s
+
+    assert css =~
+             ~r/html\.weapons-hats-ingame \.weapons-ingame-grid \{[^}]*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[^}]*max-width: 975px;/s
 
     assert css =~
              ~r/html\.weapons-ingame #button-container a\.on \{[^}]*max-width: 330px;[^}]*height: 300px;[^}]*max-height: 300px;/s

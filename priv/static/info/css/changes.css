@@ -396,6 +396,10 @@ html.weapons-ingame .weapons-ingame-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
 }
+html.weapons-hats-ingame .weapons-ingame-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 975px;
+}
 html.weapons-ingame #button-container a.on {
   width: 100%;
   max-width: 330px;
