@@ -139,18 +139,14 @@
             class={(@grouped_custom_ingame || @grouped_hats_ingame) && "weapons-ingame-grouped"}
           >
             <%= if @grouped_hats_ingame do %>
-              <section :for={group <- @initial_hat_groups} class="weapons-ingame-group">
-                <span class="tab-button-label tab-button-label--desktop">{group.slot}</span>
-                <hr />
-                <div class="weapons-ingame-grid">
-                  <.weapon_tile
-                    :for={item <- group.items}
-                    item={item}
-                    inert={is_nil(@panel_session)}
-                    interactive={!is_nil(@panel_session)}
-                  />
-                </div>
-              </section>
+              <div class="weapons-ingame-grid">
+                <.weapon_tile
+                  :for={item <- Enum.flat_map(@initial_hat_groups, fn group -> group.items end)}
+                  item={item}
+                  inert={is_nil(@panel_session)}
+                  interactive={!is_nil(@panel_session)}
+                />
+              </div>
             <% else %>
               <%= if @grouped_custom_ingame do %>
                 <section class="weapons-ingame-group">

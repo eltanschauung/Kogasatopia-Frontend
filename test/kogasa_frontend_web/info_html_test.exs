@@ -2,6 +2,7 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
   use ExUnit.Case, async: true
 
   alias KogasaFrontendWeb.InfoHTML
+  alias KogasaFrontend.InfoPage
 
   test "locked shop weapons are muted and cannot be selected" do
     html = render_weapon_tile(true)
@@ -19,6 +20,38 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     refute html =~ "!shop Item"
     assert html =~ "Level 1 Rifle"
     assert html =~ ~s(href="#")
+  end
+
+  test "hats use one grid in slot order without separators while weapons retain theirs" do
+    hats = InfoPage.assigns("hats-ingame")
+    hats_html = hats |> InfoHTML.index() |> Phoenix.HTML.Safe.to_iodata() |> IO.iodata_to_binary()
+
+    assert length(Regex.scan(~r/class="weapons-ingame-grid"/, hats_html)) == 1
+    refute hats_html =~ "tab-button-label--desktop"
+    refute hats_html =~ "<hr"
+
+    rendered_uids =
+      ~r/data-weapon-uid="([^"]+)"/
+      |> Regex.scan(hats_html, capture: :all_but_first)
+      |> List.flatten()
+
+    expected_uids =
+      hats.initial_hat_groups
+      |> Enum.flat_map(fn group -> group.items end)
+      |> Enum.map(& &1.uid)
+
+    assert rendered_uids == expected_uids
+
+    weapons_html =
+      "scout-custom-ingame"
+      |> InfoPage.assigns()
+      |> InfoHTML.index()
+      |> Phoenix.HTML.Safe.to_iodata()
+      |> IO.iodata_to_binary()
+
+    assert weapons_html =~ "Custom Weapons"
+    assert weapons_html =~ "Reskins"
+    assert length(Regex.scan(~r/class="weapons-ingame-group"/, weapons_html)) == 2
   end
 
   defp render_weapon_tile(locked) do
