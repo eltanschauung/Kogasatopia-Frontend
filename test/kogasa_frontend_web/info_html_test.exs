@@ -21,6 +21,12 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     assert html =~ "Level 1 Rifle"
     assert html =~ ~s(href="#")
     assert html =~ ~s(width="96" height="96")
+    refute html =~ "style=\"color:"
+  end
+
+  test "hat label colors override gold only when a valid chat color is configured" do
+    assert render_weapon_tile(false, "#FF4040") =~ ~s(style="color: #FF4040")
+    refute render_weapon_tile(false) =~ "style=\"color:"
   end
 
   test "hats use one grid in slot order without separators while weapons retain theirs" do
@@ -28,7 +34,10 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     hats_html = hats |> InfoHTML.index() |> Phoenix.HTML.Safe.to_iodata() |> IO.iodata_to_binary()
 
     assert length(Regex.scan(~r/class="weapons-ingame-grid"/, hats_html)) == 1
-    assert length(Regex.scan(~r/width="150" height="150"/, hats_html)) == length(hats.initial_items)
+
+    assert length(Regex.scan(~r/width="150" height="150"/, hats_html)) ==
+             length(hats.initial_items)
+
     assert hats_html =~ "weapons-hats-ingame"
     refute hats_html =~ "tab-button-label--desktop"
     refute hats_html =~ "<hr"
@@ -59,7 +68,7 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     assert weapons_html =~ ~s(width="96" height="96")
   end
 
-  defp render_weapon_tile(locked) do
+  defp render_weapon_tile(locked, label_color \\ nil) do
     item = %{
       equipped: false,
       locked: locked,
@@ -68,7 +77,8 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
       name: "Test Weapon",
       icon: "/test.png",
       type_level: "Level 1 Rifle",
-      effects: []
+      effects: [],
+      label_color: label_color
     }
 
     %{item: item, inert: false, interactive: true}

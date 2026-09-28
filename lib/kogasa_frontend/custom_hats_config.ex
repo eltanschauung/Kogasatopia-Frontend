@@ -2,6 +2,7 @@ defmodule KogasaFrontend.CustomHatsConfig do
   @moduledoc false
 
   alias KogasaFrontend.ValveKeyValues
+  alias KogasaFrontend.Chat.MoreColors
 
   @default_config_path "/home/kogasa/Kogasatopia-Frontend/custom_hats.cfg"
   @default_image "100px-item_icon_nonomi_minigun.png"
@@ -26,6 +27,7 @@ defmodule KogasaFrontend.CustomHatsConfig do
               slot: slot(children),
               image: ValveKeyValues.value(children, "image", @default_image),
               type: ValveKeyValues.value(children, "type", "Custom Hat"),
+              label_color: MoreColors.css(ValveKeyValues.value(children, "chat_color")),
               level: level(children),
               classes: classes(children),
               points_store_purchase: ValveKeyValues.value(children, "points_store_purchase")

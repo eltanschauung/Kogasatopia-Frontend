@@ -29,7 +29,9 @@ defmodule KogasaFrontendWeb.InfoHTML do
         decoding="sync"
         fetchpriority="high"
       />
-      <span class="btn-label">{if @item.equipped, do: "Equipped", else: @item.name}</span>
+      <span class="btn-label" style={@item[:label_color] && "color: #{@item[:label_color]}"}>
+        {if @item.equipped, do: "Equipped", else: @item.name}
+      </span>
       <span :if={@item.locked || @item.type_level != ""} class="type-lvl">
         {if @item.locked, do: "!shop Item", else: @item.type_level}
       </span>
