@@ -6,6 +6,7 @@ defmodule KogasaFrontendWeb.InfoHTML do
   attr :item, :map, required: true
   attr :inert, :boolean, default: false
   attr :interactive, :boolean, default: false
+  attr :image_size, :integer, default: 96
 
   def weapon_tile(assigns) do
     ~H"""
@@ -22,8 +23,8 @@ defmodule KogasaFrontendWeb.InfoHTML do
         class="btn-icon"
         src={@item.icon}
         alt=""
-        width="96"
-        height="96"
+        width={@image_size}
+        height={@image_size}
         loading="eager"
         decoding="sync"
         fetchpriority="high"

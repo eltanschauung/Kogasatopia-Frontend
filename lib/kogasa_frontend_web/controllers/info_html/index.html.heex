@@ -3,6 +3,7 @@
   lang="en"
   class={[
     @initial_state.ingame && "weapons-ingame",
+    @grouped_hats_ingame && "weapons-hats-ingame",
     @panel_session && "weapons-panel-active"
   ]}
   data-steamid64={@panel_session && @panel_session.steamid64}
@@ -145,6 +146,7 @@
                   item={item}
                   inert={is_nil(@panel_session)}
                   interactive={!is_nil(@panel_session)}
+                  image_size={150}
                 />
               </div>
             <% else %>

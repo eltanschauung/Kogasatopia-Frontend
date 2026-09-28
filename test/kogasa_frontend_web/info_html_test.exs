@@ -20,6 +20,7 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     refute html =~ "!shop Item"
     assert html =~ "Level 1 Rifle"
     assert html =~ ~s(href="#")
+    assert html =~ ~s(width="96" height="96")
   end
 
   test "hats use one grid in slot order without separators while weapons retain theirs" do
@@ -27,6 +28,8 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     hats_html = hats |> InfoHTML.index() |> Phoenix.HTML.Safe.to_iodata() |> IO.iodata_to_binary()
 
     assert length(Regex.scan(~r/class="weapons-ingame-grid"/, hats_html)) == 1
+    assert length(Regex.scan(~r/width="150" height="150"/, hats_html)) == length(hats.initial_items)
+    assert hats_html =~ "weapons-hats-ingame"
     refute hats_html =~ "tab-button-label--desktop"
     refute hats_html =~ "<hr"
 
@@ -52,6 +55,8 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     assert weapons_html =~ "Custom Weapons"
     assert weapons_html =~ "Reskins"
     assert length(Regex.scan(~r/class="weapons-ingame-group"/, weapons_html)) == 2
+    refute weapons_html =~ "weapons-hats-ingame"
+    assert weapons_html =~ ~s(width="96" height="96")
   end
 
   defp render_weapon_tile(locked) do
