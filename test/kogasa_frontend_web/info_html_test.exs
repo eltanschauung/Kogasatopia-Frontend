@@ -32,12 +32,15 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
       kind: :gradient,
       first: "#FF4040",
       second: "#00FF7F",
-      completion: 50
+      completion: 50,
+      transition: :midpoint_band
     }
 
     gradient_html = render_weapon_tile(false, gradient)
     assert gradient_html =~ "chat-name-gradient"
-    assert gradient_html =~ "linear-gradient(90deg, #FF4040 0%, #00FF7F 50%, #00FF7F 100%)"
+
+    assert gradient_html =~
+             "linear-gradient(90deg, #FF4040 0%, #FF4040 45%, #00FF7F 55%, #00FF7F 100%)"
 
     css = File.read!(Path.expand("../../priv/static/info/css/changes.css", __DIR__))
 

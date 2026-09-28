@@ -100,7 +100,8 @@ defmodule KogasaFrontend.CustomHatPopularityTest do
              kind: :gradient,
              first: "#FF4040",
              second: "#00FF7F",
-             completion: 50
+             completion: 50,
+             transition: :midpoint_band
            }
 
     assert Enum.at(items, 1).label_style == %{kind: :solid, color: "#DDA0DD"}

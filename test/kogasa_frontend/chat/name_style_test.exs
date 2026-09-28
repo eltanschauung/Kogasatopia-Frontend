@@ -19,6 +19,24 @@ defmodule KogasaFrontend.Chat.NameStyleTest do
     assert NameStyle.css_style(style) =~ "#FF4040 75%, #FF4040 100%"
   end
 
+  test "midpoint-band gradients leave both outer halves solid" do
+    style = %{
+      kind: :gradient,
+      first: "#99CCFF",
+      second: "#FF4040",
+      completion: 50,
+      transition: :midpoint_band
+    }
+
+    assert NameStyle.css_class(style) == "chat-name-gradient"
+
+    assert NameStyle.css_style(style) =~
+             "#99CCFF 0%, #99CCFF 45%, #FF4040 55%, #FF4040 100%"
+
+    normal = Map.delete(style, :transition)
+    assert NameStyle.css_style(normal) =~ "#99CCFF 0%, #FF4040 50%, #FF4040 100%"
+  end
+
   test "builds a three-color gradient without a completion point" do
     style = NameStyle.from_preference(%{pattern: "gradient3:blue:white:red", color: ""})
 

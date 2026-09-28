@@ -44,6 +44,10 @@ defmodule KogasaFrontend.Chat.NameStyle do
 
   def css_class(_), do: nil
 
+  def css_style(%{kind: :gradient, first: first, second: second, transition: :midpoint_band}),
+    do:
+      "color: transparent; --chat-name-gradient: linear-gradient(90deg, #{first} 0%, #{first} 45%, #{second} 55%, #{second} 100%)"
+
   def css_style(%{kind: :gradient, first: first, second: second, completion: completion}),
     do:
       "color: transparent; --chat-name-gradient: linear-gradient(90deg, #{first} 0%, #{second} #{completion}%, #{second} 100%)"

@@ -82,7 +82,10 @@ defmodule KogasaFrontend.CustomHatsConfig do
     second = ValveKeyValues.value(children, "chat_color_blu")
     pattern = if first != "" and second != "", do: "gradient:#{first}:#{second}:50"
 
-    NameStyle.from_preference(%{pattern: pattern, color: first})
+    case NameStyle.from_preference(%{pattern: pattern, color: first}) do
+      %{kind: :gradient} = style -> Map.put(style, :transition, :midpoint_band)
+      style -> style
+    end
   end
 
   defp slot(children) do
