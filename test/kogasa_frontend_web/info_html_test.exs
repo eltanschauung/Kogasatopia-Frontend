@@ -90,6 +90,16 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     assert weapons_html =~ ~s(width="96" height="96")
   end
 
+  test "hat cards are 240 pixels without changing weapon card dimensions" do
+    css = File.read!(Path.expand("../../priv/static/info/css/changes.css", __DIR__))
+
+    assert css =~
+             ~r/html\.weapons-ingame #button-container a\.on \{[^}]*max-width: 330px;[^}]*height: 300px;[^}]*max-height: 300px;/s
+
+    assert css =~
+             ~r/html\.weapons-hats-ingame #button-container a\.on \{[^}]*width: 100%;[^}]*max-width: 240px;[^}]*height: 240px;[^}]*max-height: 240px;/s
+  end
+
   defp render_weapon_tile(locked, label_style \\ nil) do
     item = %{
       equipped: false,

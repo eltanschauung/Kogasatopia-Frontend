@@ -404,6 +404,12 @@ html.weapons-ingame #button-container a.on {
   margin: 0;
   float: none;
 }
+html.weapons-hats-ingame #button-container a.on {
+  width: 100%;
+  max-width: 240px;
+  height: 240px;
+  max-height: 240px;
+}
 html.weapons-hats-ingame .btn-icon {
   width: 150px;
   height: 150px;
