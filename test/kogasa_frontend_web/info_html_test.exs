@@ -38,6 +38,12 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     gradient_html = render_weapon_tile(false, gradient)
     assert gradient_html =~ "chat-name-gradient"
     assert gradient_html =~ "linear-gradient(90deg, #FF4040 0%, #00FF7F 50%, #00FF7F 100%)"
+
+    css = File.read!(Path.expand("../../priv/static/info/css/changes.css", __DIR__))
+
+    assert css =~
+             ~r/html\.weapons-hats-ingame \.btn-label\.chat-name-gradient \{[^}]*text-shadow: none;/s
+
     refute render_weapon_tile(false) =~ "style=\"color:"
   end
 

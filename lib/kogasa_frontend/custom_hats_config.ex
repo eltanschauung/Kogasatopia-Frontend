@@ -80,7 +80,7 @@ defmodule KogasaFrontend.CustomHatsConfig do
   defp label_style(children) do
     first = ValveKeyValues.value(children, "chat_color")
     second = ValveKeyValues.value(children, "chat_color_blu")
-    pattern = if first != "" and second != "", do: "gradient:#{first}:#{second}"
+    pattern = if first != "" and second != "", do: "gradient:#{first}:#{second}:50"
 
     NameStyle.from_preference(%{pattern: pattern, color: first})
   end

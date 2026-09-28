@@ -188,6 +188,7 @@ html.weapons-hats-ingame .btn-label.chat-name-gradient {
   background-image: var(--chat-name-gradient);
   background-clip: text;
   -webkit-background-clip: text;
+  text-shadow: none;
 }
 .type-lvl {
   color: #756b5e;
