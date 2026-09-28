@@ -2,7 +2,7 @@ defmodule KogasaFrontend.CustomHatsConfig do
   @moduledoc false
 
   alias KogasaFrontend.ValveKeyValues
-  alias KogasaFrontend.Chat.MoreColors
+  alias KogasaFrontend.Chat.NameStyle
 
   @default_config_path "/home/kogasa/Kogasatopia-Frontend/custom_hats.cfg"
   @default_image "100px-item_icon_nonomi_minigun.png"
@@ -27,7 +27,7 @@ defmodule KogasaFrontend.CustomHatsConfig do
               slot: slot(children),
               image: ValveKeyValues.value(children, "image", @default_image),
               type: ValveKeyValues.value(children, "type", "Custom Hat"),
-              label_color: MoreColors.css(ValveKeyValues.value(children, "chat_color")),
+              label_style: label_style(children),
               level: level(children),
               classes: classes(children),
               points_store_purchase: ValveKeyValues.value(children, "points_store_purchase")
@@ -76,6 +76,14 @@ defmodule KogasaFrontend.CustomHatsConfig do
   end
 
   defp forced?(children), do: ValveKeyValues.value(children, "force", "0") in ["1", "true"]
+
+  defp label_style(children) do
+    first = ValveKeyValues.value(children, "chat_color")
+    second = ValveKeyValues.value(children, "chat_color_blu")
+    pattern = if first != "" and second != "", do: "gradient:#{first}:#{second}"
+
+    NameStyle.from_preference(%{pattern: pattern, color: first})
+  end
 
   defp slot(children) do
     children

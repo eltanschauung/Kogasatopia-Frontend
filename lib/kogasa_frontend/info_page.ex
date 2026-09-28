@@ -111,7 +111,7 @@ defmodule KogasaFrontend.InfoPage do
         uid: hat.id,
         slot: hat.slot,
         type_level: "Level #{hat.level} #{hat.type}",
-        label_color: hat.label_color,
+        label_style: hat.label_style,
         icon: "/info/icons/" <> hat.image,
         is_custom: true,
         is_hidden: false,

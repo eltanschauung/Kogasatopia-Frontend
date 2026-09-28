@@ -1,6 +1,8 @@
 defmodule KogasaFrontendWeb.InfoHTML do
   use KogasaFrontendWeb, :html
 
+  alias KogasaFrontend.Chat.NameStyle
+
   embed_templates "info_html/*"
 
   attr :item, :map, required: true
@@ -29,7 +31,10 @@ defmodule KogasaFrontendWeb.InfoHTML do
         decoding="sync"
         fetchpriority="high"
       />
-      <span class="btn-label" style={@item[:label_color] && "color: #{@item[:label_color]}"}>
+      <span
+        class={["btn-label", NameStyle.css_class(@item[:label_style])]}
+        style={NameStyle.css_style(@item[:label_style])}
+      >
         {if @item.equipped, do: "Equipped", else: @item.name}
       </span>
       <span :if={@item.locked || @item.type_level != ""} class="type-lvl">

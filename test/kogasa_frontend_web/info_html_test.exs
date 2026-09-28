@@ -25,7 +25,19 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
   end
 
   test "hat label colors override gold only when a valid chat color is configured" do
-    assert render_weapon_tile(false, "#FF4040") =~ ~s(style="color: #FF4040")
+    assert render_weapon_tile(false, %{kind: :solid, color: "#FF4040"}) =~
+             ~s(style="color: #FF4040")
+
+    gradient = %{
+      kind: :gradient,
+      first: "#FF4040",
+      second: "#00FF7F",
+      completion: 50
+    }
+
+    gradient_html = render_weapon_tile(false, gradient)
+    assert gradient_html =~ "chat-name-gradient"
+    assert gradient_html =~ "linear-gradient(90deg, #FF4040 0%, #00FF7F 50%, #00FF7F 100%)"
     refute render_weapon_tile(false) =~ "style=\"color:"
   end
 
@@ -65,10 +77,11 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
     assert weapons_html =~ "Reskins"
     assert length(Regex.scan(~r/class="weapons-ingame-group"/, weapons_html)) == 2
     refute weapons_html =~ "weapons-hats-ingame"
+    refute weapons_html =~ "chat-name-gradient"
     assert weapons_html =~ ~s(width="96" height="96")
   end
 
-  defp render_weapon_tile(locked, label_color \\ nil) do
+  defp render_weapon_tile(locked, label_style \\ nil) do
     item = %{
       equipped: false,
       locked: locked,
@@ -78,7 +91,7 @@ defmodule KogasaFrontendWeb.InfoHTMLTest do
       icon: "/test.png",
       type_level: "Level 1 Rifle",
       effects: [],
-      label_color: label_color
+      label_style: label_style
     }
 
     %{item: item, inert: false, interactive: true}

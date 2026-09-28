@@ -183,6 +183,12 @@ div#button-container a.on.is-locked:hover {
   line-height: 16px;
   text-shadow: 2px 1px 1px #24201b;
 }
+html.weapons-hats-ingame .btn-label.chat-name-gradient {
+  color: transparent;
+  background-image: var(--chat-name-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
 .type-lvl {
   color: #756b5e;
   font-family: 'TF2 Secondary', Verdana, Geneva, sans-serif;

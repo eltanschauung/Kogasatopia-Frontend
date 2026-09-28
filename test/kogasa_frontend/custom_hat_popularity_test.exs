@@ -26,6 +26,7 @@ defmodule KogasaFrontend.CustomHatPopularityTest do
             {
                 "name" "Mercenary Derby"
                 "chat_color" "axis"
+                "chat_color_blu" "springgreen"
                 "soldier"
                 {
                     "defindex" "360"
@@ -34,6 +35,7 @@ defmodule KogasaFrontend.CustomHatPopularityTest do
             "punishing_bird"
             {
                 "name" "Punishing Bird"
+                "chat_color" "plum"
             }
             "single_hat"
             {
@@ -93,8 +95,16 @@ defmodule KogasaFrontend.CustomHatPopularityTest do
     assert Enum.all?(items, &(&1.type == "Custom Hat" and &1.level == 10))
     assert Enum.all?(items, &(&1.slot == "default"))
     assert Enum.all?(items, &CustomHatsConfig.visible_for_class?(&1, "soldier"))
-    assert hd(items).label_color == "#FF4040"
-    assert Enum.at(items, 1).label_color == nil
+
+    assert hd(items).label_style == %{
+             kind: :gradient,
+             first: "#FF4040",
+             second: "#00FF7F",
+             completion: 50
+           }
+
+    assert Enum.at(items, 1).label_style == %{kind: :solid, color: "#DDA0DD"}
+    assert Enum.at(items, 2).label_style == nil
   end
 
   test "the frontend reads its repository copy by default" do
