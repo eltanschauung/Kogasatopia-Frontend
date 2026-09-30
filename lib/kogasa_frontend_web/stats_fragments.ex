@@ -1,6 +1,7 @@
 defmodule KogasaFrontendWeb.StatsFragments do
   @moduledoc false
 
+  alias KogasaFrontend.DemoDownloads
   alias KogasaFrontend.DisplayFormat
   alias KogasaFrontend.PlayerPresentation
   alias KogasaFrontend.Tf2Classes
@@ -390,6 +391,7 @@ defmodule KogasaFrontendWeb.StatsFragments do
     <details class="log-entry" data-player-count="#{player_count}" data-started-at="#{started_at}">
       <summary class="log-summary">
         <span class="gamemode-label">#{e(mode)}</span>
+        #{demo_download_html(log)}
         <span class="log-title">#{e(map_name)} | #{format_log_datetime_html(started_at)}</span>
         <span class="log-meta">#{player_count} player#{if player_count == 1, do: "", else: "s"}</span>
       </summary>
@@ -398,6 +400,16 @@ defmodule KogasaFrontendWeb.StatsFragments do
       </div>
     </details>
     """
+  end
+
+  defp demo_download_html(log) do
+    case DemoDownloads.url(Map.get(log, :demo_filename)) do
+      nil ->
+        ""
+
+      url ->
+        ~s(<a class="gamemode-label demo-download" href="#{e(url)}" download>Demo <i class="fa-solid fa-download" aria-hidden="true"></i></a>)
+    end
   end
 
   defp current_log_player_row_html(player, default_avatar) do

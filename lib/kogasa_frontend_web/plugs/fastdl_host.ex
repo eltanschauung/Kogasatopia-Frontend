@@ -83,6 +83,7 @@ defmodule KogasaFrontendWeb.Plugs.FastdlHost do
       |> put_no_cache_headers()
       |> put_resp_content_type(content_type(file))
       |> put_resp_header("content-length", Integer.to_string(stat.size))
+      |> maybe_demo_attachment(file)
 
     if conn.method == "HEAD" do
       conn
@@ -92,6 +93,17 @@ defmodule KogasaFrontendWeb.Plugs.FastdlHost do
       conn
       |> send_file(conn.status || 200, file)
       |> halt()
+    end
+  end
+
+  defp maybe_demo_attachment(conn, file) do
+    if Path.dirname(file) == Path.join(FastdlSite.docroot(), "demos") and
+         Regex.match?(~r/\A[A-Za-z0-9_-]+\.dem\z/, Path.basename(file)) do
+      conn
+      |> put_resp_content_type("application/octet-stream")
+      |> put_resp_header("content-disposition", ~s(attachment; filename="#{Path.basename(file)}"))
+    else
+      conn
     end
   end
 

@@ -1000,10 +1000,23 @@ body {
 }
 
 .log-title {
+    min-width: 0;
     flex: 1;
     font-weight: 600;
     font-size: 1rem;
     color: var(--text-primary);
+}
+
+.demo-download {
+    color: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.demo-download:hover,
+.demo-download:focus-visible {
+    color: #ffd700;
+    text-decoration: underline;
 }
 
 .log-meta {

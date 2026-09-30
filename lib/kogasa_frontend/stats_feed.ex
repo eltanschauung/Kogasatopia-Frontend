@@ -225,7 +225,7 @@ defmodule KogasaFrontend.StatsFeed do
 
     sql = """
     SELECT l.log_id, l.map, l.gamemode, l.started_at, l.ended_at, l.duration,
-           l.player_count, l.created_at, l.updated_at
+           l.player_count, l.created_at, l.updated_at, l.demo_filename
     FROM #{@logs_table} l
     WHERE #{where_sql}
     ORDER BY l.started_at DESC
@@ -247,7 +247,8 @@ defmodule KogasaFrontend.StatsFeed do
               duration: int(m["duration"]),
               player_count: int(m["player_count"]),
               created_at: int(m["created_at"]),
-              updated_at: int(m["updated_at"])
+              updated_at: int(m["updated_at"]),
+              demo_filename: m["demo_filename"]
             }
           end)
 
