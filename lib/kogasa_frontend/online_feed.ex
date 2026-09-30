@@ -10,6 +10,7 @@ defmodule KogasaFrontend.OnlineFeed do
   alias KogasaFrontend.PlayerIdentity
   alias KogasaFrontend.Quickstats
   alias KogasaFrontend.QueryResult
+  alias KogasaFrontend.PublicActivity
   alias KogasaFrontend.Repo
   alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.WeaponCategories
@@ -127,13 +128,17 @@ defmodule KogasaFrontend.OnlineFeed do
 
   defp fetch_online_players do
     with {:ok, columns} <- table_columns("whaletracker_online") do
+      {privacy_sql, excluded} =
+        PublicActivity.sql_filter("steamid", PublicActivity.excluded_ids())
+
       sql =
         "SELECT " <>
           select_clause(@online_column_defaults, columns) <>
-          " FROM whaletracker_online" <>
+          " FROM whaletracker_online WHERE " <>
+          privacy_sql <>
           order_by_clause(columns, "last_update", "DESC", "steamid", "ASC")
 
-      query_mapped_rows(sql, [])
+      query_mapped_rows(sql, excluded)
     end
   end
 

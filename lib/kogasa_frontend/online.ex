@@ -4,6 +4,7 @@ defmodule KogasaFrontend.Online do
   import KogasaFrontend.Value, only: [int: 1]
 
   alias Ecto.Adapters.SQL
+  alias KogasaFrontend.PublicActivity
   alias KogasaFrontend.Repo
 
   @default_visible_max 32
@@ -55,10 +56,13 @@ defmodule KogasaFrontend.Online do
   defp human_online_count(now) do
     cutoff = now - @online_fresh_seconds
 
+    {privacy_sql, excluded} = PublicActivity.sql_filter("steamid", PublicActivity.excluded_ids())
+
     case SQL.query(
            Repo,
-           "SELECT COUNT(*) AS total_players FROM whaletracker_online WHERE last_update >= ?",
-           [cutoff]
+           "SELECT COUNT(*) AS total_players FROM whaletracker_online WHERE last_update >= ? AND " <>
+             privacy_sql,
+           [cutoff | excluded]
          ) do
       {:ok, %{rows: [[players]]}} -> int(players)
       _ -> 0

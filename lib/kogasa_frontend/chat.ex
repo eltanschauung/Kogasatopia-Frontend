@@ -18,6 +18,7 @@ defmodule KogasaFrontend.Chat do
   }
 
   alias KogasaFrontend.PlayerIdentity
+  alias KogasaFrontend.PublicActivity
   alias KogasaFrontend.Repo
 
   @topic "chat:live"
@@ -34,8 +35,14 @@ defmodule KogasaFrontend.Chat do
     after_id = normalize_id(Map.get(opts, :after))
     alerts_only = truthy?(Map.get(opts, :alerts_only, false))
 
+    excluded = PublicActivity.excluded_ids()
+    excluded_relays = Enum.map(excluded, &("player:" <> &1))
+
     base =
       from m in Message,
+        where:
+          (is_nil(m.steamid) or m.steamid not in ^excluded) and
+            (is_nil(m.iphash) or m.iphash not in ^excluded_relays),
         select: %{
           id: m.id,
           created_at: m.created_at,
@@ -218,7 +225,10 @@ defmodule KogasaFrontend.Chat do
                 |> format_message(%{}, PlayerIdentity.name_styles_for_ids([row.steamid]))
                 |> message_to_json()
 
-              Phoenix.PubSub.broadcast(KogasaFrontend.PubSub, @topic, {:new_message, payload})
+              unless PublicActivity.excluded?(row.steamid) do
+                Phoenix.PubSub.broadcast(KogasaFrontend.PubSub, @topic, {:new_message, payload})
+              end
+
               {:ok, :sent}
 
             {:error, _step, _changeset, _changes} ->
