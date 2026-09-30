@@ -27,13 +27,25 @@ defmodule KogasaFrontend.Chat.RateLimiter do
   def allow_count?(key, limit, window_seconds)
       when is_binary(key) and is_integer(limit) and limit > 0 and
              is_integer(window_seconds) and window_seconds > 0 do
-    GenServer.call(__MODULE__, {:allow_count, key, limit, window_seconds})
+    allow_count?([key], limit, window_seconds)
+  end
+
+  def allow_count?(keys, limit, window_seconds)
+      when is_list(keys) and keys != [] and is_integer(limit) and limit > 0 and
+             is_integer(window_seconds) and window_seconds > 0 do
+    GenServer.call(__MODULE__, {:allow_count, keys, limit, window_seconds})
   end
 
   def at_count_limit?(key, limit, window_seconds)
       when is_binary(key) and is_integer(limit) and limit > 0 and
              is_integer(window_seconds) and window_seconds > 0 do
-    GenServer.call(__MODULE__, {:at_count_limit, key, limit, window_seconds})
+    at_count_limit?([key], limit, window_seconds)
+  end
+
+  def at_count_limit?(keys, limit, window_seconds)
+      when is_list(keys) and keys != [] and is_integer(limit) and limit > 0 and
+             is_integer(window_seconds) and window_seconds > 0 do
+    GenServer.call(__MODULE__, {:at_count_limit, keys, limit, window_seconds})
   end
 
   @impl true
@@ -58,21 +70,26 @@ defmodule KogasaFrontend.Chat.RateLimiter do
   end
 
   @impl true
-  def handle_call({:allow_count, key, limit, window_seconds}, _from, state) do
+  def handle_call({:allow_count, keys, limit, window_seconds}, _from, state) do
     now = System.system_time(:second)
-    recent = recent_timestamps(key, now - window_seconds)
+    counts = Enum.map(Enum.uniq(keys), &{&1, recent_timestamps(&1, now - window_seconds)})
 
-    if length(recent) >= limit do
+    if Enum.any?(counts, fn {_key, recent} -> length(recent) >= limit end) do
       {:reply, false, state}
     else
-      :ets.insert(@counted_table, {key, now + window_seconds, [now | recent]})
+      # Reserve every quota together, or none; a rejected request must not spend the other quota.
+      entries =
+        Enum.map(counts, fn {key, recent} -> {key, now + window_seconds, [now | recent]} end)
+
+      :ets.insert(@counted_table, entries)
       {:reply, true, state}
     end
   end
 
-  def handle_call({:at_count_limit, key, limit, window_seconds}, _from, state) do
-    recent = recent_timestamps(key, System.system_time(:second) - window_seconds)
-    {:reply, length(recent) >= limit, state}
+  def handle_call({:at_count_limit, keys, limit, window_seconds}, _from, state) do
+    cutoff = System.system_time(:second) - window_seconds
+    limited = Enum.any?(keys, &(length(recent_timestamps(&1, cutoff)) >= limit))
+    {:reply, limited, state}
   end
 
   @impl true

@@ -145,7 +145,7 @@ defmodule KogasaFrontend.Chat do
   def create_chat_message(actor, message) do
     rate_key = "chat:" <> to_string(actor[:rate_key] || actor[:iphash] || "anon")
     same_message_key = same_message_rate_key(actor, message)
-    message_volume_key = message_volume_rate_key(actor)
+    message_volume_keys = message_volume_rate_keys(actor)
 
     cond do
       IpBan.blocked?(actor) ->
@@ -155,7 +155,7 @@ defmodule KogasaFrontend.Chat do
         immediate_ban_result(actor, :prohibited_content)
 
       RateLimiter.at_count_limit?(
-        message_volume_key,
+        message_volume_keys,
         @message_volume_limit,
         @message_volume_window_seconds
       ) ->
@@ -175,7 +175,7 @@ defmodule KogasaFrontend.Chat do
         antispam_limit_result(actor, :canonical_duplicate, :duplicate_rate_limited)
 
       not RateLimiter.allow_count?(
-        message_volume_key,
+        message_volume_keys,
         @message_volume_limit,
         @message_volume_window_seconds
       ) ->
@@ -272,9 +272,17 @@ defmodule KogasaFrontend.Chat do
       rate_digest(normalized_message)
   end
 
-  defp message_volume_rate_key(actor) do
+  defp message_volume_rate_keys(actor) do
     browser_identity = actor[:rate_key] || actor[:iphash] || "anon"
-    "chat-volume:" <> rate_digest(client_identity(actor) <> "|" <> browser_identity)
+    browser_key = "chat-volume:browser:" <> rate_digest(browser_identity)
+
+    case actor[:remote_ip] do
+      ip when is_binary(ip) and ip != "" ->
+        ["chat-volume:ip:" <> rate_digest(ip), browser_key]
+
+      _ ->
+        [browser_key]
+    end
   end
 
   defp client_identity(actor) do

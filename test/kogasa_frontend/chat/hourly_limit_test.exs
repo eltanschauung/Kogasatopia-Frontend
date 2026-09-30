@@ -1,6 +1,8 @@
 defmodule KogasaFrontend.Chat.HourlyLimitTest do
   use ExUnit.Case, async: false
 
+  import ExUnit.CaptureLog
+
   alias KogasaFrontend.Chat
   alias KogasaFrontend.Chat.RateLimiter
   alias KogasaFrontendWeb.ChatApiController
@@ -10,10 +12,13 @@ defmodule KogasaFrontend.Chat.HourlyLimitTest do
     %{remote_ip: nil, rate_key: token, iphash: token}
   end
 
+  defp quota_key(kind, identity) do
+    digest = :crypto.hash(:sha256, identity) |> Base.encode16(case: :lower)
+    "chat-volume:#{kind}:" <> digest
+  end
+
   defp fill_quota(actor) do
-    identity = actor.remote_ip || actor.rate_key
-    digest = :crypto.hash(:sha256, identity <> "|" <> actor.rate_key)
-    key = "chat-volume:" <> Base.encode16(digest, case: :lower)
+    key = quota_key("browser", actor.rate_key)
     assert Enum.all?(1..5, fn _ -> RateLimiter.allow_count?(key, 5, 3600) end)
   end
 
@@ -29,18 +34,30 @@ defmodule KogasaFrontend.Chat.HourlyLimitTest do
     assert Chat.hourly_limit_message() == "Error: Messages are limited to 5/hour per individual."
   end
 
-  test "IP and browser session together identify the hourly quota" do
+  test "switching browsers cannot bypass an exhausted IP quota" do
+    first = %{actor() | remote_ip: "198.51.100.12"}
+    second = %{actor() | remote_ip: first.remote_ip}
+    ip_key = quota_key("ip", first.remote_ip)
+    assert Enum.all?(1..5, fn _ -> RateLimiter.allow_count?(ip_key, 5, 3600) end)
+
+    capture_log(fn ->
+      assert Chat.submit_message(first, "Hello again") == {:error, :hourly_rate_limited}
+      assert Chat.submit_message(second, "Hello again") == {:error, :hourly_rate_limited}
+    end)
+
+    refute RateLimiter.at_count_limit?(quota_key("browser", second.rate_key), 1, 3600)
+  end
+
+  test "changing IP cannot bypass an exhausted browser quota" do
     first = actor()
     fill_quota(first)
+    moved = %{first | remote_ip: "198.51.100.13"}
 
-    second = %{first | rate_key: "#{first.rate_key}-other-browser"}
-    fill_quota(second)
+    capture_log(fn ->
+      assert Chat.submit_message(moved, "Hello again") == {:error, :hourly_rate_limited}
+    end)
 
-    moved = %{first | remote_ip: "198.51.100.12"}
-    fill_quota(moved)
-
-    assert Chat.submit_message(first, "Hello again") == {:error, :hourly_rate_limited}
-    assert Chat.submit_message(second, "Hello again") == {:error, :hourly_rate_limited}
+    refute RateLimiter.at_count_limit?(quota_key("ip", moved.remote_ip), 1, 3600)
   end
 
   test "chat API returns HTTP 429 and the requested warning" do
