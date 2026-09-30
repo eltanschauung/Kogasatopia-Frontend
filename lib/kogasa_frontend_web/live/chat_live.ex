@@ -70,6 +70,9 @@ defmodule KogasaFrontendWeb.ChatLive do
 
         {:noreply, assign(socket, :status, status)}
 
+      {:error, :hourly_rate_limited} ->
+        {:noreply, assign(socket, :status, Chat.hourly_limit_message())}
+
       {:error, :rate_limited} ->
         {:noreply, assign(socket, :status, "Rate limited (wait 5s)")}
 

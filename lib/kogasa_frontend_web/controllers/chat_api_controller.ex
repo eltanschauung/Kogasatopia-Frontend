@@ -32,6 +32,11 @@ defmodule KogasaFrontendWeb.ChatApiController do
         {:ok, {:persona_not_found, options}} ->
           json(conn, %{ok: true, message: "persona-not-found", options: options})
 
+        {:error, :hourly_rate_limited} ->
+          conn
+          |> put_status(:too_many_requests)
+          |> json(%{ok: false, error: "hourly_rate", message: Chat.hourly_limit_message()})
+
         {:error, :rate_limited} ->
           conn |> put_status(:too_many_requests) |> json(%{ok: false, error: "rate"})
 

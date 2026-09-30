@@ -24,8 +24,10 @@ defmodule KogasaFrontend.Chat do
   @topic "chat:live"
   @same_message_limit 3
   @same_message_window_seconds 300
-  @message_volume_limit 15
-  @message_volume_window_seconds 180
+  @message_volume_limit 5
+  @message_volume_window_seconds 3600
+
+  def hourly_limit_message, do: "Error: Messages are limited to 5/hour per individual."
 
   def topic, do: @topic
 
@@ -152,6 +154,13 @@ defmodule KogasaFrontend.Chat do
       SpamGuard.automatic_ban_content?(message) ->
         immediate_ban_result(actor, :prohibited_content)
 
+      RateLimiter.at_count_limit?(
+        message_volume_key,
+        @message_volume_limit,
+        @message_volume_window_seconds
+      ) ->
+        {:error, :hourly_rate_limited}
+
       not RateLimiter.allow?(rate_key, 5) ->
         {:error, :rate_limited}
 
@@ -170,7 +179,7 @@ defmodule KogasaFrontend.Chat do
         @message_volume_limit,
         @message_volume_window_seconds
       ) ->
-        antispam_limit_result(actor, :sustained_volume, :spam_limited)
+        {:error, :hourly_rate_limited}
 
       true ->
         now = System.system_time(:second)
@@ -264,7 +273,8 @@ defmodule KogasaFrontend.Chat do
   end
 
   defp message_volume_rate_key(actor) do
-    "chat-volume:" <> rate_digest(client_identity(actor))
+    browser_identity = actor[:rate_key] || actor[:iphash] || "anon"
+    "chat-volume:" <> rate_digest(client_identity(actor) <> "|" <> browser_identity)
   end
 
   defp client_identity(actor) do

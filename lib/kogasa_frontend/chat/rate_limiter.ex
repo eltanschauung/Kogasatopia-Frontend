@@ -30,6 +30,12 @@ defmodule KogasaFrontend.Chat.RateLimiter do
     GenServer.call(__MODULE__, {:allow_count, key, limit, window_seconds})
   end
 
+  def at_count_limit?(key, limit, window_seconds)
+      when is_binary(key) and is_integer(limit) and limit > 0 and
+             is_integer(window_seconds) and window_seconds > 0 do
+    GenServer.call(__MODULE__, {:at_count_limit, key, limit, window_seconds})
+  end
+
   @impl true
   def init(state) do
     :ets.new(@table, [
@@ -54,16 +60,7 @@ defmodule KogasaFrontend.Chat.RateLimiter do
   @impl true
   def handle_call({:allow_count, key, limit, window_seconds}, _from, state) do
     now = System.system_time(:second)
-    cutoff = now - window_seconds
-
-    recent =
-      case :ets.lookup(@counted_table, key) do
-        [{^key, _expires_at, timestamps}] ->
-          Enum.filter(timestamps, &(&1 > cutoff))
-
-        _ ->
-          []
-      end
+    recent = recent_timestamps(key, now - window_seconds)
 
     if length(recent) >= limit do
       {:reply, false, state}
@@ -71,6 +68,11 @@ defmodule KogasaFrontend.Chat.RateLimiter do
       :ets.insert(@counted_table, {key, now + window_seconds, [now | recent]})
       {:reply, true, state}
     end
+  end
+
+  def handle_call({:at_count_limit, key, limit, window_seconds}, _from, state) do
+    recent = recent_timestamps(key, System.system_time(:second) - window_seconds)
+    {:reply, length(recent) >= limit, state}
   end
 
   @impl true
@@ -84,6 +86,13 @@ defmodule KogasaFrontend.Chat.RateLimiter do
 
     schedule_cleanup()
     {:noreply, state}
+  end
+
+  defp recent_timestamps(key, cutoff) do
+    case :ets.lookup(@counted_table, key) do
+      [{^key, _expires_at, timestamps}] -> Enum.filter(timestamps, &(&1 > cutoff))
+      _ -> []
+    end
   end
 
   defp schedule_cleanup do
