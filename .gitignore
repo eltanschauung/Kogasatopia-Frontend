@@ -30,6 +30,7 @@ refactor_plan.txt
 AGENTS.md
 .server4001.log
 access.log
+access.log.last_clear
 weapons.cfg
 installed-packages.tsv
 manual-packages.txt

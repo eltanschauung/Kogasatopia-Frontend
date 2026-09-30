@@ -19,6 +19,7 @@ config :kogasa_frontend, KogasaFrontend.Repo,
 
 config :kogasa_frontend, :skip_repo, System.get_env("KOGASA_SKIP_TEST_DB") in ["1", "true"]
 config :kogasa_frontend, :mapsdb_cache_enabled, false
+config :kogasa_frontend, :access_log_path, Path.expand("_build/test/access.log")
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
