@@ -16,7 +16,8 @@ defmodule KogasaFrontend.Chat do
     RateLimiter,
     Sender,
     SpamGuard,
-    SteamProfiles
+    SteamProfiles,
+    Visibility
   }
 
   alias KogasaFrontend.PlayerIdentity
@@ -37,13 +38,11 @@ defmodule KogasaFrontend.Chat do
     alerts_only = truthy?(Map.get(opts, :alerts_only, false))
 
     excluded = PublicActivity.excluded_ids()
-    excluded_relays = Enum.map(excluded, &("player:" <> &1))
+    public_filter = Visibility.public_filter(excluded)
 
     base =
       from m in Message,
-        where:
-          (is_nil(m.steamid) or m.steamid not in ^excluded) and
-            (is_nil(m.iphash) or m.iphash not in ^excluded_relays),
+        where: ^public_filter,
         select: %{
           id: m.id,
           created_at: m.created_at,
@@ -235,7 +234,7 @@ defmodule KogasaFrontend.Chat do
                 |> message_payload(profiles, styles)
                 |> message_to_json()
 
-              unless PublicActivity.excluded?(row.steamid) do
+              if Visibility.visible?(row, PublicActivity.excluded_ids()) do
                 Phoenix.PubSub.broadcast(KogasaFrontend.PubSub, @topic, {:new_message, payload})
               end
 
