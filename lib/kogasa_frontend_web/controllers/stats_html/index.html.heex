@@ -599,6 +599,11 @@
               <div class="stats-chat-text">${UI.escapeHtml(msg.message || '')}</div>
             </div>
           `;
+          if (msg.name_style && window.KogasaPlayerIdentity) {
+            window.KogasaPlayerIdentity.applyNameStyle(
+              row.querySelector('.stats-chat-name'), msg.name_style, false, displayName
+            );
+          }
           frag.appendChild(row);
           state.chat.afterId = Math.max(Number(state.chat.afterId || 0), Number(msg.id || 0));
         });
@@ -636,7 +641,10 @@
           const res = await fetch('/stats/chat.php', {
             method: 'POST',
             credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            },
             body: JSON.stringify({ message })
           });
           const payload = await res.json();
@@ -645,7 +653,7 @@
             await loadChat(false);
             return true;
           }
-          els.chatStatus.textContent = (payload && payload.error) ? payload.error : 'Failed to send';
+          els.chatStatus.textContent = payload?.message || payload?.error || 'Failed to send';
         } catch (_) {
           els.chatStatus.textContent = 'Failed to send';
         }

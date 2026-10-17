@@ -14,6 +14,14 @@ defmodule KogasaFrontendWeb.SteamLogin do
 
     case action do
       "logout" ->
+        if token = get_session(conn, "wt_chat_client_token") do
+          Phoenix.PubSub.broadcast(
+            KogasaFrontend.PubSub,
+            KogasaFrontend.Chat.Identity.session_topic(token),
+            :steam_logout
+          )
+        end
+
         conn
         |> configure_session(drop: true)
         |> redirect(to: return_to)
@@ -23,28 +31,20 @@ defmodule KogasaFrontendWeb.SteamLogin do
     end
   end
 
-  defp login_or_callback(conn, %{"steamid" => steamid}, return_to, opts)
-       when is_binary(steamid) do
-    steamid = String.trim(steamid)
-
-    if Regex.match?(~r/^\d{17}$/, steamid) do
-      conn
-      |> put_session("steamid", steamid)
-      |> redirect(to: return_to)
-    else
-      render_error_page(conn, return_to, "Invalid SteamID64. Expected 17 digits.", opts)
-    end
-  end
-
   defp login_or_callback(conn, %{"openid.mode" => "cancel"}, return_to, _opts) do
-    redirect(conn, to: append_query_flag(return_to, "login", "cancelled"))
+    conn
+    |> delete_session("steam_login_pending")
+    |> redirect(to: append_query_flag(return_to, "login", "cancelled"))
   end
 
   defp login_or_callback(conn, %{"openid.mode" => _mode} = params, return_to, opts) do
     case validate_openid_response(conn, params, return_to, opts) do
       {:ok, steamid} ->
         conn
+        |> configure_session(renew: true)
         |> put_session("steamid", steamid)
+        |> put_session("steam_verified_id", steamid)
+        |> delete_session("steam_login_pending")
         |> redirect(to: return_to)
 
       {:error, reason} ->
@@ -53,6 +53,13 @@ defmodule KogasaFrontendWeb.SteamLogin do
   end
 
   defp login_or_callback(conn, _params, return_to, opts) do
+    pending = %{
+      "token" => Base.url_encode64(:crypto.strong_rand_bytes(24), padding: false),
+      "return" => return_to,
+      "issued_at" => System.system_time(:second)
+    }
+
+    conn = put_session(conn, "steam_login_pending", pending)
     redirect(conn, external: build_steam_login_url(conn, return_to, opts))
   end
 
@@ -79,23 +86,38 @@ defmodule KogasaFrontendWeb.SteamLogin do
       |> Enum.filter(fn {k, _v} -> String.starts_with?(k, "openid.") end)
       |> Map.new()
       |> Map.put("openid.mode", "check_authentication")
-      |> Map.put("openid.return_to", absolute_login_return_url(conn, return_to, opts))
 
-    with {:ok, response} <- Req.post(@steam_openid_url, form: openid_fields),
+    signed =
+      case params["openid.signed"] do
+        value when is_binary(value) -> String.split(value, ",")
+        _ -> []
+      end
+    required = ~w(op_endpoint claimed_id identity return_to response_nonce)
+
+    request_options =
+      Keyword.merge(Keyword.get(opts, :request_options, []),
+        form: openid_fields,
+        receive_timeout: 5_000
+      )
+
+    with %{"token" => token, "return" => ^return_to, "issued_at" => issued_at} <-
+           get_session(conn, "steam_login_pending"),
+         true <- is_binary(token) and token == params["state"],
+         true <- is_integer(issued_at) and (System.system_time(:second) - issued_at) in 0..600,
+         true <- params["openid.mode"] == "id_res" and params["openid.ns"] == @openid_ns,
+         true <- params["openid.op_endpoint"] == @steam_openid_url,
+         true <- params["openid.identity"] == params["openid.claimed_id"],
+         true <- Enum.all?(required, &(&1 in signed)),
+         true <- params["openid.return_to"] == absolute_login_return_url(conn, return_to, opts),
+         {:ok, response} <- Req.post(@steam_openid_url, request_options),
          true <- response.status in 200..299,
          body when is_binary(body) <- response.body,
-         true <- String.contains?(body, "is_valid:true"),
+         true <- "is_valid:true" in String.split(body, ~r/\r?\n/),
          {:ok, steamid} <- steamid_from_claimed_id(params["openid.claimed_id"]) do
       {:ok, steamid}
     else
       false ->
         {:error, "Steam OpenID validation failed."}
-
-      {:error, %Req.TransportError{reason: reason}} ->
-        {:error, "Steam OpenID network error: #{inspect(reason)}"}
-
-      {:error, reason} ->
-        {:error, "Steam OpenID error: #{inspect(reason)}"}
 
       _ ->
         {:error, "Steam OpenID validation failed."}
@@ -103,7 +125,7 @@ defmodule KogasaFrontendWeb.SteamLogin do
   end
 
   defp steamid_from_claimed_id(claimed_id) when is_binary(claimed_id) do
-    case Regex.run(~r|^https://steamcommunity\.com/openid/id/(\d+)$|, claimed_id) do
+    case Regex.run(~r|^https://steamcommunity\.com/openid/id/(\d{17})$|, claimed_id) do
       [_full, steamid] -> {:ok, steamid}
       _ -> {:error, :invalid_claimed_id}
     end
@@ -112,8 +134,11 @@ defmodule KogasaFrontendWeb.SteamLogin do
   defp steamid_from_claimed_id(_), do: {:error, :missing_claimed_id}
 
   defp absolute_login_return_url(conn, return_to, opts) do
+    state = get_in(get_session(conn), ["steam_login_pending", "token"]) || ""
+
     request_realm(conn) <>
-      Keyword.fetch!(opts, :login_path) <> "?return=" <> URI.encode(return_to)
+      Keyword.fetch!(opts, :login_path) <>
+      "?" <> URI.encode_query(%{"return" => return_to, "state" => state})
   end
 
   defp request_realm(conn) do

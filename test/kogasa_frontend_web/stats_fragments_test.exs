@@ -27,7 +27,8 @@ defmodule KogasaFrontendWeb.StatsFragmentsTest do
           personaname: "Styled Admin",
           profileurl: "https://steamcommunity.com/profiles/76561198000000000",
           is_admin: true,
-          name_style: %{kind: :gradient, first: "#99CCFF", second: "#FF4040"}
+          name_style:
+            KogasaFrontend.Chat.NameStyle.from_preference(%{pattern: "gradient:blue:red"})
         }
       ])
 

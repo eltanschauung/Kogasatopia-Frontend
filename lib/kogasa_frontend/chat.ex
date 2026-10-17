@@ -7,12 +7,14 @@ defmodule KogasaFrontend.Chat do
 
   alias KogasaFrontend.Chat.{
     AvatarService,
+    HourlyQuota,
     IpBan,
     Message,
     MessageParts,
     OutboxMessage,
     Persona,
     RateLimiter,
+    Sender,
     SpamGuard,
     SteamProfiles
   }
@@ -24,10 +26,7 @@ defmodule KogasaFrontend.Chat do
   @topic "chat:live"
   @same_message_limit 3
   @same_message_window_seconds 300
-  @message_volume_limit 5
-  @message_volume_window_seconds 3600
-
-  def hourly_limit_message, do: "Error: Messages are limited to 5/hour per individual."
+  def hourly_limit_message(actor \\ %{}), do: HourlyQuota.message(actor)
 
   def topic, do: @topic
 
@@ -96,7 +95,7 @@ defmodule KogasaFrontend.Chat do
     steamids = Enum.map(rows, fn r -> r[:steamid] || r["steamid"] end)
     steam_profiles = SteamProfiles.fetch_many(steamids)
     name_styles = PlayerIdentity.name_styles_for_ids(steamids)
-    messages = Enum.map(rows, &format_message(&1, steam_profiles, name_styles))
+    messages = Enum.map(rows, &message_payload(&1, steam_profiles, name_styles))
     ids = Enum.map(messages, & &1.id)
 
     %{
@@ -145,7 +144,7 @@ defmodule KogasaFrontend.Chat do
   def create_chat_message(actor, message) do
     rate_key = "chat:" <> to_string(actor[:rate_key] || actor[:iphash] || "anon")
     same_message_key = same_message_rate_key(actor, message)
-    message_volume_keys = message_volume_rate_keys(actor)
+    quota = HourlyQuota.policy(actor)
 
     cond do
       IpBan.blocked?(actor) ->
@@ -155,9 +154,9 @@ defmodule KogasaFrontend.Chat do
         immediate_ban_result(actor, :prohibited_content)
 
       RateLimiter.at_count_limit?(
-        message_volume_keys,
-        @message_volume_limit,
-        @message_volume_window_seconds
+        quota.keys,
+        quota.limit,
+        quota.window
       ) ->
         {:error, :hourly_rate_limited}
 
@@ -175,9 +174,9 @@ defmodule KogasaFrontend.Chat do
         antispam_limit_result(actor, :canonical_duplicate, :duplicate_rate_limited)
 
       not RateLimiter.allow_count?(
-        message_volume_keys,
-        @message_volume_limit,
-        @message_volume_window_seconds
+        quota.keys,
+        quota.limit,
+        quota.window
       ) ->
         {:error, :hourly_rate_limited}
 
@@ -190,17 +189,19 @@ defmodule KogasaFrontend.Chat do
         server_port =
           actor[:server_port] || Application.get_env(:kogasa_frontend, :chat_server_port, 443)
 
-        display_name =
-          cond do
-            actor[:steamid] && actor[:personaname] -> actor[:personaname] <> " | Web"
-            actor[:personaname] -> actor[:personaname]
-            true -> "Web Player"
-          end
+        steamid = actor[:steamid]
+        profiles = SteamProfiles.fetch_many(List.wrap(steamid))
+        identities = PlayerIdentity.for_ids(List.wrap(steamid))
+
+        sender =
+          Sender.presentation(actor, profiles[steamid], PlayerIdentity.get(identities, steamid))
+
+        styles = Map.new(identities, fn {id, identity} -> {id, identity.name_style} end)
 
         attrs = %{
           created_at: now,
           steamid: actor[:steamid],
-          personaname: display_name,
+          personaname: sender.display_name,
           iphash: actor[:iphash],
           source_subnet: actor[:source_subnet],
           message: message,
@@ -213,7 +214,7 @@ defmodule KogasaFrontend.Chat do
           created_at: now,
           iphash: actor[:iphash] || "anon",
           source_subnet: actor[:source_subnet],
-          display_name: display_name,
+          display_name: sender.relay_name,
           message: message,
           server_ip: server_ip,
           server_port: server_port
@@ -231,7 +232,7 @@ defmodule KogasaFrontend.Chat do
 
               payload =
                 row
-                |> format_message(%{}, PlayerIdentity.name_styles_for_ids([row.steamid]))
+                |> message_payload(profiles, styles)
                 |> message_to_json()
 
               unless PublicActivity.excluded?(row.steamid) do
@@ -272,22 +273,9 @@ defmodule KogasaFrontend.Chat do
       rate_digest(normalized_message)
   end
 
-  defp message_volume_rate_keys(actor) do
-    browser_identity = actor[:rate_key] || actor[:iphash] || "anon"
-    browser_key = "chat-volume:browser:" <> rate_digest(browser_identity)
-
-    case actor[:remote_ip] do
-      ip when is_binary(ip) and ip != "" ->
-        ["chat-volume:ip:" <> rate_digest(ip), browser_key]
-
-      _ ->
-        [browser_key]
-    end
-  end
-
   defp client_identity(actor) do
     Enum.find(
-      [actor[:remote_ip], actor[:rate_key], actor[:iphash]],
+      [actor[:steamid], actor[:remote_ip], actor[:rate_key], actor[:iphash]],
       "anon",
       &(is_binary(&1) and &1 != "")
     )
@@ -299,7 +287,8 @@ defmodule KogasaFrontend.Chat do
     |> Base.encode16(case: :lower)
   end
 
-  defp format_message(row, steam_profiles, name_styles) do
+  @doc false
+  def message_payload(row, steam_profiles, name_styles) do
     iphash = row[:iphash] || row["iphash"]
     personaname = row[:personaname] || row["personaname"]
     steamid = row[:steamid] || row["steamid"]

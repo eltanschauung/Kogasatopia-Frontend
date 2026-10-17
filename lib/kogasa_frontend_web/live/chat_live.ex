@@ -2,6 +2,7 @@ defmodule KogasaFrontendWeb.ChatLive do
   use KogasaFrontendWeb, :live_view
 
   alias KogasaFrontend.Chat
+  alias KogasaFrontend.Chat.Identity
   alias KogasaFrontend.TimeDisplay
   alias KogasaFrontendWeb.Plugs.ChatIdentity
   @poll_ms 4_000
@@ -16,18 +17,19 @@ defmodule KogasaFrontendWeb.ChatLive do
     persona = session["wt_chat_persona"] || Chat.ensure_session_persona(nil)
 
     identity =
-      %{
-        steamid: nil,
-        personaname: persona["display"],
-        persona: persona,
-        iphash: short_hash(session),
-        rate_key: session["wt_chat_client_token"] || "anon",
+      session
+      |> Identity.from_session(persona)
+      |> Map.merge(%{
         remote_ip: remote_ip(socket),
-        source_subnet: source_subnet(socket, session),
-        server_ip: Application.get_env(:kogasa_frontend, :chat_server_ip, "127.0.0.1"),
-        server_port: Application.get_env(:kogasa_frontend, :chat_server_port, 443)
-      }
-      |> ensure_persona(session, persona)
+        source_subnet: source_subnet(socket, session)
+      })
+
+    if connected?(socket) && identity.steamid do
+      Phoenix.PubSub.subscribe(
+        KogasaFrontend.PubSub,
+        Identity.session_topic(identity.browser_key)
+      )
+    end
 
     payload = Chat.list_messages(%{limit: 50})
 
@@ -71,7 +73,7 @@ defmodule KogasaFrontendWeb.ChatLive do
         {:noreply, assign(socket, :status, status)}
 
       {:error, :hourly_rate_limited} ->
-        {:noreply, assign(socket, :status, Chat.hourly_limit_message())}
+        {:noreply, assign(socket, :status, Chat.hourly_limit_message(socket.assigns.identity))}
 
       {:error, :rate_limited} ->
         {:noreply, assign(socket, :status, "Rate limited (wait 5s)")}
@@ -123,6 +125,19 @@ defmodule KogasaFrontendWeb.ChatLive do
   end
 
   @impl true
+  def handle_info(:steam_logout, socket) do
+    identity = socket.assigns.identity
+
+    identity = %{
+      identity
+      | steamid: nil,
+        personaname: identity.persona["display"],
+        rate_key: identity.browser_key
+    }
+
+    {:noreply, assign(socket, :identity, identity)}
+  end
+
   def handle_info({:new_message, msg}, socket) do
     latest_id = max_id(socket.assigns.latest_id, msg)
 
@@ -308,16 +323,6 @@ defmodule KogasaFrontendWeb.ChatLive do
     end
   end
 
-  defp short_hash(session) do
-    token = session["wt_chat_client_token"] || "anon"
-    secret = Application.get_env(:kogasa_frontend, :chat_ip_secret, "changeme")
-
-    :sha256
-    |> :crypto.hash("#{secret}|#{token}")
-    |> Base.encode16(case: :lower)
-    |> String.slice(0, 8)
-  end
-
   defp source_subnet(socket, session) do
     if connected?(socket) do
       case get_connect_info(socket, :peer_data) do
@@ -337,17 +342,6 @@ defmodule KogasaFrontendWeb.ChatLive do
       end
     else
       ""
-    end
-  end
-
-  defp ensure_persona(identity, session, fallback_persona) do
-    case get_in(session, ["wt_chat_persona", "display"]) do
-      nil ->
-        persona = fallback_persona || Chat.ensure_session_persona(nil)
-        %{identity | personaname: persona["display"], persona: persona}
-
-      _ ->
-        identity
     end
   end
 end
