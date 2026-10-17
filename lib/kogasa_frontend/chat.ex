@@ -291,6 +291,13 @@ defmodule KogasaFrontend.Chat do
   def message_payload(row, steam_profiles, name_styles) do
     iphash = row[:iphash] || row["iphash"]
     personaname = row[:personaname] || row["personaname"]
+    # Earlier authenticated posts used this suffix; render them consistently
+    # without mutating saved history or its original provenance.
+    personaname =
+      if MessageParts.authenticated_web?(row) and is_binary(personaname),
+        do: String.trim_trailing(personaname, " | Web"),
+        else: personaname
+
     steamid = row[:steamid] || row["steamid"]
     raw_message = row[:message] || row["message"] || ""
     {clan_tag, message} = MessageParts.split(raw_message, row)

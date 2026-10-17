@@ -245,7 +245,10 @@ defmodule KogasaFrontend.SteamChatTest do
     profile = %{"personaname" => "Steam Name", "avatarfull" => "https://example.com/avatar.jpg"}
     stored = %{prename: "Chosen Name", cached_name: "Cached Name", name_style: style}
     sender = Sender.presentation(%{steamid: @id}, profile, stored)
-    assert sender.display_name == "Chosen Name | Web"
+    assert sender.display_name == "Chosen Name"
+    assert String.starts_with?(sender.relay_name, "{gold}[Web]{default}")
+    assert String.ends_with?(sender.relay_name, "{default}")
+    refute sender.relay_name =~ " | Web"
     assert sender.relay_name =~ "\x0799CCFF"
     assert sender.relay_name =~ "\x07FF4040"
 
@@ -253,6 +256,7 @@ defmodule KogasaFrontend.SteamChatTest do
       id: 1,
       steamid: @id,
       iphash: "test",
+      server_ip: "192.0.2.1",
       personaname: sender.display_name,
       message: "Hi",
       alert: true
@@ -260,6 +264,7 @@ defmodule KogasaFrontend.SteamChatTest do
 
     payload = Chat.message_payload(row, %{@id => profile}, %{@id => style})
     assert payload.name == sender.display_name
+    assert payload.clan_tag == "{gold}[Web]{default}"
     assert payload.name_style == style
     assert payload.avatar == profile["avatarfull"]
     assert payload.steamid == @id
@@ -270,10 +275,10 @@ defmodule KogasaFrontend.SteamChatTest do
     profile = %{"personaname" => "Steam Name"}
 
     assert Sender.presentation(actor, profile, %{cached_name: "Saved"}).display_name ==
-             "Saved | Web"
+             "Saved"
 
-    assert Sender.presentation(actor, profile, %{}).display_name == "Steam Name | Web"
-    assert Sender.presentation(actor, nil, %{}).display_name == @id <> " | Web"
+    assert Sender.presentation(actor, profile, %{}).display_name == "Steam Name"
+    assert Sender.presentation(actor, nil, %{}).display_name == @id
 
     assert Sender.presentation(%{personaname: "{green}Guest"}, nil, %{}).relay_name ==
              "{green}Guest"
@@ -294,6 +299,13 @@ defmodule KogasaFrontend.SteamChatTest do
       assert String.ends_with?(rendered, "\x01")
       assert byte_size(rendered <> " | Web") < 128
       assert rendered =~ "\x07"
+
+      for name <- [String.duplicate("人", 40), String.duplicate("a", 40)] do
+        sender = Sender.presentation(%{steamid: @id}, nil, %{prename: name, name_style: style})
+        assert String.valid?(sender.relay_name)
+        assert byte_size(sender.relay_name) < 128
+        assert String.ends_with?(sender.relay_name, "{default}")
+      end
     end
 
     assert SourceName.render("ABC", %{kind: :trans}) == "\x075BCEFAA\x07FFFFFFB\x07F5A9B8C\x01"

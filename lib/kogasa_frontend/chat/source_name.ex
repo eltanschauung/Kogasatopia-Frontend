@@ -3,7 +3,7 @@ defmodule KogasaFrontend.Chat.SourceName do
   import Bitwise
 
   # Match Filters' eight-step gradients and discrete flag palettes. Bound the
-  # plain relay name so color codes plus " | Web" fit its 128-byte outbox reader.
+  # plain relay name and its optional label to fit the 128-byte outbox reader.
   @palettes %{
     america: [
       0xFFFFFF,
@@ -24,7 +24,7 @@ defmodule KogasaFrontend.Chat.SourceName do
     rainbow: [0xFF4040, 0xFFA500, 0xFFFF00, 0x3EFF3E, 0x99CCFF, 0x9370D8, 0xEE82EE]
   }
 
-  def render(name, style) do
+  def render(name, style, budget \\ 116) do
     glyphs =
       name
       |> String.codepoints()
@@ -32,6 +32,18 @@ defmodule KogasaFrontend.Chat.SourceName do
         if IO.iodata_length([acc, glyph]) <= 31, do: {:cont, acc ++ [glyph]}, else: {:halt, acc}
       end)
 
+    render_glyphs(glyphs, style, budget)
+  end
+
+  defp render_glyphs(glyphs, style, budget) do
+    rendered = encode_glyphs(glyphs, style)
+
+    if byte_size(rendered) <= budget or glyphs == [],
+      do: rendered,
+      else: render_glyphs(Enum.drop(glyphs, -1), style, budget)
+  end
+
+  defp encode_glyphs(glyphs, style) do
     count = length(glyphs)
     steps = min(count, 8)
     denominator = max(steps - 1, 1)

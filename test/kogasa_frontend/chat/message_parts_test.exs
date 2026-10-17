@@ -25,14 +25,14 @@ defmodule KogasaFrontend.Chat.MessagePartsTest do
     assert MessageParts.split(message, game_source()) == {nil, "first : second"}
   end
 
-  test "does not parse web messages" do
+  test "labels authenticated web messages without parsing their body" do
     message = "this is not a rendered name : keep all of it"
 
     assert MessageParts.split(message, %{
              steamid: "76561198000000000",
              iphash: "web-session",
-             server_ip: "127.0.0.1"
-           }) == {nil, message}
+             server_ip: "192.0.2.1"
+           }) == {"{gold}[Web]{default}", message}
   end
 
   test "does not parse system messages" do

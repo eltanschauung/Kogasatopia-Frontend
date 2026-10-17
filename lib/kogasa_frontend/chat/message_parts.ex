@@ -4,15 +4,22 @@ defmodule KogasaFrontend.Chat.MessageParts do
   @clan_tag_re ~r/\[[^\]\r\n]*\]/u
 
   def split(message, source) when is_binary(message) and is_map(source) do
-    if game_chat?(source) do
-      split_game_message(message)
-    else
-      {nil, message}
+    cond do
+      authenticated_web?(source) -> {"{gold}[Web]{default}", message}
+      game_chat?(source) -> split_game_message(message)
+      true -> {nil, message}
     end
   end
 
   def split(message, _source) when is_binary(message), do: {nil, message}
   def split(_message, _source), do: {nil, ""}
+
+  def authenticated_web?(source) do
+    hash = value(source, :iphash)
+
+    present?(value(source, :steamid)) and present?(hash) and hash != "system" and
+      not String.starts_with?(hash, "player:") and present?(value(source, :server_ip))
+  end
 
   defp game_chat?(source) do
     present?(value(source, :steamid)) and

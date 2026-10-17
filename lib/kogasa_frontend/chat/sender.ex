@@ -15,10 +15,14 @@ defmodule KogasaFrontend.Chat.Sender do
 
     name = if String.trim(name) == "", do: id, else: name
     style = identity[:name_style]
+    prefix = "{gold}[Web]{default}"
+    suffix = "{default}"
+    budget = 127 - byte_size(prefix) - byte_size(suffix) + 1
 
     %{
-      display_name: name <> " | Web",
-      relay_name: SourceName.render(name, style) <> " | Web",
+      display_name: name,
+      relay_name:
+        prefix <> String.trim_trailing(SourceName.render(name, style, budget), "\x01") <> suffix,
       name_style: style
     }
   end
