@@ -246,7 +246,7 @@ defmodule KogasaFrontend.SteamChatTest do
     stored = %{prename: "Chosen Name", cached_name: "Cached Name", name_style: style}
     sender = Sender.presentation(%{steamid: @id}, profile, stored)
     assert sender.display_name == "Chosen Name"
-    assert String.starts_with?(sender.relay_name, "{gold}[Web]{default}")
+    assert String.starts_with?(sender.relay_name, "{gold}[Web]{default} ")
     assert String.ends_with?(sender.relay_name, "{default}")
     refute sender.relay_name =~ " | Web"
     assert sender.relay_name =~ "\x0799CCFF"
