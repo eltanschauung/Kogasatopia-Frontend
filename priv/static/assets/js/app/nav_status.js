@@ -45,7 +45,7 @@
     if (!element(labelReference) && !element(mirrorReference)) return null;
 
     try {
-      const response = await fetch(onlineEndpoint, { cache: "no-store" });
+      const response = await fetch(onlineEndpoint, { cache: "default" });
       if (!response.ok) throw new Error("Online summary request failed");
       const summary = applyOnline(await response.json(), labelReference, mirrorReference);
       if (typeof onUpdate === "function") onUpdate(summary);

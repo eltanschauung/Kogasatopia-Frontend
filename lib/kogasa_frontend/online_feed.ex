@@ -127,7 +127,7 @@ defmodule KogasaFrontend.OnlineFeed do
   end
 
   defp fetch_online_players do
-    with {:ok, columns} <- table_columns("whaletracker_online") do
+    KogasaFrontend.OnlineSchema.with_columns("whaletracker_online", fn columns ->
       {privacy_sql, excluded} =
         PublicActivity.sql_filter("steamid", PublicActivity.excluded_ids())
 
@@ -139,13 +139,13 @@ defmodule KogasaFrontend.OnlineFeed do
           order_by_clause(columns, "last_update", "DESC", "steamid", "ASC")
 
       query_mapped_rows(sql, excluded)
-    end
+    end)
   end
 
   defp fetch_servers(now) do
     cutoff = now - @server_fresh_seconds
 
-    with {:ok, columns} <- table_columns("whaletracker_servers") do
+    KogasaFrontend.OnlineSchema.with_columns("whaletracker_servers", fn columns ->
       {where_clause, params} = freshness_filter(columns, cutoff)
 
       sql =
@@ -159,34 +159,13 @@ defmodule KogasaFrontend.OnlineFeed do
         {:ok, rows} -> {:ok, build_server_rows(rows)}
         {:error, reason} -> {:error, reason}
       end
-    end
+    end)
   end
 
   defp query_mapped_rows(sql, params) do
     case SQL.query(Repo, sql, params) do
       {:ok, %{rows: rows, columns: columns}} -> {:ok, map_rows(rows, columns)}
       {:error, reason} -> {:error, reason}
-    end
-  end
-
-  defp table_columns(table) when table in ["whaletracker_online", "whaletracker_servers"] do
-    case SQL.query(Repo, "SHOW COLUMNS FROM #{table}", []) do
-      {:ok, %{rows: rows}} ->
-        columns =
-          rows
-          |> Enum.map(fn
-            [field | _] -> str(field)
-            %{"Field" => field} -> str(field)
-            %{Field: field} -> str(field)
-            _ -> ""
-          end)
-          |> Enum.reject(&(&1 == ""))
-          |> MapSet.new()
-
-        {:ok, columns}
-
-      {:error, reason} ->
-        {:error, reason}
     end
   end
 

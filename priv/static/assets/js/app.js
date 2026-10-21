@@ -240,7 +240,7 @@
       if (!this.navCountEl && !this.chatInput) return;
 
       try {
-        const res = await fetch(this.onlineSummaryEndpoint, { cache: "no-store" });
+        const res = await fetch(this.onlineSummaryEndpoint, { cache: "default" });
         if (!res.ok) throw new Error("Request failed");
 
         const payload = await res.json();

@@ -3,14 +3,13 @@ defmodule KogasaFrontend.ValveKeyValues do
 
   def load_file(path) do
     with {:ok, body} <- File.read(path) do
-      body
-      |> tokenize()
-      |> parse_entries()
-      |> elem(0)
+      parse(body)
     else
       _ -> []
     end
   end
+
+  def parse(body), do: body |> tokenize() |> parse_entries() |> elem(0)
 
   def section(nil, _key), do: nil
 

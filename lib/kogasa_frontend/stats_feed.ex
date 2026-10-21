@@ -56,21 +56,21 @@ defmodule KogasaFrontend.StatsFeed do
       )
 
     player = Map.get(opts, :player, Map.get(opts, "player"))
+    aggregate = aggregate_stats()
 
     %{
-      summary: summary(),
+      summary: summary(aggregate),
       currency_snapshot: currency_snapshot(),
-      performance_averages: performance_averages(),
+      performance_averages: performance_averages(aggregate),
       cumulative: cumulative(%{q: search, page: page, per_page: per_page, player: player}),
       current_log: current_log(%{identity_mode: PlayerIdentity.stats_mode()}),
       default_avatar_url: default_avatar_url()
     }
   end
 
-  def summary do
-    identity_mode = PlayerIdentity.stats_mode()
-
-    sql = """
+  @doc false
+  def aggregate_stats_sql do
+    """
     SELECT COUNT(*) AS total_players,
            COALESCE(SUM(kills), 0) AS total_kills,
            COALESCE(SUM(assists), 0) AS total_assists,
@@ -81,12 +81,33 @@ defmodule KogasaFrontend.StatsFeed do
            COALESCE(SUM(damage_dealt), 0) AS total_damage,
            COALESCE(SUM(damage_taken), 0) AS total_damage_taken,
            COALESCE(SUM(medic_drops), 0) AS total_drops,
-           COALESCE(SUM(total_ubers), 0) AS total_ubers_used
+           COALESCE(SUM(total_ubers), 0) AS total_ubers_used,
+           COUNT(CASE WHEN playtime >= 18000 THEN 1 END) AS eligible,
+           AVG(CASE WHEN playtime >= 18000 THEN CASE WHEN deaths > 0 THEN kills / NULLIF(deaths, 0) ELSE kills END END) AS avg_kd,
+           AVG(CASE WHEN playtime >= 18000 THEN damage_dealt END) AS avg_damage,
+           AVG(CASE WHEN playtime >= 18000 THEN airshots END) AS avg_airshots,
+           AVG(CASE WHEN playtime >= 18000 THEN healing END) AS avg_healing,
+           AVG(CASE WHEN playtime >= 18000 AND playtime > 0 THEN damage_dealt / (playtime / 60.0) END) AS avg_dpm,
+           AVG(CASE WHEN playtime >= 18000 AND shots > 0 THEN hits / shots END) AS avg_accuracy
     FROM #{@stats_table}
     """
+  end
 
-    with {:ok, %{rows: [row], columns: cols}} <- SQL.query(Repo, sql, []) do
-      data = row_map(row, cols)
+  defp aggregate_stats do
+    case SQL.query(Repo, aggregate_stats_sql(), []) do
+      {:ok, %{rows: [row], columns: cols}} -> row_map(row, cols)
+      _ -> %{}
+    end
+  rescue
+    _ -> %{}
+  end
+
+  def summary, do: summary(aggregate_stats())
+
+  defp summary(data) do
+    identity_mode = PlayerIdentity.stats_mode()
+
+    if map_size(data) > 0 do
       playtime_seconds = int(data["total_playtime"])
       total_damage = int(data["total_damage"])
       total_minutes = if playtime_seconds > 0, do: playtime_seconds / 60.0, else: 0.0
@@ -111,7 +132,7 @@ defmodule KogasaFrontend.StatsFeed do
       |> Map.merge(summary_top_killstreak(identity_mode))
       |> Map.merge(summary_insights(identity_mode))
     else
-      _ -> %{}
+      %{}
     end
   rescue
     _ -> %{}
@@ -223,7 +244,31 @@ defmodule KogasaFrontend.StatsFeed do
     total_sql = "SELECT COUNT(*) AS c FROM #{@logs_table} l WHERE #{where_sql}"
     total = scalar_query(total_sql, search_params)
 
-    sql = """
+    rows = fetch_log_rows(where_sql, search_params, per_page, offset)
+
+    rows =
+      if include_players do
+        attach_log_players(rows, identity_mode)
+      else
+        rows
+      end
+
+    %{
+      ok: true,
+      q: q,
+      page: page,
+      per_page: per_page,
+      total: total,
+      total_pages: max(1, ceil_div(total, per_page)),
+      rows: rows
+    }
+  rescue
+    _ -> %{ok: false, q: "", rows: [], total: 0, page: 1, total_pages: 1, per_page: 25}
+  end
+
+  @doc false
+  def log_rows_sql(where_sql) do
+    """
     SELECT l.log_id, l.map, l.gamemode, l.started_at, l.ended_at, l.duration,
            l.player_count, l.created_at, l.updated_at, l.demo_filename
     FROM #{@logs_table} l
@@ -231,6 +276,10 @@ defmodule KogasaFrontend.StatsFeed do
     ORDER BY l.started_at DESC
     LIMIT ? OFFSET ?
     """
+  end
+
+  defp fetch_log_rows(where_sql, search_params, per_page, offset) do
+    sql = log_rows_sql(where_sql)
 
     rows =
       case SQL.query(Repo, sql, search_params ++ [per_page, offset]) do
@@ -256,24 +305,7 @@ defmodule KogasaFrontend.StatsFeed do
           []
       end
 
-    rows =
-      if include_players do
-        attach_log_players(rows, identity_mode)
-      else
-        rows
-      end
-
-    %{
-      ok: true,
-      q: q,
-      page: page,
-      per_page: per_page,
-      total: total,
-      total_pages: max(1, ceil_div(total, per_page)),
-      rows: rows
-    }
-  rescue
-    _ -> %{ok: false, q: "", rows: [], total: 0, page: 1, total_pages: 1, per_page: 25}
+    rows
   end
 
   defp logs_search_filter(""), do: {"l.player_count > 0", []}
@@ -394,15 +426,14 @@ defmodule KogasaFrontend.StatsFeed do
   def current_log(opts \\ %{}) do
     identity_mode = Map.get(opts, :identity_mode, Map.get(opts, "identity_mode", :filters))
 
-    case logs(%{
-           page: 1,
-           per_page: 1,
-           include_players: true,
-           identity_mode: identity_mode
-         }) do
-      %{ok: true, rows: [log | _]} -> %{ok: true, log: log}
+    rows = fetch_log_rows("l.player_count > 0", [], 1, 0)
+
+    case attach_log_players(rows, identity_mode) do
+      [log | _] -> %{ok: true, log: log}
       _ -> %{ok: false, log: nil}
     end
+  rescue
+    _ -> %{ok: false, log: nil}
   end
 
   def tab_hash do
@@ -455,23 +486,27 @@ defmodule KogasaFrontend.StatsFeed do
 
     case SQL.query(Repo, sql, []) do
       {:ok, %{rows: [row], columns: cols}} ->
-        m = row_map(row, cols)
-
-        %{
-          eligible: int(m["eligible"]),
-          kd: float(m["avg_kd"]),
-          damage: float(m["avg_damage"]),
-          airshots: float(m["avg_airshots"]),
-          healing: float(m["avg_healing"]),
-          dpm: float(m["avg_dpm"]),
-          accuracy: float(m["avg_accuracy"]) * 100.0
-        }
+        performance_averages(row_map(row, cols))
 
       _ ->
         %{}
     end
   rescue
     _ -> %{}
+  end
+
+  defp performance_averages(m) when map_size(m) == 0, do: %{}
+
+  defp performance_averages(m) do
+    %{
+      eligible: int(m["eligible"]),
+      kd: float(m["avg_kd"]),
+      damage: float(m["avg_damage"]),
+      airshots: float(m["avg_airshots"]),
+      healing: float(m["avg_healing"]),
+      dpm: float(m["avg_dpm"]),
+      accuracy: float(m["avg_accuracy"]) * 100.0
+    }
   end
 
   def fetch_player(nil), do: nil
@@ -987,32 +1022,34 @@ defmodule KogasaFrontend.StatsFeed do
       }
   end
 
-  defp weekly_killstreak_podium(week_start_ts, identity_mode) do
-    sql = """
-    SELECT lp.log_id,
-           lp.steamid,
-           lp.personaname,
-           COALESCE(lp.best_streak, 0) AS best_streak,
-           COALESCE(lp.kills, 0) AS kills,
-           l.started_at
-    FROM #{@log_players_table} lp
-    INNER JOIN #{@logs_table} l ON l.log_id = lp.log_id
-    WHERE l.started_at >= ?
-      AND lp.log_id = (
-        SELECT lp2.log_id
-        FROM #{@log_players_table} lp2
-        INNER JOIN #{@logs_table} l2 ON l2.log_id = lp2.log_id
-        WHERE lp2.steamid = lp.steamid
-          AND l2.started_at >= ?
-        ORDER BY COALESCE(lp2.best_streak, 0) DESC, COALESCE(lp2.kills, 0) DESC, l2.started_at DESC
-        LIMIT 1
-      )
-    ORDER BY COALESCE(lp.best_streak, 0) DESC, COALESCE(lp.kills, 0) DESC, l.started_at DESC
+  @doc false
+  def weekly_killstreak_podium_sql do
+    """
+    SELECT log_id, steamid, personaname, best_streak, kills, started_at
+    FROM (
+      SELECT lp.log_id, lp.steamid, lp.personaname,
+             COALESCE(lp.best_streak, 0) AS best_streak,
+             COALESCE(lp.kills, 0) AS kills, l.started_at,
+             ROW_NUMBER() OVER (
+               PARTITION BY lp.steamid
+               ORDER BY COALESCE(lp.best_streak, 0) DESC,
+                        COALESCE(lp.kills, 0) DESC, l.started_at DESC, lp.log_id ASC
+             ) AS rn
+      FROM #{@log_players_table} lp
+      INNER JOIN #{@logs_table} l ON l.log_id = lp.log_id
+      WHERE l.started_at >= ?
+    ) ranked
+    WHERE rn = 1
+    ORDER BY best_streak DESC, kills DESC, started_at DESC, steamid ASC, log_id ASC
     LIMIT 3
     """
+  end
+
+  defp weekly_killstreak_podium(week_start_ts, identity_mode) do
+    sql = weekly_killstreak_podium_sql()
 
     rows =
-      case SQL.query(Repo, sql, [week_start_ts, week_start_ts]) do
+      case SQL.query(Repo, sql, [week_start_ts]) do
         {:ok, %{rows: rs, columns: cols}} -> Enum.map(rs, &row_map(&1, cols))
         _ -> []
       end

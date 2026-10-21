@@ -62,12 +62,17 @@ defmodule KogasaFrontendWeb.Router do
 
     get "/chat.php", ChatApiController, :index
     post "/chat.php", ChatApiController, :create
-    get "/online_summary.php", OnlineSummaryController, :index
     get "/online.php", OnlineApiController, :index
     get "/fetch_page.php", StatsApiController, :fetch_page
     get "/cumulative_fragment.php", StatsApiController, :cumulative_fragment
     get "/logs_fragment.php", StatsApiController, :logs_fragment
     get "/current_log_fragment.php", StatsApiController, :current_log_fragment
+  end
+
+  scope "/stats", KogasaFrontendWeb do
+    pipe_through :api
+
+    get "/online_summary.php", OnlineSummaryController, :index
   end
 
   scope "/mapsdb", KogasaFrontendWeb do

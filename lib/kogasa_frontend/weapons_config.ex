@@ -123,7 +123,7 @@ defmodule KogasaFrontend.WeaponsConfig do
   end
 
   defp load_entries(path) do
-    ValveKeyValues.load_file(path)
+    KogasaFrontend.WeaponsRootCache.load(path)
   end
 
   defp root_entries(entries), do: section(entries, @root_section) || entries

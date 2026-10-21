@@ -16,6 +16,8 @@ defmodule KogasaFrontend.Application do
         [
           KogasaFrontend.Chat.RateLimiter,
           KogasaFrontend.Chat.SteamProfiles,
+          KogasaFrontend.OnlineSchema,
+          KogasaFrontend.WeaponsRootCache,
           KogasaFrontend.AccessLog,
           {DNSCluster,
            query: Application.get_env(:kogasa_frontend, :dns_cluster_query) || :ignore},
