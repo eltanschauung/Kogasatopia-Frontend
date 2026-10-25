@@ -6,6 +6,7 @@ defmodule KogasaFrontend.MapsDb.ConfigBrowser do
   alias KogasaFrontend.MapsDb.MapMeta
   alias KogasaFrontend.MapsDb.Sections
   alias KogasaFrontend.MapsDb.Source
+  alias KogasaFrontend.MapsDb.PublicConfig
   alias KogasaFrontend.Repo
   alias KogasaFrontend.TimeDisplay
 
@@ -35,9 +36,9 @@ defmodule KogasaFrontend.MapsDb.ConfigBrowser do
   def load_config_file(map, source, cfg) do
     with {:ok, normalized_source} <- Source.sanitize(source),
          {:ok, path, map_name} <- sanitize_map(map, normalized_source, cfg),
-         {:ok, content} <- File.read(path),
+         {:ok, content} <- PublicConfig.read(path),
          {:ok, stat} <- File.stat(path) do
-      {:ok, %{map: map_name, content: content, modified: mtime_unix(stat)}}
+      {:ok, %{map: map_name, content: PublicConfig.redact(content), modified: mtime_unix(stat)}}
     else
       {:error, _} = error -> error
       {:file_error, reason} -> {:error, {:io, reason}}
@@ -236,6 +237,8 @@ defmodule KogasaFrontend.MapsDb.ConfigBrowser do
     end
   end
 
+  defp sanitize_map(_map, _source, _cfg), do: {:error, :invalid_map}
+
   defp allowed_config?(map, "tfcfg", cfg),
     do: cfg.tf_cfg_dir |> allowed_tfcfg_entries() |> MapSet.member?(map)
 
@@ -290,11 +293,12 @@ defmodule KogasaFrontend.MapsDb.ConfigBrowser do
   end
 
   defp multi_line_config?(path) do
-    path
-    |> File.stream!([], :line)
-    |> Enum.take(2)
-    |> length()
-    |> Kernel.>(1)
+    with {:ok, content} <- PublicConfig.read(path),
+         {position, 1} <- :binary.match(content, "\n") do
+      position + 1 < byte_size(content)
+    else
+      _ -> false
+    end
   rescue
     _ -> false
   end

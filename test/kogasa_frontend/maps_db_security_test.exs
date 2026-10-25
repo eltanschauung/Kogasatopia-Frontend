@@ -32,6 +32,7 @@ defmodule KogasaFrontend.MapsDbSecurityTest do
              MapsDb.load_config_file("koth_test", "mapsdb")
 
     assert {:error, :invalid_map} = MapsDb.load_config_file("../server", "mapsdb")
+    assert {:error, :invalid_map} = MapsDb.load_config_file(["koth_test"], "mapsdb")
   end
 
   test "one-line mapsdb configs are hidden from the viewer allowlist", %{maps_dir: maps_dir} do
@@ -59,12 +60,32 @@ defmodule KogasaFrontend.MapsDbSecurityTest do
   test "symlinked configs are not served", %{maps_dir: maps_dir, root: root} do
     target = Path.join(root, "outside.cfg")
     link = Path.join(maps_dir, "linked.cfg")
-    File.write!(target, "outside\n")
+    File.write!(target, "outside\nsecond line\n")
 
     case File.ln_s(target, link) do
       :ok -> assert {:error, :not_found} = MapsDb.load_config_file("linked", "mapsdb")
       {:error, _} -> :ok
     end
+  end
+
+  test "published server and map configs redact known secrets", %{tf_cfg_dir: cfg, maps_dir: maps} do
+    for {dir, name, source} <- [{cfg, "server", "tfcfg"}, {maps, "koth_test", "mapsdb"}] do
+      File.write!(
+        Path.join(dir, name <> ".cfg"),
+        "mp_winlimit 2\nsv_password synthetic-private\n"
+      )
+
+      assert {:ok, result} = MapsDb.load_config_file(name, source)
+      assert result.content =~ "mp_winlimit 2"
+      refute result.content =~ "synthetic-private"
+    end
+  end
+
+  test "oversized and invalid UTF-8 configs never reach public output", %{maps_dir: dir} do
+    File.write!(Path.join(dir, "too_big.cfg"), String.duplicate("a", 1_048_577) <> "\nsecond\n")
+    File.write!(Path.join(dir, "invalid.cfg"), <<255, 10, 10>>)
+    assert {:error, :not_found} = MapsDb.load_config_file("too_big", "mapsdb")
+    assert {:error, :not_found} = MapsDb.load_config_file("invalid", "mapsdb")
   end
 
   defp restore_env(key, nil), do: Application.delete_env(:kogasa_frontend, key)
