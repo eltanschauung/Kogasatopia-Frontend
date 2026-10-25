@@ -47,4 +47,24 @@ defmodule KogasaFrontendWeb.AccessLogSecurityTest do
     assert result["payload"]["session_token"] == "[FILTERED]"
     assert result["page"] == "2"
   end
+
+  test "path capabilities are redacted in request and referrer paths, including encoded prefixes" do
+    secret = String.duplicate("a", 32)
+
+    for prefix <- ["/api/weapons/panel/", "/%61pi/weapons/panel/"] do
+      path = prefix <> secret <> "/actions"
+
+      conn =
+        Plug.Test.conn(:post, path)
+        |> put_req_header("referer", "https://example.test" <> path)
+        |> resp(202, "ok")
+
+      line = AccessLog.format_line(conn)
+      refute line =~ secret
+      assert line =~ "[FILTERED]"
+      assert KogasaFrontend.LogPrivacy.request_level(conn) == false
+    end
+
+    assert KogasaFrontend.LogPrivacy.request_level(Plug.Test.conn(:get, "/stats")) == :info
+  end
 end

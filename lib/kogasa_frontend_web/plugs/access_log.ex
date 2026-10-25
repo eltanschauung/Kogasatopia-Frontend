@@ -61,9 +61,11 @@ defmodule KogasaFrontendWeb.Plugs.AccessLog do
   defp request_line(conn) do
     # Queries can contain Steam OpenID proofs and game-panel bearer tokens.
     # Omit all query values rather than chasing a blacklist of credential names.
+    path = KogasaFrontend.LogPrivacy.path(conn.request_path)
+
     conn.method <>
       " " <>
-      binary_part(conn.request_path, 0, min(byte_size(conn.request_path), 2048)) <> " HTTP/1.1"
+      binary_part(path, 0, min(byte_size(path), 2048)) <> " HTTP/1.1"
   end
 
   defp status(conn) do
@@ -103,7 +105,14 @@ defmodule KogasaFrontendWeb.Plugs.AccessLog do
     case URI.parse(value) do
       %URI{scheme: scheme, host: host} = uri
       when scheme in ["http", "https"] and is_binary(host) ->
-        %{uri | userinfo: nil, query: nil, fragment: nil} |> URI.to_string()
+        %{
+          uri
+          | userinfo: nil,
+            query: nil,
+            fragment: nil,
+            path: KogasaFrontend.LogPrivacy.path(uri.path)
+        }
+        |> URI.to_string()
 
       _ ->
         "-"

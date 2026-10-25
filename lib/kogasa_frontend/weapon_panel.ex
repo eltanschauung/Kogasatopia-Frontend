@@ -12,7 +12,7 @@ defmodule KogasaFrontend.WeaponPanel do
           %{
             rows: [[steamid64, ^expected_class_id, equipped_uids, locked_purchase_keys]]
           }} <-
-           Repo.query(
+           query(
              "SELECT steamid64, class_index, equipped_uids, locked_purchase_keys " <>
                "FROM weapons_web_sessions " <>
                "WHERE token = ? AND expires_at >= ? LIMIT 1",
@@ -39,7 +39,7 @@ defmodule KogasaFrontend.WeaponPanel do
           %{
             rows: [[steamid64, class_index, equipped_uids, locked_purchase_keys]]
           }} <-
-           Repo.query(
+           query(
              "SELECT steamid64, class_index, equipped_uids, locked_purchase_keys " <>
                "FROM weapons_web_sessions " <>
                "WHERE token = ? AND class_index < 0 AND expires_at >= ? LIMIT 1",
@@ -66,7 +66,7 @@ defmodule KogasaFrontend.WeaponPanel do
     with true <- valid_session_token?(token),
          true <- valid_weapon_uid?(weapon_uid),
          {:ok, %{num_rows: 1}} <-
-           Repo.query(
+           query(
              "INSERT INTO weapons_web_actions " <>
                "(action_id, session_token, weapon_uid, desired_equipped, status, " <>
                "result_loadout, error_code, created_at, processed_at) " <>
@@ -95,10 +95,11 @@ defmodule KogasaFrontend.WeaponPanel do
     with true <- valid_session_token?(token),
          true <- is_binary(id) and Regex.match?(@action_id, id),
          {:ok, %{rows: [[status, result_loadout, error_code]]}} <-
-           Repo.query(
-             "SELECT status, result_loadout, error_code FROM weapons_web_actions " <>
-               "WHERE action_id = ? AND session_token = ? LIMIT 1",
-             [id, token]
+           query(
+             "SELECT a.status, a.result_loadout, a.error_code FROM weapons_web_actions a " <>
+               "JOIN weapons_web_sessions s ON s.token = a.session_token " <>
+               "WHERE a.action_id = ? AND a.session_token = ? AND s.expires_at >= ? LIMIT 1",
+             [id, token, now()]
            ) do
       {:ok,
        %{
@@ -126,4 +127,14 @@ defmodule KogasaFrontend.WeaponPanel do
 
   defp split_list(_value), do: MapSet.new()
   defp now, do: System.system_time(:second)
+
+  defp query(sql, params) do
+    # Bound SQL values include bearer tokens. Never send them to Ecto debug logs
+    # or propagate storage exceptions into a request/connection diagnostic dump.
+    Repo.query(sql, params, log: false)
+  rescue
+    _ -> {:error, :unavailable}
+  catch
+    :exit, _ -> {:error, :unavailable}
+  end
 end
