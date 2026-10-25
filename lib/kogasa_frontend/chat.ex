@@ -108,17 +108,30 @@ defmodule KogasaFrontend.Chat do
     }
   end
 
-  def submit_message(actor, message) when is_binary(message) do
-    message = String.trim(message)
-
-    cond do
-      message == "" -> {:error, :invalid}
-      String.length(message) > 180 -> {:error, :invalid}
-      true -> do_submit_message(actor, message)
+  def submit_message(actor, message) do
+    with {:ok, message} <- normalize_message(message), :ok <- authorize_actor(actor) do
+      do_submit_message(actor, message)
     end
   end
 
-  def submit_message(_actor, _message), do: {:error, :invalid}
+  @doc false
+  def valid_input?(message),
+    do: is_binary(message) and byte_size(message) <= 16_384 and String.valid?(message)
+
+  defp normalize_message(message) do
+    if valid_input?(message) do
+      text = String.trim(message)
+      if text != "" and String.length(text) <= 180, do: {:ok, text}, else: {:error, :invalid}
+    else
+      {:error, :invalid}
+    end
+  end
+
+  defp authorize_actor(actor) do
+    if actor[:steamid] && not SteamSession.valid?(actor[:steamid], actor[:steam_session_id]),
+      do: {:error, :authentication_expired},
+      else: :ok
+  end
 
   def ensure_session_persona(persona), do: Persona.ensure_persona(persona)
 
@@ -126,11 +139,11 @@ defmodule KogasaFrontend.Chat do
 
   defp do_submit_message(actor, "/" <> _ = message) do
     if actor[:steamid] do
-      create_chat_message(actor, message)
+      do_create_chat_message(actor, message)
     else
       case Persona.try_update_from_command(message) do
         {:not_command, _} ->
-          create_chat_message(actor, message)
+          do_create_chat_message(actor, message)
 
         {:persona_updated, persona} ->
           {:ok, {:persona_updated, persona}}
@@ -141,12 +154,10 @@ defmodule KogasaFrontend.Chat do
     end
   end
 
-  defp do_submit_message(actor, message), do: create_chat_message(actor, message)
+  defp do_submit_message(actor, message), do: do_create_chat_message(actor, message)
 
   def create_chat_message(actor, message) do
-    if actor[:steamid] && not SteamSession.valid?(actor[:steamid], actor[:steam_session_id]) do
-      {:error, :authentication_expired}
-    else
+    with {:ok, message} <- normalize_message(message), :ok <- authorize_actor(actor) do
       do_create_chat_message(actor, message)
     end
   end

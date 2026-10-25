@@ -3,6 +3,7 @@ defmodule KogasaFrontendWeb.ChatLive do
 
   alias KogasaFrontend.Chat
   alias KogasaFrontend.Chat.Identity
+  alias KogasaFrontend.Chat.{History, RateLimiter}
   alias KogasaFrontend.TimeDisplay
   alias KogasaFrontendWeb.Plugs.ChatIdentity
   @poll_ms 4_000
@@ -40,6 +41,8 @@ defmodule KogasaFrontendWeb.ChatLive do
      |> assign(:latest_id, payload.latest_id || payload.newest_id)
      |> assign(:oldest_id, payload.oldest_id)
      |> assign(:has_more_older, payload.has_more_older)
+     |> assign(:history_mode, false)
+     |> assign(:poll_after_id, payload.latest_id || payload.newest_id)
      |> assign(:status, nil)
      |> assign(:message_input, "")
      |> assign(:identity, identity)}
@@ -103,15 +106,17 @@ defmodule KogasaFrontendWeb.ChatLive do
 
   @impl true
   def handle_event("change", %{"message" => message}, socket) do
-    {:noreply, assign(socket, :message_input, message)}
+    if Chat.valid_input?(message),
+      do: {:noreply, assign(socket, :message_input, message)},
+      else: {:noreply, assign(socket, :status, "Invalid message")}
   end
 
   @impl true
   def handle_event("load_older", _params, socket) do
-    if socket.assigns.has_more_older && socket.assigns.oldest_id do
+    if socket.assigns.has_more_older && socket.assigns.oldest_id && history_allowed?(socket) do
       payload = Chat.list_messages(%{before: socket.assigns.oldest_id, limit: 50})
       older = payload.messages || []
-      merged = older ++ socket.assigns.messages
+      merged = History.prepend(socket.assigns.messages, older)
       prepended = older != []
 
       {:reply,
@@ -121,14 +126,41 @@ defmodule KogasaFrontendWeb.ChatLive do
          oldest_id: payload.oldest_id
        },
        socket
-       |> assign(:messages, dedupe_by_id(merged))
+       |> assign(:messages, merged)
+       |> assign(:history_mode, socket.assigns.history_mode or prepended)
        |> assign(:oldest_id, payload.oldest_id || socket.assigns.oldest_id)
        |> assign(:has_more_older, payload.has_more_older)}
     else
-      {:reply, %{prepended: false, has_more_older: false, oldest_id: socket.assigns.oldest_id},
-       socket}
+      {:reply,
+       %{
+         prepended: false,
+         has_more_older: socket.assigns.has_more_older,
+         oldest_id: socket.assigns.oldest_id
+       }, socket}
     end
   end
+
+  def handle_event("load_latest", _params, socket) do
+    if history_allowed?(socket) do
+      payload = Chat.list_messages(%{limit: 50})
+
+      {:reply, %{live: true},
+       socket
+       |> assign(:messages, payload.messages || [])
+       |> assign(:oldest_id, payload.oldest_id)
+       |> assign(:latest_id, payload.latest_id)
+       |> assign(:poll_after_id, payload.latest_id)
+       |> assign(:history_mode, false)
+       |> assign(:has_more_older, payload.has_more_older)
+       |> assign(:status, nil)}
+    else
+      {:reply, %{live: false},
+       assign(socket, :status, "Please wait before loading more history.")}
+    end
+  end
+
+  def handle_event(_event, _params, socket),
+    do: {:noreply, assign(socket, :status, "Invalid request")}
 
   @impl true
   def handle_info(:steam_logout, socket) do
@@ -140,27 +172,31 @@ defmodule KogasaFrontendWeb.ChatLive do
   end
 
   def handle_info({:new_message, msg}, socket) do
-    latest_id = max_id(socket.assigns.latest_id, msg)
-
-    {:noreply,
-     socket
-     |> assign(:latest_id, latest_id)
-     |> update(:messages, fn messages -> dedupe_by_id(messages ++ [msg]) end)}
+    if socket.assigns.history_mode do
+      {:noreply, socket}
+    else
+      {:noreply, append_messages(socket, [msg])}
+    end
   end
 
   @impl true
   def handle_info(:poll_new_messages, socket) do
-    payload =
-      case socket.assigns[:latest_id] do
-        id when is_integer(id) and id > 0 -> Chat.list_messages(%{after: id, limit: 100})
-        _ -> Chat.list_messages(%{limit: 1})
-      end
+    socket = update(socket, :identity, &Identity.refresh/1)
 
     socket =
-      socket
-      |> update(:identity, &Identity.refresh/1)
-      |> assign(:latest_id, payload[:latest_id] || socket.assigns[:latest_id])
-      |> update(:messages, fn messages -> dedupe_by_id(messages ++ (payload[:messages] || [])) end)
+      if socket.assigns.history_mode do
+        socket
+      else
+        payload =
+          case socket.assigns[:poll_after_id] do
+            id when is_integer(id) and id > 0 -> Chat.list_messages(%{after: id, limit: 100})
+            _ -> Chat.list_messages(%{limit: 50})
+          end
+
+        socket
+        |> append_messages(payload[:messages] || [])
+        |> assign(:poll_after_id, payload[:latest_id] || socket.assigns[:poll_after_id])
+      end
 
     Process.send_after(self(), :poll_new_messages, @poll_ms)
     {:noreply, socket}
@@ -191,7 +227,14 @@ defmodule KogasaFrontendWeb.ChatLive do
         </div>
 
         <div id="chat-panel" class="players-list">
-          <div id="chat-messages" phx-hook="ChatViewport">
+          <button :if={@history_mode} id="chat-return-live" type="button" phx-click="load_latest">
+            Viewing history — Return to live chat
+          </button>
+          <div
+            id="chat-messages"
+            phx-hook="ChatViewport"
+            data-history-mode={if(@history_mode, do: "1", else: "0")}
+          >
             <%= if @messages == [] do %>
               <p class="chat-empty">No messages yet.</p>
             <% else %>
@@ -300,29 +343,31 @@ defmodule KogasaFrontendWeb.ChatLive do
 
   defp format_time(_), do: ""
 
-  defp dedupe_by_id(messages) do
-    messages
-    |> Enum.reduce({MapSet.new(), []}, fn msg, {seen, acc} ->
-      id = Map.get(msg, :id) || Map.get(msg, "id")
+  defp history_allowed?(socket) do
+    actor = socket.assigns.identity
+    keys = ["chat-history:browser:" <> to_string(actor[:browser_key] || "unknown")]
 
-      if is_nil(id) or MapSet.member?(seen, id) do
-        {seen, acc}
-      else
-        {MapSet.put(seen, id), [msg | acc]}
-      end
-    end)
-    |> elem(1)
-    |> Enum.reverse()
+    keys =
+      if actor[:remote_ip] not in [nil, ""],
+        do: ["chat-history:ip:" <> actor.remote_ip | keys],
+        else: keys
+
+    RateLimiter.allow_count?(keys, 30, 60)
   end
 
-  defp max_id(current, msg) do
-    msg_id = Map.get(msg, :id) || Map.get(msg, "id")
+  defp append_messages(socket, incoming) do
+    combined = socket.assigns.messages ++ incoming
+    window = History.append(socket.assigns.messages, incoming)
+    ids = Enum.map(window, & &1.id)
 
-    cond do
-      is_integer(current) and is_integer(msg_id) -> max(current, msg_id)
-      is_integer(msg_id) -> msg_id
-      true -> current
-    end
+    socket
+    |> assign(:messages, window)
+    |> assign(:latest_id, List.last(ids) || socket.assigns.latest_id)
+    |> assign(:oldest_id, List.first(ids) || socket.assigns.oldest_id)
+    |> assign(
+      :has_more_older,
+      socket.assigns.has_more_older or length(combined) > History.limit()
+    )
   end
 
   defp source_subnet(socket, session) do

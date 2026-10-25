@@ -3,6 +3,20 @@ defmodule KogasaFrontend.Chat.RateLimiterTest do
 
   alias KogasaFrontend.Chat.RateLimiter
 
+  test "cooldown reservations are atomic across concurrent callers" do
+    key = "cooldown-#{System.unique_integer([:positive])}"
+
+    results =
+      1..40
+      |> Task.async_stream(fn _ -> RateLimiter.allow?(key, 60) end,
+        max_concurrency: 40,
+        ordered: false
+      )
+      |> Enum.count(&match?({:ok, true}, &1))
+
+    assert results == 1
+  end
+
   test "atomically limits repeated events within a counted window" do
     key = "test-repeat-#{System.unique_integer([:positive])}"
 

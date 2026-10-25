@@ -11,17 +11,7 @@ defmodule KogasaFrontend.Chat.RateLimiter do
 
   def allow?(key, ttl_seconds)
       when is_binary(key) and is_integer(ttl_seconds) and ttl_seconds > 0 do
-    now = System.system_time(:second)
-    expires_at = now + ttl_seconds
-
-    case :ets.lookup(@table, key) do
-      [{^key, existing_expiry}] when existing_expiry > now ->
-        false
-
-      _ ->
-        :ets.insert(@table, {key, expires_at})
-        true
-    end
+    GenServer.call(__MODULE__, {:allow, key, ttl_seconds})
   end
 
   def allow_count?(key, limit, window_seconds)
@@ -52,10 +42,9 @@ defmodule KogasaFrontend.Chat.RateLimiter do
   def init(state) do
     :ets.new(@table, [
       :named_table,
-      :public,
+      :protected,
       :set,
-      read_concurrency: true,
-      write_concurrency: true
+      read_concurrency: true
     ])
 
     :ets.new(@counted_table, [
@@ -70,6 +59,19 @@ defmodule KogasaFrontend.Chat.RateLimiter do
   end
 
   @impl true
+  def handle_call({:allow, key, ttl_seconds}, _from, state) do
+    now = System.system_time(:second)
+
+    case :ets.lookup(@table, key) do
+      [{^key, expiry}] when expiry > now ->
+        {:reply, false, state}
+
+      _ ->
+        :ets.insert(@table, {key, now + ttl_seconds})
+        {:reply, true, state}
+    end
+  end
+
   def handle_call({:allow_count, keys, limit, window_seconds}, _from, state) do
     now = System.system_time(:second)
     counts = Enum.map(Enum.uniq(keys), &{&1, recent_timestamps(&1, now - window_seconds)})

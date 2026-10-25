@@ -13,6 +13,7 @@
       this.loadOlderReply = null;
       this.loadOlderRequestedAt = 0;
       this.wasNearBottom = true;
+      this.wasInHistory = this.el.dataset.historyMode === "1";
       this.seenIds = new Set();
       this.maxSeenId = 0;
       this.minSeenId = null;
@@ -44,16 +45,13 @@
 
       if (this.topBtn) this.topBtn.addEventListener("click", () => { this.el.scrollTop = 0; });
       if (this.bottomBtn) this.bottomBtn.addEventListener("click", () => {
-        this.scrollToBottom();
-        this.autoScroll = true;
-        this.updateLockButton();
-        this.resetUnread();
+        this.showLiveBottom();
       });
       if (this.lockBtn) {
         this.lockBtn.addEventListener("click", () => {
           this.autoScroll = !this.autoScroll;
           this.updateLockButton();
-          if (this.autoScroll) this.scrollToBottom();
+          if (this.autoScroll) this.showLiveBottom();
         });
       }
 
@@ -88,6 +86,10 @@
 
       this.syncSeenRows(rows);
       this.maybeRestorePrependAnchor();
+
+      const inHistory = this.el.dataset.historyMode === "1";
+      if (this.wasInHistory && !inHistory) this.finishLiveBottom();
+      this.wasInHistory = inHistory;
 
       if (this.loadingOlder && Date.now() - this.loadOlderRequestedAt > 5000) {
         this.clearOlderLoadState();
@@ -166,6 +168,24 @@
 
     scrollToBottom() {
       this.el.scrollTop = this.el.scrollHeight;
+    },
+
+    finishLiveBottom() {
+      this.clearOlderLoadState();
+      this.autoScroll = true;
+      this.scrollToBottom();
+      this.updateLockButton();
+      this.resetUnread();
+    },
+
+    showLiveBottom() {
+      if (this.el.dataset.historyMode === "1") {
+        this.pushEvent("load_latest", {}, (reply) => {
+          if (reply?.live) this.finishLiveBottom();
+        });
+      } else {
+        this.finishLiveBottom();
+      }
     },
 
     updateLockButton() {
