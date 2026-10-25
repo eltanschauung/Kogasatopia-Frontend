@@ -95,7 +95,7 @@ defmodule KogasaFrontendWeb.SteamLogin do
 
   defp build_steam_login_url(conn, return_to, opts) do
     return_url = absolute_login_return_url(conn, return_to, opts)
-    realm = request_realm(conn)
+    realm = configured_realm()
 
     query =
       URI.encode_query(%{
@@ -167,40 +167,10 @@ defmodule KogasaFrontendWeb.SteamLogin do
   defp absolute_login_return_url(conn, return_to, opts) do
     state = get_in(get_session(conn), ["steam_login_pending", "token"]) || ""
 
-    request_realm(conn) <>
+    configured_realm() <>
       Keyword.fetch!(opts, :login_path) <>
       "?" <> URI.encode_query(%{"return" => return_to, "state" => state})
   end
-
-  defp request_realm(conn) do
-    scheme =
-      case get_req_header(conn, "x-forwarded-proto") do
-        [proto | _] when proto in ["http", "https"] -> proto
-        _ -> Atom.to_string(conn.scheme || :http)
-      end
-
-    host =
-      case get_req_header(conn, "x-forwarded-host") do
-        [value | _] -> value
-        _ -> List.first(get_req_header(conn, "host")) || "localhost"
-      end
-
-    if localhost?(host) do
-      configured_realm()
-    else
-      scheme <> "://" <> host
-    end
-  end
-
-  defp localhost?(host) when is_binary(host) do
-    host
-    |> String.downcase()
-    |> String.split(":", parts: 2)
-    |> List.first()
-    |> then(&(&1 in ["localhost", "127.0.0.1", "::1"]))
-  end
-
-  defp localhost?(_), do: true
 
   defp configured_realm do
     url_config = Application.get_env(:kogasa_frontend, KogasaFrontendWeb.Endpoint, [])[:url] || []
@@ -262,7 +232,8 @@ defmodule KogasaFrontendWeb.SteamLogin do
   end
 
   defp sanitize_return(path, opts) do
-    if is_binary(path) and String.starts_with?(path, "/") and not String.starts_with?(path, "//") do
+    if is_binary(path) and String.starts_with?(path, "/") and
+         not String.starts_with?(path, "//") and not String.match?(path, ~r/[\\\\\x00-\x20\x7f]/) do
       path
     else
       Keyword.fetch!(opts, :default_return)
