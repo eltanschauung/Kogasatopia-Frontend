@@ -38,9 +38,17 @@ defmodule KogasaFrontendWeb.Plugs.ChatIdentity do
   end
 
   def remote_ip_string(address) when is_tuple(address) do
-    address
-    |> Tuple.to_list()
-    |> Enum.join(".")
+    address =
+      case address do
+        {0, 0, 0, 0, 0, 65_535, high, low} when high in 0..65_535 and low in 0..65_535 ->
+          {Bitwise.bsr(high, 8), Bitwise.band(high, 255), Bitwise.bsr(low, 8),
+           Bitwise.band(low, 255)}
+
+        other ->
+          other
+      end
+
+    address |> :inet.ntoa() |> to_string()
   rescue
     _ -> ""
   end
