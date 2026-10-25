@@ -57,4 +57,38 @@ defmodule KogasaFrontend.AccessLogTest do
     start_supervised!({AccessLog, path: path, name: nil})
     assert File.read!(path) == ""
   end
+
+  test "active log and weekly marker are private, including existing loose files", %{path: path} do
+    File.write!(path, "old\n")
+    File.chmod!(path, 0o644)
+    start_supervised!({AccessLog, path: path, name: nil})
+    assert Bitwise.band(File.stat!(path).mode, 0o777) == 0o600
+    assert Bitwise.band(File.stat!(path <> ".last_clear").mode, 0o777) == 0o600
+  end
+
+  test "symlink log targets cannot overwrite outside files", %{path: path} do
+    outside = path <> ".outside"
+    File.write!(outside, "preserve\n")
+    File.ln_s!(outside, path)
+    pid = start_supervised!({AccessLog, path: path, name: nil})
+    AccessLog.write("ignored\n", pid)
+    :sys.get_state(pid)
+    assert File.read!(outside) == "preserve\n"
+  end
+
+  test "oversized lines and a saturated writer queue are shed", %{path: path} do
+    pid = start_supervised!({AccessLog, path: path, name: nil})
+    AccessLog.write(String.duplicate("x", 8193), pid)
+    :sys.suspend(pid)
+
+    try do
+      Enum.each(1..1100, fn _ -> AccessLog.write("bounded\n", pid) end)
+      assert {:message_queue_len, 1000} = Process.info(pid, :message_queue_len)
+    after
+      :sys.resume(pid)
+    end
+
+    :sys.get_state(pid)
+    refute File.read!(path) =~ "xxxx"
+  end
 end

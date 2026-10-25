@@ -16,7 +16,8 @@ defmodule KogasaFrontendWeb.Plugs.AccessLog do
     end)
   end
 
-  defp format_line(conn) do
+  @doc false
+  def format_line(conn) do
     [
       remote_ip(conn),
       " - - [",
@@ -28,9 +29,9 @@ defmodule KogasaFrontendWeb.Plugs.AccessLog do
       " ",
       response_size(conn),
       " \"",
-      escape(header(conn, "referer")),
+      escape(safe_referrer(header(conn, "referer")), 1024),
       "\" \"",
-      escape(header(conn, "user-agent")),
+      escape(header(conn, "user-agent"), 512),
       "\"\n"
     ]
     |> IO.iodata_to_binary()
@@ -58,8 +59,11 @@ defmodule KogasaFrontendWeb.Plugs.AccessLog do
   end
 
   defp request_line(conn) do
-    query = if conn.query_string in [nil, ""], do: "", else: "?" <> conn.query_string
-    conn.method <> " " <> conn.request_path <> query <> " HTTP/1.1"
+    # Queries can contain Steam OpenID proofs and game-panel bearer tokens.
+    # Omit all query values rather than chasing a blacklist of credential names.
+    conn.method <>
+      " " <>
+      binary_part(conn.request_path, 0, min(byte_size(conn.request_path), 2048)) <> " HTTP/1.1"
   end
 
   defp status(conn) do
@@ -95,11 +99,25 @@ defmodule KogasaFrontendWeb.Plugs.AccessLog do
     end
   end
 
-  defp escape(value) do
+  defp safe_referrer(value) do
+    case URI.parse(value) do
+      %URI{scheme: scheme, host: host} = uri
+      when scheme in ["http", "https"] and is_binary(host) ->
+        %{uri | userinfo: nil, query: nil, fragment: nil} |> URI.to_string()
+
+      _ ->
+        "-"
+    end
+  rescue
+    _ -> "-"
+  end
+
+  defp escape(value, limit \\ 3072) do
     value
     |> to_string()
+    |> then(fn value -> binary_part(value, 0, min(byte_size(value), limit)) end)
     |> String.replace("\\", "\\\\")
     |> String.replace("\"", "\\\"")
-    |> String.replace(~r/[\r\n\t]/, " ")
+    |> String.replace(~r/[\x00-\x1f\x7f]/, " ")
   end
 end

@@ -13,12 +13,23 @@ defmodule KogasaFrontend.AccessLog do
     GenServer.start_link(__MODULE__, opts, name: Keyword.get(opts, :name, @name))
   end
 
-  def write(line) when is_binary(line) do
-    case Process.whereis(@name) do
-      nil -> :ok
-      _pid -> GenServer.cast(@name, {:write, line})
+  def write(line, server \\ @name)
+
+  def write(line, server) when is_binary(line) and byte_size(line) <= 8192 do
+    case GenServer.whereis(server) do
+      nil ->
+        :ok
+
+      pid ->
+        # Best-effort queue shedding; avoid blocking request processes on disk.
+        case Process.info(pid, :message_queue_len) do
+          {:message_queue_len, count} when count < 1000 -> GenServer.cast(pid, {:write, line})
+          _ -> :ok
+        end
     end
   end
+
+  def write(_line, _server), do: :ok
 
   @impl true
   def init(opts) do
@@ -82,7 +93,8 @@ defmodule KogasaFrontend.AccessLog do
   end
 
   defp read_last_clear(marker) do
-    with {:ok, value} <- File.read(marker),
+    with :ok <- KogasaFrontend.PrivateFile.ensure(marker),
+         {:ok, value} <- File.read(marker),
          {timestamp, ""} when timestamp > 0 <- Integer.parse(String.trim(value)) do
       timestamp
     else
@@ -99,9 +111,9 @@ defmodule KogasaFrontend.AccessLog do
       state = %{state | io: nil}
       File.mkdir_p!(Path.dirname(state.path))
 
-      case File.write(state.path, "") do
+      case private_write(state.path, "") do
         :ok ->
-          case File.write(state.marker, Integer.to_string(now)) do
+          case private_write(state.marker, Integer.to_string(now)) do
             :ok ->
               :ok
 
@@ -126,7 +138,10 @@ defmodule KogasaFrontend.AccessLog do
     |> Path.dirname()
     |> File.mkdir_p!()
 
-    case File.open(path, [:append, :utf8]) do
+    result =
+      with :ok <- KogasaFrontend.PrivateFile.ensure(path), do: File.open(path, [:append, :utf8])
+
+    case result do
       {:ok, io} ->
         {:ok, io}
 
@@ -134,5 +149,9 @@ defmodule KogasaFrontend.AccessLog do
         Logger.error("failed to open access log #{path}: #{inspect(reason)}")
         {:error, reason}
     end
+  end
+
+  defp private_write(path, value) do
+    with :ok <- KogasaFrontend.PrivateFile.ensure(path), do: File.write(path, value)
   end
 end
