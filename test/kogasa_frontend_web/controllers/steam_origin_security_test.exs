@@ -1,5 +1,5 @@
 defmodule KogasaFrontendWeb.SteamOriginSecurityTest do
-  use ExUnit.Case, async: false
+  use KogasaFrontendWeb.ConnCase, async: false
   import Plug.Conn
   alias KogasaFrontendWeb.SteamLogin
 
@@ -60,5 +60,46 @@ defmodule KogasaFrontendWeb.SteamOriginSecurityTest do
     conn = Plug.Test.conn(:post, "/stats/login.php") |> Plug.Test.init_test_session(%{})
     result = SteamLogin.handle(conn, %{"action" => "logout", "return" => path}, @opts)
     assert get_resp_header(result, "location") == [path]
+  end
+
+  test "confirmation GET and HEAD cannot emit external Cancel links" do
+    for method <- [:get, :head],
+        path <- [
+          "/\\untrusted.example/path",
+          "/\t/untrusted.example",
+          "/\n/untrusted.example",
+          "/\r/untrusted.example"
+        ] do
+      conn = Plug.Test.conn(method, "/stats/login.php") |> Plug.Test.init_test_session(%{})
+      result = SteamLogin.handle(conn, %{"action" => "logout", "return" => path}, @opts)
+      assert result.status == 200
+
+      if method == :get do
+        assert result.resp_body =~ ~s(<a href="/stats">Cancel</a>)
+        assert result.resp_body =~ ~s(name="return" value="/stats")
+      else
+        assert result.resp_body == ""
+      end
+
+      refute result.resp_body =~ "untrusted.example"
+      refute result.private[:plug_session_info] == :drop
+    end
+  end
+
+  test "real CSRF-protected POST falls back for a browser-ambiguous return", %{conn: conn} do
+    form = conn |> init_test_session(%{}) |> get("/stats/login.php?action=logout")
+    [_, token] = Regex.run(~r/name="_csrf_token" value="([^"]+)"/, html_response(form, 200))
+
+    result =
+      form
+      |> recycle()
+      |> put_private(:plug_skip_csrf_protection, false)
+      |> post("/stats/login.php", %{
+        "_csrf_token" => token,
+        "return" => "/\\untrusted.example/path"
+      })
+
+    assert redirected_to(result) == "/stats"
+    assert result.private[:plug_session_info] == :drop
   end
 end
