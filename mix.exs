@@ -40,21 +40,21 @@ defmodule KogasaFrontend.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.8.4"},
+      {:phoenix, "~> 1.8.16"},
       {:phoenix_ecto, "~> 4.5"},
-      {:ecto_sql, "~> 3.13"},
-      {:myxql, ">= 0.0.0"},
+      {:ecto_sql, "~> 3.14"},
+      {:myxql, "~> 0.9.0"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 1.1.0"},
-      {:lazy_html, ">= 0.1.0", only: :test},
+      {:phoenix_live_view, "~> 1.1.33"},
+      {:lazy_html, "~> 0.1.13", only: :test},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
-      {:req, "~> 0.5"},
+      {:req, "~> 0.7.5"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.13"}
     ]
   end
 
