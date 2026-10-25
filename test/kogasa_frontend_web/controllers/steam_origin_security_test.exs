@@ -65,6 +65,7 @@ defmodule KogasaFrontendWeb.SteamOriginSecurityTest do
   test "confirmation GET and HEAD cannot emit external Cancel links" do
     for method <- [:get, :head],
         path <- [
+          "/%09/local",
           "/\\untrusted.example/path",
           "/\t/untrusted.example",
           "/\n/untrusted.example",

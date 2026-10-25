@@ -7,7 +7,7 @@ defmodule KogasaFrontendWeb.StatsController do
   alias KogasaFrontendWeb.StatsFragments
 
   def index(conn, params) do
-    session_steamid = get_session(conn, "steamid")
+    session_steamid = KogasaFrontend.SteamSession.steamid(get_session(conn))
     focused_player = Map.get(params, "player") || session_steamid
     search = Map.get(params, "q", "")
 

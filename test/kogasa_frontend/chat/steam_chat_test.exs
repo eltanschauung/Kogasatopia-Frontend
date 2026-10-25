@@ -1,5 +1,6 @@
 defmodule KogasaFrontend.SteamChatTest do
-  use ExUnit.Case, async: false
+  use KogasaFrontend.DataCase, async: false
+  @moduletag :database
   import Plug.Conn
   import ExUnit.CaptureLog
   alias KogasaFrontend.Chat
@@ -13,9 +14,11 @@ defmodule KogasaFrontend.SteamChatTest do
   @opts [login_path: "/stats/login.php", default_return: "/stats"]
 
   defp session do
+    {:ok, handle} = SteamSession.issue(@id)
+
     %{
       "steamid" => @id,
-      "steam_verified_id" => @id,
+      "steam_session_id" => handle,
       "wt_chat_client_token" => "test-#{System.unique_integer([:positive])}",
       "wt_chat_persona" => @persona
     }
@@ -30,7 +33,7 @@ defmodule KogasaFrontend.SteamChatTest do
     assert Identity.from_session(s, @persona).steamid == @id
 
     for invalid <- [
-          Map.delete(s, "steam_verified_id"),
+          Map.delete(s, "steam_session_id"),
           Map.put(s, "steamid", "10000000000000002"),
           Map.put(s, "steamid", "bad")
         ] do
@@ -196,10 +199,7 @@ defmodule KogasaFrontend.SteamChatTest do
   end
 
   test "chat API requires CSRF even with an authenticated cookie, and accepts the form's token" do
-    s =
-      session()
-      |> Map.put("steamid", "10000000000000003")
-      |> Map.put("steam_verified_id", "10000000000000003")
+    s = session()
 
     quota = s |> Identity.from_session(@persona) |> HourlyQuota.policy()
     Enum.each(1..10, fn _ -> RateLimiter.allow_count?(quota.keys, 10, 3600) end)

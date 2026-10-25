@@ -23,6 +23,7 @@ defmodule KogasaFrontend.Chat do
   alias KogasaFrontend.PlayerIdentity
   alias KogasaFrontend.PublicActivity
   alias KogasaFrontend.Repo
+  alias KogasaFrontend.SteamSession
 
   @topic "chat:live"
   @same_message_limit 3
@@ -117,6 +118,8 @@ defmodule KogasaFrontend.Chat do
     end
   end
 
+  def submit_message(_actor, _message), do: {:error, :invalid}
+
   def ensure_session_persona(persona), do: Persona.ensure_persona(persona)
 
   def webname_options, do: Persona.webnames()
@@ -141,6 +144,14 @@ defmodule KogasaFrontend.Chat do
   defp do_submit_message(actor, message), do: create_chat_message(actor, message)
 
   def create_chat_message(actor, message) do
+    if actor[:steamid] && not SteamSession.valid?(actor[:steamid], actor[:steam_session_id]) do
+      {:error, :authentication_expired}
+    else
+      do_create_chat_message(actor, message)
+    end
+  end
+
+  defp do_create_chat_message(actor, message) do
     rate_key = "chat:" <> to_string(actor[:rate_key] || actor[:iphash] || "anon")
     same_message_key = same_message_rate_key(actor, message)
     quota = HourlyQuota.policy(actor)

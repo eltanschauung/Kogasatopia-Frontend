@@ -90,6 +90,12 @@ defmodule KogasaFrontendWeb.ChatLive do
       {:error, :invalid} ->
         {:noreply, assign(socket, :status, "Invalid message")}
 
+      {:error, :authentication_expired} ->
+        {:noreply,
+         socket
+         |> assign(:identity, Identity.anonymous(socket.assigns.identity))
+         |> assign(:status, "Steam session expired. Please sign in again.")}
+
       {:error, _} ->
         {:noreply, assign(socket, :status, "Failed to send message")}
     end
@@ -128,12 +134,7 @@ defmodule KogasaFrontendWeb.ChatLive do
   def handle_info(:steam_logout, socket) do
     identity = socket.assigns.identity
 
-    identity = %{
-      identity
-      | steamid: nil,
-        personaname: identity.persona["display"],
-        rate_key: identity.browser_key
-    }
+    identity = Identity.anonymous(identity)
 
     {:noreply, assign(socket, :identity, identity)}
   end
@@ -157,6 +158,7 @@ defmodule KogasaFrontendWeb.ChatLive do
 
     socket =
       socket
+      |> update(:identity, &Identity.refresh/1)
       |> assign(:latest_id, payload[:latest_id] || socket.assigns[:latest_id])
       |> update(:messages, fn messages -> dedupe_by_id(messages ++ (payload[:messages] || [])) end)
 

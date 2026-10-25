@@ -3,12 +3,18 @@ defmodule KogasaFrontendWeb.SteamLogin do
 
   import Plug.Conn
   import Phoenix.Controller, only: [redirect: 2]
+  alias KogasaFrontend.SteamSession
 
   @steam_openid_url "https://steamcommunity.com/openid/login"
   @openid_ns "http://specs.openid.net/auth/2.0"
   @openid_identifier_select "http://specs.openid.net/auth/2.0/identifier_select"
 
   def handle(conn, params, opts) do
+    conn =
+      conn
+      |> put_resp_header("cache-control", "private, no-store")
+      |> put_resp_header("referrer-policy", "no-referrer")
+
     action = params["action"] || "login"
     return_to = sanitize_return(params["return"] || Keyword.fetch!(opts, :default_return), opts)
 
@@ -17,17 +23,21 @@ defmodule KogasaFrontendWeb.SteamLogin do
         confirm_logout(conn, return_to, opts)
 
       "logout" when conn.method == "POST" ->
-        if token = get_session(conn, "wt_chat_client_token") do
-          Phoenix.PubSub.broadcast(
-            KogasaFrontend.PubSub,
-            KogasaFrontend.Chat.Identity.session_topic(token),
-            :steam_logout
-          )
-        end
+        case SteamSession.revoke(get_session(conn)) do
+          :ok ->
+            if token = get_session(conn, "wt_chat_client_token") do
+              Phoenix.PubSub.broadcast(
+                KogasaFrontend.PubSub,
+                KogasaFrontend.Chat.Identity.session_topic(token),
+                :steam_logout
+              )
+            end
 
-        conn
-        |> configure_session(drop: true)
-        |> redirect(to: return_to)
+            conn |> configure_session(drop: true) |> redirect(to: return_to)
+
+          {:error, _} ->
+            session_unavailable(conn)
+        end
 
       "logout" ->
         conn
@@ -70,12 +80,19 @@ defmodule KogasaFrontendWeb.SteamLogin do
   defp login_or_callback(conn, %{"openid.mode" => _mode} = params, return_to, opts) do
     case validate_openid_response(conn, params, return_to, opts) do
       {:ok, steamid} ->
-        conn
-        |> configure_session(renew: true)
-        |> put_session("steamid", steamid)
-        |> put_session("steam_verified_id", steamid)
-        |> delete_session("steam_login_pending")
-        |> redirect(to: return_to)
+        case SteamSession.issue(steamid, get_session(conn)) do
+          {:ok, handle} ->
+            conn
+            |> configure_session(renew: true)
+            |> put_session("steamid", steamid)
+            |> delete_session("steam_verified_id")
+            |> put_session("steam_session_id", handle)
+            |> delete_session("steam_login_pending")
+            |> redirect(to: return_to)
+
+          {:error, _} ->
+            session_unavailable(conn)
+        end
 
       {:error, reason} ->
         render_error_page(conn, return_to, reason, opts)
@@ -198,7 +215,7 @@ defmodule KogasaFrontendWeb.SteamLogin do
   defp render_error_page(conn, return_to, error_msg, opts) do
     esc = &escape/1
 
-    steamid = get_session(conn, "steamid")
+    steamid = SteamSession.steamid(get_session(conn))
     title = Keyword.get(opts, :title, "Steam Login")
     return_label = Keyword.get(opts, :return_label, "page")
 
@@ -232,11 +249,18 @@ defmodule KogasaFrontendWeb.SteamLogin do
   end
 
   defp sanitize_return(path, opts) do
-    if is_binary(path) and String.starts_with?(path, "/") and
-         not String.starts_with?(path, "//") and not String.match?(path, ~r/[\\\\\x00-\x20\x7f]/) do
+    if is_binary(path) and Phoenix.URL.classify_local_path(path) == :ok and
+         not String.match?(path, ~r/[\\\\\x00-\x20\x7f]/) do
       path
     else
       Keyword.fetch!(opts, :default_return)
     end
+  end
+
+  defp session_unavailable(conn) do
+    conn
+    |> put_resp_header("cache-control", "private, no-store")
+    |> put_resp_content_type("text/plain")
+    |> send_resp(503, "Authentication is temporarily unavailable. Please try again.")
   end
 end

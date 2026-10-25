@@ -62,6 +62,9 @@ defmodule KogasaFrontendWeb.ChatApiController do
         {:error, :invalid} ->
           conn |> put_status(:bad_request) |> json(%{ok: false, error: "invalid"})
 
+        {:error, :authentication_expired} ->
+          conn |> put_status(:unauthorized) |> json(%{ok: false, error: "authentication_expired"})
+
         {:error, _} ->
           conn |> put_status(:internal_server_error) |> json(%{ok: false, error: "server"})
       end

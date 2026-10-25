@@ -13,6 +13,15 @@ Features include:
 - live chat, which communicates with both servers (inspired by Minecraft Dynmap concept)
 - weapons page which allows clients to check stats easily (to be completed)
 
+## Steam sessions
+
+Run `mix ecto.migrate` before starting an updated application. Steam logins use
+per-device database records; this upgrade requires existing users to sign in once
+again. Logout revokes that device without signing out other devices. The
+`:steam_session_ttl_seconds` application setting defaults to 30 days (bounded to
+5 minutes–90 days); expired records are pruned hourly. Keep the session table on
+rollback and use only rollback builds that validate the persistent registry.
+
 ## Player Count API
 
 `GET https://kogasa.tf/api/playercount` returns the current aggregate server population:

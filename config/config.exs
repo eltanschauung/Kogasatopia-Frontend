@@ -24,6 +24,7 @@ config :kogasa_frontend,
   # Toggle filters prenames and custom name styles on /stats without affecting /online or /logs.
   stats_use_filter_identity: false,
   session_signing_salt: System.get_env("PHX_SESSION_SIGNING_SALT") || "public-session-salt",
+  steam_session_ttl_seconds: 30 * 24 * 60 * 60,
   access_log_path: Path.expand("access.log")
 
 # Configure the endpoint

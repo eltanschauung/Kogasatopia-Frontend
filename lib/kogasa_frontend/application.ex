@@ -10,7 +10,8 @@ defmodule KogasaFrontend.Application do
     children =
       [
         KogasaFrontendWeb.Telemetry,
-        repo_child()
+        repo_child(),
+        session_pruner_child()
       ] ++
         mapsdb_cache_children() ++
         [
@@ -56,5 +57,10 @@ defmodule KogasaFrontend.Application do
     else
       []
     end
+  end
+
+  defp session_pruner_child do
+    unless Application.get_env(:kogasa_frontend, :skip_repo, false),
+      do: KogasaFrontend.SteamSession.Pruner
   end
 end
