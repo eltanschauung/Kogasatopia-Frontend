@@ -154,6 +154,131 @@ defmodule KogasaFrontend.MapsDb.CacheTest do
     assert log =~ "Maps analytics cache refresh failed"
   end
 
+  test "caps cold waiters and removes disconnected callers", %{cache_path: cache_path} do
+    test_pid = self()
+
+    {:ok, cache} =
+      Cache.start_link(
+        cache_path: cache_path,
+        max_waiters: 2,
+        build_fun: fn ->
+          send(test_pid, {:builder, self()})
+
+          receive do
+            :finish -> %{version: "ready"}
+          end
+        end,
+        validate_fun: fn _ -> true end
+      )
+
+    assert_receive {:builder, builder}
+    caller = spawn(fn -> Cache.get() end)
+    waiter = Task.async(&Cache.get/0)
+    assert_eventually(fn -> map_size(:sys.get_state(cache).waiters) == 2 end)
+    assert {:error, :busy} = Cache.get()
+    Process.exit(caller, :kill)
+    assert_eventually(fn -> map_size(:sys.get_state(cache).waiters) == 1 end)
+    send(builder, :finish)
+    assert {:ok, %{payload: %{version: "ready"}}} = Task.await(waiter)
+    assert :sys.get_state(cache).waiters == %{}
+    GenServer.stop(cache)
+  end
+
+  test "bounds caller waits and kills timed-out builds with retry backoff", %{
+    cache_path: cache_path
+  } do
+    test_pid = self()
+
+    capture_log(fn ->
+      {:ok, cache} =
+        Cache.start_link(
+          cache_path: cache_path,
+          wait_timeout_ms: 15,
+          build_timeout_ms: 80,
+          retry_delay_ms: 1_000,
+          build_fun: fn ->
+            send(test_pid, {:builder, self()})
+
+            receive do
+              :never -> %{version: "late"}
+            end
+          end,
+          validate_fun: fn _ -> true end
+        )
+
+      assert_receive {:builder, builder}
+      monitor = Process.monitor(builder)
+      assert {:error, :timeout} = Cache.get()
+      assert :sys.get_state(cache).waiters == %{}
+      assert_receive {:DOWN, ^monitor, :process, ^builder, :killed}, 1_000
+      assert_eventually(fn -> is_nil(:sys.get_state(cache).refresh_ref) end)
+      assert {:error, :refresh_backoff} = Cache.get()
+      refute_receive {:builder, _}, 50
+      GenServer.stop(cache)
+    end)
+  end
+
+  test "serves stale data even after a bounded refresh times out", %{cache_path: cache_path} do
+    {:ok, cache} =
+      Cache.start_link(
+        cache_path: cache_path,
+        build_fun: fn -> %{version: "last-good"} end,
+        validate_fun: fn _ -> true end
+      )
+
+    assert {:ok, _} = Cache.get()
+    GenServer.stop(cache)
+
+    persisted = cache_path |> File.read!() |> :erlang.binary_to_term([:safe])
+    File.write!(cache_path, :erlang.term_to_binary(%{persisted | generated_at: 1}))
+
+    capture_log(fn ->
+      {:ok, cache} =
+        Cache.start_link(
+          cache_path: cache_path,
+          build_timeout_ms: 20,
+          retry_delay_ms: 1_000,
+          build_fun: fn ->
+            receive do
+              :never -> %{}
+            end
+          end,
+          validate_fun: fn _ -> true end
+        )
+
+      assert {:ok, %{payload: %{version: "last-good"}}} = Cache.get()
+      assert_eventually(fn -> not is_nil(:sys.get_state(cache).next_refresh_at) end)
+      assert {:ok, %{payload: %{version: "last-good"}}} = Cache.get()
+      GenServer.stop(cache)
+    end)
+  end
+
+  test "stopping or crashing the cache cannot orphan a refresh", %{cache_path: cache_path} do
+    test_pid = self()
+
+    for stop <- [:normal, :kill] do
+      {:ok, cache} =
+        Cache.start_link(
+          cache_path: cache_path,
+          build_fun: fn ->
+            send(test_pid, {:builder, self()})
+
+            receive do
+              :never -> %{}
+            end
+          end,
+          validate_fun: fn _ -> true end
+        )
+
+      Process.unlink(cache)
+      assert_receive {:builder, builder}
+      monitor = Process.monitor(builder)
+      if stop == :normal, do: GenServer.stop(cache), else: Process.exit(cache, :kill)
+      assert_receive {:DOWN, ^monitor, :process, ^builder, _reason}, 1_000
+      assert_eventually(fn -> is_nil(Process.whereis(Cache)) end)
+    end
+  end
+
   defp assert_eventually(fun, attempts \\ 30)
 
   defp assert_eventually(fun, attempts) when attempts > 0 do

@@ -10,6 +10,9 @@ defmodule KogasaFrontend.MapsDb.Cache do
   @cache_version 3
   @default_ttl_seconds 24 * 60 * 60
   @default_retry_delay_ms 60_000
+  @default_build_timeout_ms 120_000
+  @default_wait_timeout_ms 10_000
+  @default_max_waiters 64
   @table __MODULE__
   @task_supervisor Module.concat(__MODULE__, TaskSupervisor)
 
@@ -32,7 +35,7 @@ defmodule KogasaFrontend.MapsDb.Cache do
 
       :error ->
         if Process.whereis(__MODULE__) do
-          GenServer.call(__MODULE__, :get_or_build, :infinity)
+          get_or_build()
         else
           {:error, :not_started}
         end
@@ -46,17 +49,25 @@ defmodule KogasaFrontend.MapsDb.Cache do
 
   @impl true
   def init(opts) do
+    # Linked workers die with the cache owner; task failures are isolated by
+    # trapping exits and handled through the matching monitor below.
+    Process.flag(:trap_exit, true)
     :ets.new(@table, [:named_table, :set, :protected, read_concurrency: true])
 
     state = %{
       build_fun: Keyword.get(opts, :build_fun, &KogasaFrontend.MapsDb.build_cache_payload/0),
       cache_path: Keyword.get(opts, :cache_path, configured_cache_path()),
+      build_timeout_ms: Keyword.get(opts, :build_timeout_ms, @default_build_timeout_ms),
+      max_waiters: Keyword.get(opts, :max_waiters, @default_max_waiters),
       next_refresh_at: nil,
+      refresh_pid: nil,
       refresh_ref: nil,
+      refresh_timer: nil,
       retry_delay_ms: Keyword.get(opts, :retry_delay_ms, @default_retry_delay_ms),
       ttl_seconds: Keyword.get(opts, :ttl_seconds, configured_ttl_seconds()),
       validate_fun: Keyword.get(opts, :validate_fun, &valid_maps_payload?/1),
-      waiters: []
+      wait_timeout_ms: Keyword.get(opts, :wait_timeout_ms, @default_wait_timeout_ms),
+      waiters: %{}
     }
 
     :ets.insert(@table, {:ttl_seconds, state.ttl_seconds})
@@ -80,10 +91,15 @@ defmodule KogasaFrontend.MapsDb.Cache do
       :error ->
         state = start_refresh(state)
 
-        if state.refresh_ref do
-          {:noreply, add_waiter(state, from)}
-        else
-          {:reply, {:error, :refresh_backoff}, state}
+        cond do
+          is_nil(state.refresh_ref) ->
+            {:reply, {:error, :refresh_backoff}, state}
+
+          map_size(state.waiters) >= state.max_waiters ->
+            {:reply, {:error, :busy}, state}
+
+          true ->
+            {:noreply, add_waiter(state, from)}
         end
     end
   end
@@ -95,8 +111,6 @@ defmodule KogasaFrontend.MapsDb.Cache do
   def handle_info(:refresh, state), do: {:noreply, start_refresh(state)}
 
   def handle_info({ref, {:ok, payload, elapsed_ms}}, %{refresh_ref: ref} = state) do
-    Process.demonitor(ref, [:flush])
-
     entry = build_entry(payload)
     :ets.insert(@table, {:entry, entry})
 
@@ -110,29 +124,60 @@ defmodule KogasaFrontend.MapsDb.Cache do
 
     Logger.info("Regenerated maps analytics cache hash=#{entry.hash} elapsed_ms=#{elapsed_ms}")
 
-    reply_waiters(state.waiters, {:ok, entry})
-    {:noreply, %{state | next_refresh_at: nil, refresh_ref: nil, waiters: []}}
+    {:noreply, finish_refresh(state, {:ok, entry})}
   end
 
   def handle_info({ref, {:error, reason, elapsed_ms}}, %{refresh_ref: ref} = state) do
-    Process.demonitor(ref, [:flush])
     Logger.error("Maps analytics cache refresh failed after #{elapsed_ms}ms: #{inspect(reason)}")
-    reply_waiters(state.waiters, {:error, reason})
-    {:noreply, refresh_failed(state)}
+    {:noreply, refresh_failed(state, reason)}
   end
 
   def handle_info({:DOWN, ref, :process, _pid, reason}, %{refresh_ref: ref} = state) do
     Logger.error("Maps analytics cache task exited: #{inspect(reason)}")
-    reply_waiters(state.waiters, {:error, reason})
-    {:noreply, refresh_failed(state)}
+    {:noreply, refresh_failed(state, reason)}
+  end
+
+  def handle_info({:refresh_timeout, ref}, %{refresh_ref: ref} = state) do
+    Process.exit(state.refresh_pid, :kill)
+    Logger.warning("Maps analytics cache refresh exceeded its time limit")
+    {:noreply, refresh_failed(state, :refresh_timeout)}
+  end
+
+  def handle_info({:waiter_timeout, ref}, state) do
+    case Map.fetch(state.waiters, ref) do
+      {:ok, {from, _timer}} ->
+        GenServer.reply(from, {:error, :timeout})
+        {:noreply, remove_waiter(state, ref)}
+
+      :error ->
+        {:noreply, state}
+    end
+  end
+
+  def handle_info({:DOWN, ref, :process, _pid, _reason}, state) do
+    {:noreply, remove_waiter(state, ref)}
   end
 
   def handle_info(_message, state), do: {:noreply, state}
 
+  @impl true
+  def terminate(_reason, %{refresh_pid: pid}) when is_pid(pid) do
+    Process.exit(pid, :kill)
+    :ok
+  end
+
+  def terminate(_reason, _state), do: :ok
+
+  defp get_or_build do
+    GenServer.call(__MODULE__, :get_or_build, @default_wait_timeout_ms + 1_000)
+  catch
+    :exit, _reason -> {:error, :unavailable}
+  end
+
   defp start_refresh(%{refresh_ref: nil} = state) do
     if is_nil(state.next_refresh_at) or monotonic_milliseconds() >= state.next_refresh_at do
       task =
-        Task.Supervisor.async_nolink(@task_supervisor, fn ->
+        Task.Supervisor.async(@task_supervisor, fn ->
           started_at = monotonic_milliseconds()
 
           result =
@@ -162,7 +207,8 @@ defmodule KogasaFrontend.MapsDb.Cache do
           end
         end)
 
-      %{state | refresh_ref: task.ref}
+      timer = Process.send_after(self(), {:refresh_timeout, task.ref}, state.build_timeout_ms)
+      %{state | refresh_ref: task.ref, refresh_pid: task.pid, refresh_timer: timer}
     else
       state
     end
@@ -170,19 +216,47 @@ defmodule KogasaFrontend.MapsDb.Cache do
 
   defp start_refresh(state), do: state
 
-  defp add_waiter(state, from), do: %{state | waiters: [from | state.waiters]}
-
-  defp reply_waiters(waiters, reply) do
-    Enum.each(waiters, &GenServer.reply(&1, reply))
+  defp add_waiter(state, {pid, _tag} = from) do
+    ref = Process.monitor(pid)
+    timer = Process.send_after(self(), {:waiter_timeout, ref}, state.wait_timeout_ms)
+    %{state | waiters: Map.put(state.waiters, ref, {from, timer})}
   end
 
-  defp refresh_failed(state) do
+  defp remove_waiter(state, ref) do
+    case Map.pop(state.waiters, ref) do
+      {nil, _waiters} ->
+        state
+
+      {{_from, timer}, waiters} ->
+        Process.cancel_timer(timer)
+        Process.demonitor(ref, [:flush])
+        %{state | waiters: waiters}
+    end
+  end
+
+  defp finish_refresh(state, reply) do
+    Process.cancel_timer(state.refresh_timer)
+    Process.demonitor(state.refresh_ref, [:flush])
+
+    Enum.each(state.waiters, fn {ref, {from, timer}} ->
+      Process.cancel_timer(timer)
+      Process.demonitor(ref, [:flush])
+      GenServer.reply(from, reply)
+    end)
+
     %{
       state
-      | next_refresh_at: monotonic_milliseconds() + state.retry_delay_ms,
+      | next_refresh_at: nil,
+        refresh_pid: nil,
         refresh_ref: nil,
-        waiters: []
+        refresh_timer: nil,
+        waiters: %{}
     }
+  end
+
+  defp refresh_failed(state, reason) do
+    state = finish_refresh(state, {:error, reason})
+    %{state | next_refresh_at: monotonic_milliseconds() + state.retry_delay_ms}
   end
 
   defp lookup_entry(ttl_seconds \\ nil) do

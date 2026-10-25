@@ -18,6 +18,13 @@ defmodule KogasaFrontendWeb.MapsDbController do
       maps_cache_generated_at:
         TimeDisplay.format_server_datetime(data.analytics_cached_at, "%m/%d/%Y %H:%M:%S %Z")
     )
+  rescue
+    error in MapsDb.AnalyticsUnavailableError ->
+      conn
+      |> put_resp_header("retry-after", "60")
+      |> put_resp_header("cache-control", "no-store")
+      |> put_status(:service_unavailable)
+      |> text(Exception.message(error))
   end
 
   def legacy_redirect(conn, _params) do

@@ -878,7 +878,7 @@ defmodule KogasaFrontend.MapsDb do
     if Cache.enabled?() do
       case Cache.get() do
         {:ok, entry} -> entry
-        {:error, _reason} -> uncached_page_payload()
+        {:error, _reason} -> raise KogasaFrontend.MapsDb.AnalyticsUnavailableError
       end
     else
       uncached_page_payload()
