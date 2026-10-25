@@ -56,9 +56,12 @@
                   <span class="stats-sub" style="margin:0;">Signed in</span>
                 <% end %>
               </div>
-              <a class="steam-logout" href="/stats/login.php?action=logout&return=/stats">
-                Logout
-              </a>
+              <form action="/stats/login.php" method="post" style="margin:0">
+                <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+                <input type="hidden" name="action" value="logout" />
+                <input type="hidden" name="return" value="/stats" />
+                <button type="submit" class="steam-logout">Logout</button>
+              </form>
             <% else %>
               <a class="steam-login steam-login-image" href="/stats/login.php?return=/stats">
                 <img

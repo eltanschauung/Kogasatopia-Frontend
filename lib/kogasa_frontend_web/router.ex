@@ -51,6 +51,7 @@ defmodule KogasaFrontendWeb.Router do
     get "/logs/current", LogsController, :current
     get "/logs/current/index.php", LogsController, :current
     get "/stats/login.php", StatsLoginController, :show
+    post "/stats/login.php", StatsLoginController, :logout
     get "/maps", MapsDbController, :index
     get "/maps/index.php", MapsDbController, :index
     get "/mapsdb", MapsDbController, :legacy_redirect

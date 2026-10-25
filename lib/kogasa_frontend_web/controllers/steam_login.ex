@@ -13,7 +13,10 @@ defmodule KogasaFrontendWeb.SteamLogin do
     return_to = sanitize_return(params["return"] || Keyword.fetch!(opts, :default_return), opts)
 
     case action do
-      "logout" ->
+      "logout" when conn.method in ["GET", "HEAD"] ->
+        confirm_logout(conn, return_to, opts)
+
+      "logout" when conn.method == "POST" ->
         if token = get_session(conn, "wt_chat_client_token") do
           Phoenix.PubSub.broadcast(
             KogasaFrontend.PubSub,
@@ -26,10 +29,37 @@ defmodule KogasaFrontendWeb.SteamLogin do
         |> configure_session(drop: true)
         |> redirect(to: return_to)
 
+      "logout" ->
+        conn
+        |> put_resp_header("allow", "GET, HEAD, POST")
+        |> send_resp(405, "Method Not Allowed")
+
       _ ->
         login_or_callback(conn, params, return_to, opts)
     end
   end
+
+  defp confirm_logout(conn, return_to, opts) do
+    html = """
+    <!doctype html><html lang="en"><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><title>Log out</title></head>
+    <body><main><h1>Log out</h1><p>Are you sure you want to log out?</p>
+    <form method="post" action="#{escape(Keyword.fetch!(opts, :login_path))}">
+    <input type="hidden" name="_csrf_token" value="#{escape(Phoenix.Controller.get_csrf_token())}">
+    <input type="hidden" name="action" value="logout">
+    <input type="hidden" name="return" value="#{escape(return_to)}">
+    <button type="submit">Log out</button></form>
+    <p><a href="#{escape(return_to)}">Cancel</a></p></main></body></html>
+    """
+
+    conn
+    |> put_resp_header("cache-control", "private, no-store")
+    |> put_resp_content_type("text/html")
+    |> send_resp(200, html)
+  end
+
+  defp escape(value),
+    do: value |> to_string() |> Plug.HTML.html_escape_to_iodata() |> IO.iodata_to_binary()
 
   defp login_or_callback(conn, %{"openid.mode" => "cancel"}, return_to, _opts) do
     conn
@@ -92,6 +122,7 @@ defmodule KogasaFrontendWeb.SteamLogin do
         value when is_binary(value) -> String.split(value, ",")
         _ -> []
       end
+
     required = ~w(op_endpoint claimed_id identity return_to response_nonce)
 
     request_options =
@@ -195,9 +226,7 @@ defmodule KogasaFrontendWeb.SteamLogin do
   end
 
   defp render_error_page(conn, return_to, error_msg, opts) do
-    esc = fn value ->
-      value |> to_string() |> Plug.HTML.html_escape_to_iodata() |> IO.iodata_to_binary()
-    end
+    esc = &escape/1
 
     steamid = get_session(conn, "steamid")
     title = Keyword.get(opts, :title, "Steam Login")

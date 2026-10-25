@@ -151,7 +151,10 @@ defmodule KogasaFrontend.SteamChatTest do
       )
 
     assert SteamSession.steamid(get_session(rejected)) == nil
-    logged_out = SteamLogin.handle(conn(session()), %{"action" => "logout"}, @opts)
+
+    logged_out =
+      SteamLogin.handle(%{conn(session()) | method: "POST"}, %{"action" => "logout"}, @opts)
+
     assert logged_out.private.plug_session_info == :drop
   end
 
@@ -231,7 +234,7 @@ defmodule KogasaFrontend.SteamChatTest do
     s = session()
     actor = s |> Identity.from_session(@persona)
     Phoenix.PubSub.subscribe(KogasaFrontend.PubSub, Identity.session_topic(actor.browser_key))
-    SteamLogin.handle(conn(s), %{"action" => "logout"}, @opts)
+    SteamLogin.handle(%{conn(s) | method: "POST"}, %{"action" => "logout"}, @opts)
     assert_receive :steam_logout
     socket = %Phoenix.LiveView.Socket{assigns: %{identity: actor, __changed__: %{}}}
     assert {:noreply, socket} = ChatLive.handle_info(:steam_logout, socket)

@@ -119,6 +119,12 @@ body {
     padding: 0.4rem 0.9rem;
 }
 
+button.steam-logout {
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+
 .steam-login:hover,
 .steam-logout:hover {
     background: rgba(127, 200, 255, 0.35);
