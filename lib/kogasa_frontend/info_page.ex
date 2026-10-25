@@ -41,7 +41,7 @@ defmodule KogasaFrontend.InfoPage do
         if(initial_state.ingame,
           do: nil,
           else:
-            Jason.encode!(%{
+            KogasaFrontend.HTMLJSON.encode!(%{
               active_class: initial_state.active_class,
               initial_state: initial_state,
               items_by_class: items_by_class

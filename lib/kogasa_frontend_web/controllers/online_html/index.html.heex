@@ -50,18 +50,18 @@
     const onlineEndpoint = '/stats/online.php';
     const onlineRefreshMs = 10000;
     const UI = window.KogasaUI;
-    const defaultAvatar = <%= Phoenix.HTML.raw(Jason.encode!(@default_avatar_url)) %>;
+    const defaultAvatar = <%= Phoenix.HTML.raw(KogasaFrontend.HTMLJSON.encode!(@default_avatar_url)) %>;
     const onlineTable = document.getElementById('stats-table-online');
     const onlineTbody = onlineTable ? onlineTable.querySelector('tbody') : null;
     const onlineEmpty = document.getElementById('online-empty');
     const onlineCountLabel = document.getElementById('nav-online-count');
     const onlineTopbarCount = document.getElementById('online-topbar-count');
-    const classIconBase = <%= Phoenix.HTML.raw(Jason.encode!(String.trim_trailing(@class_icon_base || "/leaderboard/", "/"))) %> + '/';
+    const classIconBase = <%= Phoenix.HTML.raw(KogasaFrontend.HTMLJSON.encode!(String.trim_trailing(@class_icon_base || "/leaderboard/", "/"))) %> + '/';
     const mapCardsContainer = document.getElementById('online-map-cards');
     let visibleMaxPlayers = 32;
     const onlineSortState = { key: null, direction: 1 };
 
-    const classMetadata = <%= Phoenix.HTML.raw(Jason.encode!(@class_metadata)) %>;
+    const classMetadata = <%= Phoenix.HTML.raw(KogasaFrontend.HTMLJSON.encode!(@class_metadata)) %>;
 
     function createNumberCell(sortValue, displayValue, title) {
         const td = document.createElement('td'); td.textContent = displayValue;
