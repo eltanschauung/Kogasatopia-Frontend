@@ -90,6 +90,8 @@ defmodule KogasaFrontend.Chat do
         end
       rescue
         _ -> {false, [], false}
+      catch
+        :exit, _ -> {false, [], false}
       end
 
     steamids = Enum.map(rows, fn r -> r[:steamid] || r["steamid"] end)
