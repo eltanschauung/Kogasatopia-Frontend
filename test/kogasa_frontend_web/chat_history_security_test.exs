@@ -72,4 +72,13 @@ defmodule KogasaFrontendWeb.ChatHistorySecurityTest do
     assert {:reply, %{live: false}, result} = ChatLive.handle_event("load_latest", %{}, socket)
     assert result.assigns.messages == socket.assigns.messages
   end
+
+  test "duplicate arrivals cannot invent an older-history indicator" do
+    socket = mount()
+    messages = Enum.map(1..500, &%{id: &1})
+    socket = Phoenix.Component.assign(socket, messages: messages, has_more_older: false)
+    assert {:noreply, result} = ChatLive.handle_info({:new_message, %{id: 500}}, socket)
+    assert result.assigns.messages == messages
+    refute result.assigns.has_more_older
+  end
 end

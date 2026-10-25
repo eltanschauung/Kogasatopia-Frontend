@@ -62,7 +62,7 @@ defmodule KogasaFrontend.Chat do
         base
       end
 
-    {rows, has_more_older} =
+    {ok, rows, has_more_older} =
       try do
         cond do
           is_integer(after_id) and after_id > 0 ->
@@ -70,7 +70,7 @@ defmodule KogasaFrontend.Chat do
               from(m in base, where: m.id > ^after_id, order_by: [asc: m.id], limit: ^limit)
               |> Repo.all()
 
-            {rows, false}
+            {true, rows, false}
 
           true ->
             q =
@@ -86,10 +86,10 @@ defmodule KogasaFrontend.Chat do
 
             has_extra = length(rows) > limit
             rows = if has_extra, do: Enum.take(rows, limit), else: rows
-            {Enum.reverse(rows), has_extra}
+            {true, Enum.reverse(rows), has_extra}
         end
       rescue
-        _ -> {[], false}
+        _ -> {false, [], false}
       end
 
     steamids = Enum.map(rows, fn r -> r[:steamid] || r["steamid"] end)
@@ -99,7 +99,7 @@ defmodule KogasaFrontend.Chat do
     ids = Enum.map(messages, & &1.id)
 
     %{
-      ok: true,
+      ok: ok,
       messages: Enum.map(messages, &message_to_json/1),
       oldest_id: List.first(ids),
       newest_id: List.last(ids),

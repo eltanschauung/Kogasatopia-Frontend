@@ -115,21 +115,31 @@ defmodule KogasaFrontendWeb.ChatLive do
   def handle_event("load_older", _params, socket) do
     if socket.assigns.has_more_older && socket.assigns.oldest_id && history_allowed?(socket) do
       payload = Chat.list_messages(%{before: socket.assigns.oldest_id, limit: 50})
-      older = payload.messages || []
-      merged = History.prepend(socket.assigns.messages, older)
-      prepended = older != []
 
-      {:reply,
-       %{
-         prepended: prepended,
-         has_more_older: payload.has_more_older,
-         oldest_id: payload.oldest_id
-       },
-       socket
-       |> assign(:messages, merged)
-       |> assign(:history_mode, socket.assigns.history_mode or prepended)
-       |> assign(:oldest_id, payload.oldest_id || socket.assigns.oldest_id)
-       |> assign(:has_more_older, payload.has_more_older)}
+      if payload.ok do
+        older = payload.messages || []
+        merged = History.prepend(socket.assigns.messages, older)
+        prepended = older != []
+
+        {:reply,
+         %{
+           prepended: prepended,
+           has_more_older: payload.has_more_older,
+           oldest_id: payload.oldest_id
+         },
+         socket
+         |> assign(:messages, merged)
+         |> assign(:history_mode, socket.assigns.history_mode or prepended)
+         |> assign(:oldest_id, payload.oldest_id || socket.assigns.oldest_id)
+         |> assign(:has_more_older, payload.has_more_older)}
+      else
+        {:reply,
+         %{
+           prepended: false,
+           has_more_older: socket.assigns.has_more_older,
+           oldest_id: socket.assigns.oldest_id
+         }, history_unavailable(socket)}
+      end
     else
       {:reply,
        %{
@@ -144,15 +154,19 @@ defmodule KogasaFrontendWeb.ChatLive do
     if history_allowed?(socket) do
       payload = Chat.list_messages(%{limit: 50})
 
-      {:reply, %{live: true},
-       socket
-       |> assign(:messages, payload.messages || [])
-       |> assign(:oldest_id, payload.oldest_id)
-       |> assign(:latest_id, payload.latest_id)
-       |> assign(:poll_after_id, payload.latest_id)
-       |> assign(:history_mode, false)
-       |> assign(:has_more_older, payload.has_more_older)
-       |> assign(:status, nil)}
+      if payload.ok do
+        {:reply, %{live: true},
+         socket
+         |> assign(:messages, payload.messages || [])
+         |> assign(:oldest_id, payload.oldest_id)
+         |> assign(:latest_id, payload.latest_id)
+         |> assign(:poll_after_id, payload.latest_id)
+         |> assign(:history_mode, false)
+         |> assign(:has_more_older, payload.has_more_older)
+         |> assign(:status, nil)}
+      else
+        {:reply, %{live: false}, history_unavailable(socket)}
+      end
     else
       {:reply, %{live: false},
        assign(socket, :status, "Please wait before loading more history.")}
@@ -366,9 +380,17 @@ defmodule KogasaFrontendWeb.ChatLive do
     |> assign(:oldest_id, List.first(ids) || socket.assigns.oldest_id)
     |> assign(
       :has_more_older,
-      socket.assigns.has_more_older or length(combined) > History.limit()
+      socket.assigns.has_more_older or length(Enum.uniq_by(combined, & &1.id)) > History.limit()
     )
   end
+
+  defp history_unavailable(socket),
+    do:
+      assign(
+        socket,
+        :status,
+        "Chat history is temporarily unavailable. Please try again shortly."
+      )
 
   defp source_subnet(socket, session) do
     if connected?(socket) do
