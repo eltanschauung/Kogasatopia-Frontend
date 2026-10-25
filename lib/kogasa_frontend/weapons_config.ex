@@ -96,7 +96,8 @@ defmodule KogasaFrontend.WeaponsConfig do
   end
 
   def config_path do
-    local_config_path(@config_filename, @repo_fallback)
+    Application.get_env(:kogasa_frontend, :weapons_config_path) ||
+      local_config_path(@config_filename, @repo_fallback)
   end
 
   defp local_config_path(filename, fallback) do

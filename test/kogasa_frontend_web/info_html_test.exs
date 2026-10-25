@@ -1,8 +1,43 @@
 defmodule KogasaFrontendWeb.InfoHTMLTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias KogasaFrontendWeb.InfoHTML
   alias KogasaFrontend.InfoPage
+
+  setup do
+    path = Path.join(System.tmp_dir!(), "info-weapons-#{System.unique_integer([:positive])}.cfg")
+
+    File.write!(path, ~S"""
+    "Weapons"
+    {
+      "CustomWeapons"
+      {
+        "synthetic_fixture_weapon"
+        {
+          "all_class" "true"
+          "name" "Synthetic fixture weapon"
+          "type" "Fixture"
+          "image" "fixture.png"
+          "description" { "positive" "Synthetic test item" }
+        }
+      }
+    }
+    """)
+
+    previous = Application.fetch_env(:kogasa_frontend, :weapons_config_path)
+    Application.put_env(:kogasa_frontend, :weapons_config_path, path)
+
+    on_exit(fn ->
+      File.rm(path)
+
+      case previous do
+        {:ok, value} -> Application.put_env(:kogasa_frontend, :weapons_config_path, value)
+        :error -> Application.delete_env(:kogasa_frontend, :weapons_config_path)
+      end
+    end)
+
+    :ok
+  end
 
   test "locked shop weapons are muted and cannot be selected" do
     html = render_weapon_tile(true)
