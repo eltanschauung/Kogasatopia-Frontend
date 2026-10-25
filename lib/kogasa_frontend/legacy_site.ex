@@ -46,14 +46,7 @@ defmodule KogasaFrontend.LegacySite do
 
   def safe_resolve(request_path) when is_binary(request_path) do
     rel = request_path |> URI.decode() |> String.trim_leading("/")
-    root = Path.expand(docroot())
-    candidate = Path.expand(rel, root)
-
-    if candidate == root or String.starts_with?(candidate, root <> "/") do
-      {:ok, candidate}
-    else
-      :error
-    end
+    KogasaFrontend.PublicPath.resolve(docroot(), rel)
   end
 
   defp blog_image_paths do

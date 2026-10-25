@@ -71,7 +71,10 @@ defmodule KogasaFrontendWeb.Plugs.FastdlHost do
   defp existing_index_file(dir) do
     Enum.find(
       [Path.join(dir, "index.html"), Path.join(dir, "index.htm")],
-      &File.regular?/1
+      fn file ->
+        match?({:ok, _}, KogasaFrontend.PublicPath.resolve(dir, Path.basename(file))) and
+          File.regular?(file)
+      end
     )
   end
 
@@ -154,7 +157,9 @@ defmodule KogasaFrontendWeb.Plugs.FastdlHost do
   defp directory_entry(request_path, dir, name) do
     path = Path.join(dir, name)
 
-    case File.stat(path) do
+    result = with {:ok, _} <- KogasaFrontend.PublicPath.resolve(dir, name), do: File.stat(path)
+
+    case result do
       {:ok, stat} ->
         directory? = stat.type == :directory
         display_name = if(directory?, do: name <> "/", else: name)
@@ -173,7 +178,7 @@ defmodule KogasaFrontendWeb.Plugs.FastdlHost do
           }
         ]
 
-      {:error, _reason} ->
+      _ ->
         []
     end
   end

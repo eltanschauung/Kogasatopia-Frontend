@@ -9,7 +9,7 @@ defmodule KogasaFrontend.FastdlSite do
            "www.fastdl.gyate.net"
          ])
 
-  def docroot, do: @docroot
+  def docroot, do: Application.get_env(:kogasa_frontend, :fastdl_root, @docroot)
 
   def fastdl_host?(host) when is_binary(host) do
     MapSet.member?(@hosts, String.downcase(host))
@@ -18,14 +18,6 @@ defmodule KogasaFrontend.FastdlSite do
   def fastdl_host?(_host), do: false
 
   def safe_resolve(request_path) when is_binary(request_path) do
-    rel = request_path |> String.trim_leading("/")
-    candidate = Path.expand(rel, @docroot)
-    root = Path.expand(@docroot)
-
-    if candidate == root or String.starts_with?(candidate, root <> "/") do
-      {:ok, candidate}
-    else
-      :error
-    end
+    KogasaFrontend.PublicPath.resolve(docroot(), URI.decode(request_path))
   end
 end

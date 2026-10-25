@@ -63,10 +63,10 @@ defmodule KogasaFrontendWeb.Plugs.LegacyStatic do
           has_index_html?(resolved) ->
         {:ok, {:redirect_dir, request_path <> "/"}}
 
-      File.dir?(resolved) and File.regular?(Path.join(resolved, "index.html")) ->
+      File.dir?(resolved) and safe_index?(resolved, "index.html") ->
         {:ok, {:file, Path.join(resolved, "index.html")}}
 
-      File.dir?(resolved) and File.regular?(Path.join(resolved, "index.htm")) ->
+      File.dir?(resolved) and safe_index?(resolved, "index.htm") ->
         {:ok, {:file, Path.join(resolved, "index.htm")}}
 
       true ->
@@ -75,8 +75,12 @@ defmodule KogasaFrontendWeb.Plugs.LegacyStatic do
   end
 
   defp has_index_html?(resolved) do
-    File.regular?(Path.join(resolved, "index.html")) or
-      File.regular?(Path.join(resolved, "index.htm"))
+    safe_index?(resolved, "index.html") or safe_index?(resolved, "index.htm")
+  end
+
+  defp safe_index?(root, name) do
+    match?({:ok, _}, KogasaFrontend.PublicPath.resolve(root, name)) and
+      File.regular?(Path.join(root, name))
   end
 
   defp allowed_file?(file) do

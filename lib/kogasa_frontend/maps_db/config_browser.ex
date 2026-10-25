@@ -304,16 +304,8 @@ defmodule KogasaFrontend.MapsDb.ConfigBrowser do
   end
 
   defp contained_path(path, base) do
-    base_path = Path.expand(base)
-    safe_path = Path.expand(path)
-
-    with {:ok, %File.Stat{type: type}} when type != :symlink <- File.lstat(path) do
-      if safe_path == base_path or String.starts_with?(safe_path, base_path <> "/") do
-        {:ok, safe_path}
-      else
-        {:error, :not_found}
-      end
-    else
+    case KogasaFrontend.PublicPath.resolve(base, Path.relative_to(path, base)) do
+      {:ok, safe_path} -> {:ok, safe_path}
       _ -> {:error, :not_found}
     end
   end
