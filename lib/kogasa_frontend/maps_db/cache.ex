@@ -5,7 +5,9 @@ defmodule KogasaFrontend.MapsDb.Cache do
 
   require Logger
 
-  @cache_version 2
+  alias KogasaFrontend.MapsDb.CacheStorage
+
+  @cache_version 3
   @default_ttl_seconds 24 * 60 * 60
   @default_retry_delay_ms 60_000
   @table __MODULE__
@@ -98,7 +100,7 @@ defmodule KogasaFrontend.MapsDb.Cache do
     entry = build_entry(payload)
     :ets.insert(@table, {:entry, entry})
 
-    case persist_entry(state.cache_path, entry) do
+    case CacheStorage.write(state.cache_path, entry) do
       :ok ->
         :ok
 
@@ -217,10 +219,9 @@ defmodule KogasaFrontend.MapsDb.Cache do
   end
 
   defp load_persisted_entry(state) do
-    with {:ok, binary} <- File.read(state.cache_path),
-         # SQL result maps contain runtime-created atom keys. This app-owned 0600 file is trusted.
-         entry <- :erlang.binary_to_term(binary),
-         true <- valid_entry?(entry) do
+    with {:ok, entry} <- CacheStorage.read(state.cache_path),
+         true <- valid_entry?(entry),
+         true <- state.validate_fun.(entry.payload) do
       :ets.insert(@table, {:entry, entry})
     else
       _ -> :ok
@@ -251,22 +252,6 @@ defmodule KogasaFrontend.MapsDb.Cache do
   end
 
   defp valid_maps_payload?(_payload), do: false
-
-  defp persist_entry(path, entry) do
-    directory = Path.dirname(path)
-    temporary_path = path <> ".tmp-#{System.unique_integer([:positive])}"
-
-    with :ok <- File.mkdir_p(directory),
-         :ok <- File.write(temporary_path, :erlang.term_to_binary(entry, [:compressed])),
-         :ok <- File.rename(temporary_path, path) do
-      File.chmod(path, 0o600)
-    else
-      {:error, reason} = error ->
-        File.rm(temporary_path)
-        Logger.debug("Maps analytics cache write failed: #{inspect(reason)}")
-        error
-    end
-  end
 
   defp configured_cache_path do
     Application.get_env(
