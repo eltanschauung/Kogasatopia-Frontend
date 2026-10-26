@@ -155,6 +155,31 @@
 
               <div class="map-analytics-band">
                 <div class="map-analytics-header">
+                  <h3 class="map-analytics-title">Most Popular Custom Weapons</h3>
+                  <span class="map-analytics-sub">Players with the item equipped</span>
+                </div>
+                <div class="map-analytics-scroll map-analytics-scroll-custom-items">
+                  <table class="map-analytics-table">
+                    <thead>
+                      <tr>
+                        <th>Weapon</th>
+                        <th class="numeric">Equipped</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%= for weapon <- analytics[:popular_custom_weapons] || [] do %>
+                        <tr>
+                          <td><span class="map-analytics-name">{weapon.name}</span></td>
+                          <td class="numeric">{weapon.equipped_clients}</td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="map-analytics-band">
+                <div class="map-analytics-header">
                   <h3 class="map-analytics-title">Most Popular Custom Hats</h3>
                   <span class="map-analytics-sub">Players with the hat equipped</span>
                 </div>
@@ -171,6 +196,31 @@
                         <tr>
                           <td><span class="map-analytics-name">{hat.name}</span></td>
                           <td class="numeric">{hat.equipped_clients}</td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="map-analytics-band">
+                <div class="map-analytics-header">
+                  <h3 class="map-analytics-title">Most Common Shop Purchases</h3>
+                  <span class="map-analytics-sub">Players with a recorded paid purchase</span>
+                </div>
+                <div class="map-analytics-scroll map-analytics-scroll-custom-items">
+                  <table class="map-analytics-table">
+                    <thead>
+                      <tr>
+                        <th>Item</th>
+                        <th class="numeric">Purchasers</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <%= for item <- analytics[:common_shop_purchases] || [] do %>
+                        <tr>
+                          <td><span class="map-analytics-name">{item.name}</span></td>
+                          <td class="numeric">{item.purchasers}</td>
                         </tr>
                       <% end %>
                     </tbody>
@@ -267,31 +317,6 @@
                               </div>
                             </div>
                           </td>
-                        </tr>
-                      <% end %>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div class="map-analytics-band">
-                <div class="map-analytics-header">
-                  <h3 class="map-analytics-title">Most Popular Custom Weapons</h3>
-                  <span class="map-analytics-sub">Players with the item equipped</span>
-                </div>
-                <div class="map-analytics-scroll map-analytics-scroll-custom-items">
-                  <table class="map-analytics-table">
-                    <thead>
-                      <tr>
-                        <th>Weapon</th>
-                        <th class="numeric">Equipped</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <%= for weapon <- analytics[:popular_custom_weapons] || [] do %>
-                        <tr>
-                          <td><span class="map-analytics-name">{weapon.name}</span></td>
-                          <td class="numeric">{weapon.equipped_clients}</td>
                         </tr>
                       <% end %>
                     </tbody>

@@ -12,6 +12,7 @@ defmodule KogasaFrontend.MapsDb do
   alias KogasaFrontend.QueryResult
   alias KogasaFrontend.LegacyPaths
   alias KogasaFrontend.Repo
+  alias KogasaFrontend.ShopPurchasePopularity
   alias KogasaFrontend.TimeDisplay
   alias KogasaFrontend.Tf2Classes
   alias KogasaFrontend.WeaponsConfig
@@ -148,6 +149,7 @@ defmodule KogasaFrontend.MapsDb do
       class_popularity: fetch_class_popularity(),
       popular_custom_hats: CustomHatPopularity.list(),
       popular_custom_weapons: fetch_popular_custom_weapons(),
+      common_shop_purchases: ShopPurchasePopularity.list(),
       vote_table_available: table_exists?(@vote_statistics_table)
     }
   end

@@ -7,7 +7,7 @@ defmodule KogasaFrontend.MapsDb.Cache do
 
   alias KogasaFrontend.MapsDb.CacheStorage
 
-  @cache_version 3
+  @cache_version 4
   @default_ttl_seconds 24 * 60 * 60
   @default_retry_delay_ms 60_000
   @default_build_timeout_ms 120_000
