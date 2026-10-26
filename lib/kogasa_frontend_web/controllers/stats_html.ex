@@ -25,9 +25,6 @@ defmodule KogasaFrontendWeb.StatsHTML do
       value when is_number(value) ->
         sign = if value >= 0, do: "+", else: ""
         sign <> :erlang.float_to_binary(value / 1, decimals: 1) <> "%"
-
-      _ ->
-        "—"
     end
   end
 

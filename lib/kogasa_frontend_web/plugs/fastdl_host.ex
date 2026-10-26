@@ -28,13 +28,6 @@ defmodule KogasaFrontendWeb.Plugs.FastdlHost do
     with {:ok, resolved} <- FastdlSite.safe_resolve(request_path),
          {:ok, picked} <- pick_path(resolved) do
       case picked do
-        {:redirect, location} ->
-          conn
-          |> put_no_cache_headers()
-          |> put_resp_header("location", location)
-          |> send_resp(301, "")
-          |> halt()
-
         {:file, file} ->
           send_fastdl_file(conn, file)
 

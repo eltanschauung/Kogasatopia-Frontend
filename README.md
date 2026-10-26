@@ -13,6 +13,13 @@ Features include:
 - live chat, which communicates with both servers (inspired by Minecraft Dynmap concept)
 - weapons page which allows clients to check stats easily (to be completed)
 
+## Toolchain and dependencies
+
+Tested with Elixir 1.20.4, Erlang/OTP 29.1.2 and Node.js 26.12.1; `.tool-versions`
+records these versions. Elixir 1.16 or newer is required by the LiveView dependency.
+After dependency upgrades, refresh `priv/static/assets/js/phoenix*.min.js` from
+the corresponding dependencies; regression tests check the client/server pairing.
+
 ## Steam sessions
 
 Run `mix ecto.migrate` before starting an updated application. Steam logins use

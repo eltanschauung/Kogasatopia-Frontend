@@ -5,7 +5,7 @@ defmodule KogasaFrontend.MixProject do
     [
       app: :kogasa_frontend,
       version: "0.1.0",
-      elixir: "~> 1.15",
+      elixir: "~> 1.16",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -46,15 +46,15 @@ defmodule KogasaFrontend.MixProject do
       {:myxql, "~> 0.9.0"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 1.1.33"},
+      {:phoenix_live_view, "~> 1.2.13"},
       {:lazy_html, "~> 0.1.13", only: :test},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:req, "~> 0.7.5"},
-      {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.13"}
+      {:dns_cluster, "~> 0.3.1"},
+      {:bandit, "~> 1.14.0"}
     ]
   end
 

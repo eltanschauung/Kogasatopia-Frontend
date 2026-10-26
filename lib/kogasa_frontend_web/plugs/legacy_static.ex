@@ -45,9 +45,6 @@ defmodule KogasaFrontendWeb.Plugs.LegacyStatic do
           else
             conn
           end
-
-        _ ->
-          conn
       end
     else
       _ -> conn
