@@ -84,7 +84,7 @@ defmodule KogasaFrontend.WeaponPanelSecurityTest do
 
         output =
           capture_log(fn ->
-            result = get(conn, path)
+            result = get(conn, "http://localhost" <> path)
             assert result.status == 200
             assert result.private[:phoenix_action] == :show_action
           end)
@@ -93,14 +93,17 @@ defmodule KogasaFrontend.WeaponPanelSecurityTest do
         assert_redacted(path)
 
         unknown = prefix <> @token <> "/unknown"
-        output = capture_log(fn -> assert get(conn, unknown).status == 404 end)
+
+        output =
+          capture_log(fn -> assert get(conn, "http://localhost" <> unknown).status == 404 end)
+
         refute output =~ @token
         assert_redacted(unknown)
       end
 
       Repo.query!("UPDATE weapons_web_sessions SET expires_at = 0", [], log: false)
       path = "/api//weapons//panel/" <> @token <> "/actions/" <> @action
-      output = capture_log(fn -> assert get(conn, path).status == 404 end)
+      output = capture_log(fn -> assert get(conn, "http://localhost" <> path).status == 404 end)
       refute output =~ @token
       assert_redacted(path)
     after
@@ -109,7 +112,7 @@ defmodule KogasaFrontend.WeaponPanelSecurityTest do
   end
 
   defp assert_redacted(path) do
-    conn = Plug.Test.conn(:get, path)
+    conn = Plug.Test.conn(:get, "http://localhost" <> path)
     refute KogasaFrontendWeb.Plugs.AccessLog.format_line(conn) =~ @token
 
     referer =
