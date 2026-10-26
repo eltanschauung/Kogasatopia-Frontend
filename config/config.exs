@@ -57,7 +57,8 @@ config :phoenix, :filter_parameters, [
   "openid",
   "state",
   "secret",
-  "key"
+  "key",
+  "path"
 ]
 
 # Import environment specific config. This must remain at the bottom

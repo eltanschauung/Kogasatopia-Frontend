@@ -51,7 +51,14 @@ defmodule KogasaFrontendWeb.AccessLogSecurityTest do
   test "path capabilities are redacted in request and referrer paths, including encoded prefixes" do
     secret = String.duplicate("a", 32)
 
-    for prefix <- ["/api/weapons/panel/", "/%61pi/weapons/panel/"] do
+    for prefix <- [
+          "/api/weapons/panel/",
+          "/%61pi/weapons/panel/",
+          "/api//weapons/panel/",
+          "/api/weapons//panel/",
+          "///api///weapons///panel///",
+          "/api%2Fweapons/panel/"
+        ] do
       path = prefix <> secret <> "/actions"
 
       conn =
@@ -64,6 +71,9 @@ defmodule KogasaFrontendWeb.AccessLogSecurityTest do
       assert line =~ "[FILTERED]"
       assert KogasaFrontend.LogPrivacy.request_level(conn) == false
     end
+
+    assert Phoenix.Logger.filter_values(%{"path" => ["api", "weapons", "panel", secret]}) ==
+             %{"path" => "[FILTERED]"}
 
     assert KogasaFrontend.LogPrivacy.request_level(Plug.Test.conn(:get, "/stats")) == :info
   end

@@ -66,4 +66,56 @@ defmodule KogasaFrontend.WeaponPanelSecurityTest do
       Logger.configure(level: previous)
     end
   end
+
+  test "equivalent router paths and failed routes cannot disclose capabilities", %{conn: conn} do
+    previous = Logger.level()
+    Logger.configure(level: :debug)
+
+    try do
+      for prefix <- [
+            "/api/weapons/panel/",
+            "/api//weapons/panel/",
+            "/api/weapons//panel/",
+            "/api/weapons/panel//",
+            "///api///weapons///panel///",
+            "/%61pi/weapons/panel/"
+          ] do
+        path = prefix <> @token <> "/actions/" <> @action
+
+        output =
+          capture_log(fn ->
+            result = get(conn, path)
+            assert result.status == 200
+            assert result.private[:phoenix_action] == :show_action
+          end)
+
+        refute output =~ @token
+        assert_redacted(path)
+
+        unknown = prefix <> @token <> "/unknown"
+        output = capture_log(fn -> assert get(conn, unknown).status == 404 end)
+        refute output =~ @token
+        assert_redacted(unknown)
+      end
+
+      Repo.query!("UPDATE weapons_web_sessions SET expires_at = 0", [], log: false)
+      path = "/api//weapons//panel/" <> @token <> "/actions/" <> @action
+      output = capture_log(fn -> assert get(conn, path).status == 404 end)
+      refute output =~ @token
+      assert_redacted(path)
+    after
+      Logger.configure(level: previous)
+    end
+  end
+
+  defp assert_redacted(path) do
+    conn = Plug.Test.conn(:get, path)
+    refute KogasaFrontendWeb.Plugs.AccessLog.format_line(conn) =~ @token
+
+    referer =
+      Plug.Test.conn(:get, "/info") |> put_req_header("referer", "https://example.test" <> path)
+
+    refute KogasaFrontendWeb.Plugs.AccessLog.format_line(referer) =~ @token
+    assert KogasaFrontend.LogPrivacy.request_level(conn) == false
+  end
 end

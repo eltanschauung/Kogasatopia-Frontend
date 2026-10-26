@@ -3,10 +3,10 @@ defmodule KogasaFrontend.LogPrivacy do
   @panel "/api/weapons/panel/"
 
   def path(value) when is_binary(value) do
-    case URI.decode(value) do
-      @panel <> rest ->
+    case classify(value) do
+      {:panel, rest} ->
         suffix =
-          case String.split(rest, "/") do
+          case rest do
             [_token, "actions"] -> "/actions"
             [_token, "actions", _id] -> "/actions/[ACTION]"
             _ -> ""
@@ -14,11 +14,12 @@ defmodule KogasaFrontend.LogPrivacy do
 
         @panel <> "[FILTERED]" <> suffix
 
-      _ ->
+      :ordinary ->
         value
+
+      :invalid ->
+        "-"
     end
-  rescue
-    _ -> "-"
   end
 
   def path(value), do: value
@@ -26,6 +27,18 @@ defmodule KogasaFrontend.LogPrivacy do
   # Phoenix's standard request line is logged before parameter filtering; these
   # capability routes remain observable in our redacted combined access log.
   def request_level(conn) do
-    if path(conn.request_path) == conn.request_path, do: :info, else: false
+    if classify(conn.request_path) == :ordinary, do: :info, else: false
+  end
+
+  defp classify(value) do
+    # Plug removes empty segments before Phoenix routes the request. Decode then
+    # split here, conservatively including encoded separators, so equivalent or
+    # malformed panel paths never escape request/Referer/framework redaction.
+    case value |> URI.decode() |> String.split("/", trim: true) do
+      ["api", "weapons", "panel" | rest] -> {:panel, rest}
+      _ -> :ordinary
+    end
+  rescue
+    _ -> :invalid
   end
 end
