@@ -54,7 +54,7 @@ defmodule KogasaFrontend.MixProject do
       {:jason, "~> 1.2"},
       {:req, "~> 0.7.5"},
       {:dns_cluster, "~> 0.3.1"},
-      {:bandit, "~> 1.14.0"}
+      {:bandit, "~> 1.14.1"}
     ]
   end
 
