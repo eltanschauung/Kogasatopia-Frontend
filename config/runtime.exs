@@ -20,6 +20,13 @@ if System.get_env("PHX_SERVER") do
   config :kogasa_frontend, KogasaFrontendWeb.Endpoint, server: true
 end
 
+if config_env() == :prod and System.get_env("RELEASE_ROOT") do
+  # LegacyStatic must serve the active release's assets, not the source/build
+  # path captured in LegacyPaths when these modules were compiled.
+  config :kogasa_frontend,
+    legacy_static_root: Application.app_dir(:kogasa_frontend, "priv/static")
+end
+
 ip =
   case System.get_env("PHX_IP", "0.0.0.0") do
     "0.0.0.0" -> {0, 0, 0, 0}
